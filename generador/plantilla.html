@@ -129,6 +129,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable td.num,.vptable th.num{text-align:right;font-variant-numeric:tabular-nums;}
 .vptable td.vpusd{color:var(--verde);font-weight:700;}
 .vptable td.vpcmvc{color:#c0392b;font-weight:700;}
+.vptable td.vpcv{color:#1a237e;font-weight:700;}
 .vptable thead tr.r1 th.vpid{vertical-align:middle;text-align:center;}
 .vptable tbody tr.vphdr td{background:#e7e8f0;font-weight:800;color:var(--azul);}
 .vptable tbody tr.vphdr td.vpid{background:#dfe1ee;}
@@ -330,36 +331,43 @@ function exportLiq(){if(!st.liq)return;const rows=visibleRows().filter(r=>r[5]!=
   const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="liquidacion_x"+st.liq+".csv";a.click();}
 let vpRendered=false;
 function showTab(t){st.tab=t;['fc','liq','vp'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
-function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');}
+function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');const _tvp=imp*tc+dist,_cmv=impc*tc+distc;const re=document.getElementById('vprat_'+m);if(re)re.textContent=_tvp>0?((_cmv/_tvp*100).toFixed(1)+'%'):'–';}
 function renderVP(){const el=document.getElementById('view-vp');const M=DATA.months;const S=DATA.season||[];const NF=n=>n==null?'–':Math.round(n).toLocaleString('es-AR');const est=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1;
   const rows=visibleRows();
   if(rows.length===0){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';window._vpSeg={imp:[],dist:[]};return;}
-  const byCod=st.COD.size>0||st.CAT.size>0;
+  const mode=st.COD.size>0?'cod':(st.CAT.size===1?'cod':(st.CAT.size>=2?'cat':'ga'));
+  const colLbl=mode==='cod'?'Código':(mode==='cat'?'Categoría':'Grupo de artículo');
   const mk=()=>({b:Array(12).fill(0),v:Array(12).fill(0),u:Array(12).fill(0),cmv:Array(12).fill(0),aw:0,w:0});
+  const cstOf=r=>{const cc=DATA.costos&&DATA.costos[r[2]];return (cc&&cc[0])?cc[0]:0;};
+  const acc=(o,r,cst)=>{let vpt=0;for(let m=0;m<12;m++){o.b[m]+=r[79+m*2]||0;const vv=mval(r,m,3)||0;o.v[m]+=vv;o.u[m]+=r[79+m*2+1]||0;o.cmv[m]+=cst*vv;vpt+=vv;}if(r[103]!=null){o.aw+=r[103]*vpt;o.w+=vpt;}};
   const disp=[];
-  if(byCod){
-    rows.forEach(r=>{const o=mk();const cc=DATA.costos&&DATA.costos[r[2]];const cst=(cc&&cc[0])?cc[0]:0;let vpt=0;for(let m=0;m<12;m++){o.b[m]=r[79+m*2]||0;o.v[m]=mval(r,m,3)||0;o.u[m]=r[79+m*2+1]||0;o.cmv[m]=cst*o.v[m];vpt+=o.v[m];}if(r[103]!=null){o.aw=r[103]*vpt;o.w=vpt;}disp.push({label:r[2]+' · '+DATA.GA[r[1]],imp:DATA.UN[r[0]]==='Importados',o});});
+  if(mode==='cod'){
+    rows.forEach(r=>{const o=mk();acc(o,r,cstOf(r));disp.push({label:r[2],imp:DATA.UN[r[0]]==='Importados',o});});
     disp.sort((a,b)=>a.label.localeCompare(b.label));
+  } else if(mode==='cat'){
+    const map={};rows.forEach(r=>{const k=r[1]+'|'+r[3];let e=map[k];if(!e){e=map[k]={o:mk(),imp:DATA.UN[r[0]]==='Importados',gi:r[1],cti:r[3]};}acc(e.o,r,cstOf(r));});
+    Object.keys(map).map(k=>map[k]).sort((a,b)=>gaPrio(a.gi)-gaPrio(b.gi)||String(DATA.CAT[a.cti]||'').localeCompare(String(DATA.CAT[b.cti]||''))).forEach(e=>disp.push({label:(DATA.CAT[e.cti]||'(s/cat)')+' · '+DATA.GA[e.gi],imp:e.imp,o:e.o}));
   } else {
-    const gaMap={};rows.forEach(r=>{const gi=r[1];let o=gaMap[gi];if(!o){o=gaMap[gi]=mk();o.imp=DATA.UN[r[0]]==='Importados';}const cc=DATA.costos&&DATA.costos[r[2]];const cst=(cc&&cc[0])?cc[0]:0;let vpt=0;for(let m=0;m<12;m++){o.b[m]+=r[79+m*2]||0;const vv=mval(r,m,3)||0;o.v[m]+=vv;o.u[m]+=r[79+m*2+1]||0;o.cmv[m]+=cst*vv;vpt+=vv;}if(r[103]!=null){o.aw+=r[103]*vpt;o.w+=vpt;}});
+    const gaMap={};rows.forEach(r=>{const gi=r[1];let o=gaMap[gi];if(!o){o=gaMap[gi]=mk();o.imp=DATA.UN[r[0]]==='Importados';}acc(o,r,cstOf(r));});
     Object.keys(gaMap).map(Number).sort((a,b)=>gaPrio(a)-gaPrio(b)).forEach(gi=>disp.push({label:DATA.GA[gi],imp:gaMap[gi].imp,o:gaMap[gi]}));
   }
   const impR=disp.filter(d=>d.imp),distR=disp.filter(d=>!d.imp);
   const segSum=list=>{const s=mk();list.forEach(d=>{for(let m=0;m<12;m++){s.b[m]+=d.o.b[m];s.v[m]+=d.o.v[m];s.u[m]+=d.o.u[m];s.cmv[m]+=d.o.cmv[m];}s.aw+=d.o.aw;s.w+=d.o.w;});return s;};
   const segImp=segSum(impR),segDist=segSum(distR);window._vpSeg={imp:segImp.u,dist:segDist.u,impCmv:segImp.cmv,distCmv:segDist.cmv};
-  let r1='<tr class="r1"><th class="vpid" rowspan="2">'+(byCod?'Código':'Grupo de artículo')+'</th>';
-  M.forEach((m,i)=>{const tc=(S[i]&&S[i][2]!=null)?S[i][2]:'';const rat=S[i]?(Math.round((S[i][0]||0)*100)+'% / '+Math.round((S[i][1]||0)*100)+'%'):'';r1+=`<th colspan="5" class="${i%2?'mo':''}"><div class="vpmes">${m}</div><div class="vpratio">${rat}</div><div class="vptc">TC: <input id="tc_${i}" class="tcinput" value="${tc}" oninput="recalcVP(${i})"></div><div class="vptotwrap" style="color:#ff8a80">CMV: <b id="vpcmv_${i}">–</b></div><div class="vptotwrap" style="color:#69f0ae">TVP: <b id="vptot_${i}">–</b></div></th>`;});
+  let r1='<tr class="r1"><th class="vpid" rowspan="2">'+colLbl+'</th>';
+  M.forEach((m,i)=>{const tc=(S[i]&&S[i][2]!=null)?S[i][2]:'';const rat=S[i]?(Math.round((S[i][0]||0)*100)+'% / '+Math.round((S[i][1]||0)*100)+'%'):'';r1+=`<th colspan="6" class="${i%2?'mo':''}"><div class="vpmes">${m}</div><div class="vpratio">${rat}</div><div class="vptc">TC: <input id="tc_${i}" class="tcinput" value="${tc}" oninput="recalcVP(${i})"></div><div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px"><div style="text-align:right"><div class="vptotwrap" style="color:#ff8a80;margin-top:0">CMV: <b id="vpcmv_${i}">–</b></div><div class="vptotwrap" style="color:#69f0ae;margin-top:1px">TVP: <b id="vptot_${i}">–</b></div></div><div style="background:#ffd600;color:#0d1b5e;border-radius:8px;padding:3px 8px;line-height:1.05"><div style="font-size:.5rem;font-weight:800">CMV/TVP</div><div style="font-size:.85rem;font-weight:800" id="vprat_${i}">–</div></div></div></th>`;});
   r1+='<th class="trh trsep" colspan="2">Tendencia</th></tr>';
-  let r2='<tr class="r2b">';M.forEach((m,i)=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">Base u</th><th class="num${c}">%</th><th class="num${c}">V.P. u</th><th class="num${c}">CMV</th><th class="num${c}">Venta $-USD</th>`;});r2+='<th class="num trh trsep">Mens.</th><th class="num trh">Anual</th></tr>';
+  let r2='<tr class="r2b">';M.forEach((m,i)=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">Base u</th><th class="num${c}">%</th><th class="num${c}">V.P. u</th><th class="num${c}">CMV</th><th class="num${c}">CMV/Vta</th><th class="num${c}">Venta $-USD</th>`;});r2+='<th class="num trh trsep">Mens.</th><th class="num trh">Anual</th></tr>';
   const t2=x=>x==null?'':(x<0?'color:var(--rojo)':(x>0?'color:var(--verde)':''));
-  function cells(o,cur){let s='';for(let m=0;m<12;m++){const c=m%2?' mo':'';const bd=o.b[m]*est(m);const v=o.v[m];let p='–',ps='';if(bd&&v!=null){const d=(v-bd)/bd*100;if(Math.round(d*10)!==0){p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':'color:var(--verde)';}}
-      s+=`<td class="num${c}">${NF(bd)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(v)}</td><td class="num vpcmvc${c}">${cur} ${NF(o.cmv[m])}</td><td class="num vpusd${c}">${cur} ${NF(o.u[m])}</td>`;}
+  function cells(o,cur){let s='';for(let m=0;m<12;m++){const c=m%2?' mo':'';const bd=o.b[m]*est(m);const v=o.v[m];const rb=Math.round(bd),rv=Math.round(v);let p='–',ps='';if(rb){const d=(rv-rb)/rb*100;if(Math.round(d*10)!==0){p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':'color:var(--verde)';}}
+      const cv=(o.u[m]>0)?(o.cmv[m]/o.u[m]*100):null;
+      s+=`<td class="num${c}">${NF(bd)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(v)}</td><td class="num vpcmvc${c}">${cur} ${NF(o.cmv[m])}</td><td class="num vpcv${c}">${cv==null?'–':cv.toFixed(1)+'%'}</td><td class="num vpusd${c}">${cur} ${NF(o.u[m])}</td>`;}
     const tm=o.w?o.aw/o.w:null;const ta=tm==null?null:(Math.pow(1+tm,12)-1);
     s+=`<td class="num trh2 trsep" style="${t2(tm)}">${tm==null?'–':(tm*100).toFixed(1)+'%'}</td><td class="num trh2" style="${t2(ta)}">${ta==null?'–':(ta*100).toFixed(1)+'%'}</td>`;return s;}
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD')}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$')}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  window._vpExport={impR,distR,segImp,segDist,byCod};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección VP</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Exporta la proyección con los filtros actuales (respeta formato).</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(byCod?'Mostrando por código.':'Agregado por GA.')+' Base = venta base × Estacionalidad. CMV = costo × V.P. u. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección VP</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Exporta la proyección con los filtros actuales (respeta formato).</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(mode==='cod'?'Mostrando por código.':(mode==='cat'?'Agrupado por categoría.':'Agregado por GA.'))+' Base = venta base × Estacionalidad. CMV = costo × V.P. u. CMV/Vta = costo/venta. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
   M.forEach((m,i)=>recalcVP(i));}
 function renderForecast(){renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);}
 function renderLiqTable(rows){const t=document.getElementById('tablaLiq');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';return;}let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const exc=(r[5]!=null&&id!=null)?(r[5]-id):null;const vp=mval(r,0,3);const excu=(r[4]&&r[5]&&exc!=null)?r[4]/r[5]*exc:null;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtM(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${excu==null?'–':fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="${exc!=null&&exc>0?'color:var(--verde);font-weight:700':''}">${exc==null?'–':(exc>=0?'+':'')+exc.toFixed(1)}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Ideal</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
@@ -409,56 +417,56 @@ function exportVPXlsx(){
   const ex=window._vpExport;if(!ex||(!ex.impR.length&&!ex.distR.length)){alert('No hay datos de proyección con los filtros actuales.');return;}
   const M=DATA.months,S=DATA.season||[];const est=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1;
   const tcOf=m=>{const e=document.getElementById('tc_'+m);return e?(parseFloat(e.value)||0):((S[m]&&S[m][2]!=null)?S[m][2]:0);};
-  const nav='FF1A237E',nav2='FF283593',yel='FFFFD600',wht='FFFFFFFF',red='FFC0392B',grn='FF1E7E34';
-  const NC=1+12*5+2;const blank=()=>Array(NC).fill('');
-  const rMonth=blank(),rSub=blank();rMonth[0]='Grupo de artículo';
-  M.forEach((m,i)=>{const b=1+i*5;rMonth[b]=m+'  ('+Math.round((S[i]&&S[i][0]||0)*100)+'% / '+Math.round((S[i]&&S[i][1]||0)*100)+'%)  ·  TC '+tcOf(i);});
-  rMonth[61]='Tendencia';
-  M.forEach((m,i)=>{const b=1+i*5;rSub[b]='Base u';rSub[b+1]='%';rSub[b+2]='V.P. u';rSub[b+3]='CMV';rSub[b+4]='Venta $-USD';});
-  rSub[61]='Mens.';rSub[62]='Anual';
+  const nav='FF1A237E',nav2='FF283593',yel='FFFFD600',wht='FFFFFFFF',red='FFC0392B',grn='FF1E7E34',blu='FF1A237E';
+  const NC=1+12*6+2;const blank=()=>Array(NC).fill('');
+  const rMonth=blank(),rSub=blank();rMonth[0]=ex.colLbl||'Grupo de artículo';
+  M.forEach((m,i)=>{const b=1+i*6;rMonth[b]=m+'  ('+Math.round((S[i]&&S[i][0]||0)*100)+'% / '+Math.round((S[i]&&S[i][1]||0)*100)+'%)  ·  TC '+tcOf(i);});
+  rMonth[73]='Tendencia';
+  M.forEach((m,i)=>{const b=1+i*6;rSub[b]='Base u';rSub[b+1]='%';rSub[b+2]='V.P. u';rSub[b+3]='CMV';rSub[b+4]='CMV/Vta';rSub[b+5]='Venta $-USD';});
+  rSub[73]='Mens.';rSub[74]='Anual';
   const aoa=[rMonth,rSub];const rowMeta=[];
   function pushRow(label,o,cur,isHdr){const row=blank();row[0]=label;
-    for(let m=0;m<12;m++){const b=1+m*5;const bd=o.b[m]*est(m);const v=o.v[m];row[b]=Math.round(bd);
-      if(bd&&v!=null){const d=(v-bd)/bd;row[b+1]=(Math.round(d*1000)===0)?'-':d;}else row[b+1]='-';
-      row[b+2]=Math.round(v);row[b+3]=Math.round(o.cmv[m]);row[b+4]=Math.round(o.u[m]);}
+    for(let m=0;m<12;m++){const b=1+m*6;const bd=o.b[m]*est(m);const v=o.v[m];const rb=Math.round(bd),rv=Math.round(v);row[b]=rb;
+      if(rb){const d=(rv-rb)/rb;row[b+1]=(Math.round(d*1000)===0)?'-':d;}else row[b+1]='-';
+      row[b+2]=rv;row[b+3]=Math.round(o.cmv[m]);row[b+4]=(o.u[m]>0)?(o.cmv[m]/o.u[m]):'-';row[b+5]=Math.round(o.u[m]);}
     const tm=o.w?o.aw/o.w:null;const ta=tm==null?null:(Math.pow(1+tm,12)-1);
-    row[61]=tm==null?'-':tm;row[62]=ta==null?'-':ta;aoa.push(row);rowMeta.push({isHdr,cur});}
+    row[73]=tm==null?'-':tm;row[74]=ta==null?'-':ta;aoa.push(row);rowMeta.push({isHdr,cur});}
   if(ex.impR.length){pushRow('TOTAL IMPORTADOS',ex.segImp,'USD',true);ex.impR.forEach(d=>pushRow(d.label,d.o,'USD',false));}
   if(ex.distR.length){pushRow('TOTAL DISTRIB. / RECONSTR.',ex.segDist,'$',true);ex.distR.forEach(d=>pushRow(d.label,d.o,'$',false));}
-  const rCmv=blank(),rTvp=blank();rCmv[0]='TOTAL CMV ($)';rTvp[0]='TOTAL VENTA PROY. ($)';
-  for(let m=0;m<12;m++){const b=1+m*5;const tc=tcOf(m);rCmv[b]=Math.round(ex.segImp.cmv[m]*tc+ex.segDist.cmv[m]);rTvp[b]=Math.round(ex.segImp.u[m]*tc+ex.segDist.u[m]);}
-  aoa.push(rCmv);aoa.push(rTvp);
+  const rCmv=blank(),rTvp=blank(),rRat=blank();rCmv[0]='TOTAL CMV ($)';rTvp[0]='TOTAL VENTA PROY. ($)';rRat[0]='CMV / TVP (%)';
+  for(let m=0;m<12;m++){const b=1+m*6;const tc=tcOf(m);const _c=ex.segImp.cmv[m]*tc+ex.segDist.cmv[m];const _t=ex.segImp.u[m]*tc+ex.segDist.u[m];rCmv[b]=Math.round(_c);rTvp[b]=Math.round(_t);rRat[b]=_t>0?(_c/_t):'-';}
+  aoa.push(rCmv);aoa.push(rTvp);aoa.push(rRat);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  const merges=[{s:{r:0,c:0},e:{r:1,c:0}},{s:{r:0,c:61},e:{r:0,c:62}}];
-  for(let m=0;m<12;m++){const b=1+m*5;merges.push({s:{r:0,c:b},e:{r:0,c:b+4}});}
-  const rCmvIdx=aoa.length-2,rTvpIdx=aoa.length-1;
-  for(let m=0;m<12;m++){const b=1+m*5;merges.push({s:{r:rCmvIdx,c:b},e:{r:rCmvIdx,c:b+4}});merges.push({s:{r:rTvpIdx,c:b},e:{r:rTvpIdx,c:b+4}});}
+  const merges=[{s:{r:0,c:0},e:{r:1,c:0}},{s:{r:0,c:73},e:{r:0,c:74}}];
+  for(let m=0;m<12;m++){const b=1+m*6;merges.push({s:{r:0,c:b},e:{r:0,c:b+5}});}
+  const rCmvIdx=aoa.length-3,rTvpIdx=aoa.length-2,rRatIdx=aoa.length-1;
+  for(let m=0;m<12;m++){const b=1+m*6;[rCmvIdx,rTvpIdx,rRatIdx].forEach(ri=>merges.push({s:{r:ri,c:b},e:{r:ri,c:b+5}}));}
   ws['!merges']=merges;
-  const cols=[{wch:26}];for(let m=0;m<12;m++){cols.push({wch:9},{wch:8},{wch:9},{wch:13},{wch:13});}cols.push({wch:8},{wch:8});ws['!cols']=cols;
+  const cols=[{wch:26}];for(let m=0;m<12;m++){cols.push({wch:9},{wch:8},{wch:9},{wch:13},{wch:9},{wch:13});}cols.push({wch:8},{wch:8});ws['!cols']=cols;
   ws['!rows']=[{hpt:34},{hpt:18}];
   const bd={style:'thin',color:{rgb:'FFBFC5E0'}};const border={top:bd,bottom:bd,left:bd,right:bd};
-  const rng=XLSX.utils.decode_range(ws['!ref']);
   for(let c=0;c<NC;c++){
     const a0=XLSX.utils.encode_cell({r:0,c});if(ws[a0])ws[a0].s={fill:{fgColor:{rgb:nav}},font:{color:{rgb:c===0?wht:yel},bold:true,sz:c===0?10:9},alignment:{horizontal:'center',vertical:'center',wrapText:true},border};
     const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1])ws[a1].s={fill:{fgColor:{rgb:nav2}},font:{color:{rgb:wht},bold:true,sz:8},alignment:{horizontal:'center',vertical:'center'},border};
   }
   for(let i=0;i<rowMeta.length;i++){const r=2+i,mt=rowMeta[i];
     for(let c=0;c<NC;c++){const a=XLSX.utils.encode_cell({r,c});if(!ws[a])continue;
-      const isLabel=(c===0);const mc=(c>=1&&c<=60)?((c-1)%5):-1;
-      let font={color:{rgb:'FF1A237E'},sz:8,bold:mt.isHdr||isLabel};let fill=mt.isHdr?{fgColor:{rgb:'FFE7E8F0'}}:null;let z='General';
+      const isLabel=(c===0);const mc=(c>=1&&c<=72)?((c-1)%6):-1;
+      let font={color:{rgb:blu},sz:8,bold:mt.isHdr||isLabel};let fill=mt.isHdr?{fgColor:{rgb:'FFE7E8F0'}}:null;let z='General';
       if(mc===0)z='#,##0';
       else if(mc===1){z='0.0%';if(typeof ws[a].v==='number'){font={color:{rgb:ws[a].v<0?red:grn},sz:8,bold:true};}}
       else if(mc===2)z='#,##0';
       else if(mc===3){z='"'+mt.cur+'" #,##0';font={color:{rgb:red},sz:8,bold:true};}
-      else if(mc===4){z='"'+mt.cur+'" #,##0';font={color:{rgb:grn},sz:8,bold:true};}
-      else if(c>=61){z='0.0%';if(typeof ws[a].v==='number'){font={color:{rgb:ws[a].v<0?red:grn},sz:8,bold:true};}}
+      else if(mc===4){z='0.0%';font={color:{rgb:blu},sz:8,bold:true};}
+      else if(mc===5){z='"'+mt.cur+'" #,##0';font={color:{rgb:grn},sz:8,bold:true};}
+      else if(c>=73){z='0.0%';if(typeof ws[a].v==='number'){font={color:{rgb:ws[a].v<0?red:grn},sz:8,bold:true};}}
       const s={font,alignment:{horizontal:isLabel?'left':'center',vertical:'center'},border};if(fill)s.fill=fill;ws[a].s=s;ws[a].z=z;
     }
   }
-  [[rCmvIdx,red,'FFFBEAEA'],[rTvpIdx,grn,'FFEAF3DE']].forEach(pair=>{const ri=pair[0],col=pair[1],fl=pair[2];
-    for(let c=0;c<NC;c++){const a=XLSX.utils.encode_cell({r:ri,c});if(!ws[a])continue;const isLabel=(c===0);const mc=(c>=1&&c<=60)?((c-1)%5):-1;
-      ws[a].s={font:{color:{rgb:isLabel?'FF1A237E':col},bold:true,sz:9},alignment:{horizontal:isLabel?'left':'center',vertical:'center'},fill:{fgColor:{rgb:fl}},border};
-      if(c>=1&&mc===0)ws[a].z='"$" #,##0';}
+  [[rCmvIdx,red,'FFFBEAEA','"$" #,##0'],[rTvpIdx,grn,'FFEAF3DE','"$" #,##0'],[rRatIdx,blu,'FFFFF7CC','0.0%']].forEach(pair=>{const ri=pair[0],col=pair[1],fl=pair[2],zf=pair[3];
+    for(let c=0;c<NC;c++){const a=XLSX.utils.encode_cell({r:ri,c});if(!ws[a])continue;const isLabel=(c===0);const mc=(c>=1&&c<=72)?((c-1)%6):-1;
+      ws[a].s={font:{color:{rgb:isLabel?blu:col},bold:true,sz:9},alignment:{horizontal:isLabel?'left':'center',vertical:'center'},fill:{fgColor:{rgb:fl}},border};
+      if(c>=1&&mc===0)ws[a].z=zf;}
   });
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
   XLSX.writeFile(wb,'Proyeccion_VP.xlsx');

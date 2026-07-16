@@ -43,6 +43,11 @@ def extract(path):
     def F1(v):
         try: return round(float(v),1)
         except: return None
+    def N(v):
+        try: f=float(v)
+        except: return None
+        r=round(f,3)
+        return int(r) if r==int(r) else r
     UN=[];GA=[];CAT=[]
     def idx(lst,v):
         v="" if v is None else str(v)
@@ -53,19 +58,19 @@ def extract(path):
         cod=row[2]
         if not (cod and str(cod).strip()): continue
         ui=idx(UN,row[0]); gi=idx(GA,row[1]); cti=idx(CAT,row[5])
-        sa=I(row[ci("BN")-1]); ma=F1(row[ci("BO")-1])
+        sa=N(row[ci("BN")-1]); ma=F1(row[ci("BO")-1])
         flat=[]; prev=ma
         for k in range(12):
             b=BS+STRIDE*k; bn=BS+STRIDE*(k+1)
-            si=I(row[b+5-1]); mf=F1(row[b+7-1]); comp=I(row[b+10-1]); ven=I(row[b+1-1])
-            ni=bn+5-1; sf=I(row[ni]) if ni<len(row) else None
+            si=N(row[b+5-1]); mf=F1(row[b+7-1]); comp=N(row[b+10-1]); ven=N(row[b+1-1])
+            ni=bn+5-1; sf=N(row[ni]) if ni<len(row) else None
             if sf is None and si is not None and comp is not None and ven is not None: sf=si+comp-ven
             flat += [si, prev, comp, ven, sf, mf]; prev=mf
         ideal=F1(row[ci("H")-1])
         vpx=[]
         for k in range(12):
             b=BS+STRIDE*k
-            vpx += [I(row[b+0-1]), I(row[b+4-1])]  # venta base, venta proy USD/$
+            vpx += [N(row[b+0-1]), N(row[b+4-1])]  # venta base, venta proy USD/$
         try: an=round(float(row[ci("AN")-1]),4)
         except: an=None
         rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an])
