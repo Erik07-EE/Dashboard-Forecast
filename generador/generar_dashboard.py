@@ -217,15 +217,39 @@ def _parse_fname(fn):
     if not m: return None
     mo=int(m.group(1)); y=int(m.group(2)); y=2000+y if y<100 else y
     return (y,mo)
-def extract_vp_archive(path):
+_MESF={'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'setiembre':9,'octubre':10,'noviembre':11,'diciembre':12}
+def _month_of(val):
+    if isinstance(val,(datetime.datetime,datetime.date)): return val.month
+    s=str(val or "").strip().lower().replace('.','')
+    if not s: return None
+    if s in _MESF: return _MESF[s]
+    for name,mo in _MESF.items():
+        if s.startswith(name[:4]): return mo
+    pr=_parse_label(s)
+    return pr[1] if pr else None
+def extract_vp_archive(path, month):
     wb=openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
-    ws=wb["Forecast"]; col=ci("CJ")
+    ws=wb["Forecast"]
+    rr=[list(x) for x in ws.iter_rows(min_row=1, max_row=6000, max_col=200, values_only=True)]
+    r1=rr[0] if rr else []; r2=rr[1] if len(rr)>1 else []; r3=rr[2] if len(rr)>2 else []
+    targets=[]
+    for hdr in (r1,r2):
+        for cix,val in enumerate(hdr):
+            if _month_of(val)==month: targets.append(cix)
+    targets=sorted(set(targets))
+    vpcol=None
+    for t in targets:
+        for cix in range(t, min(t+16,len(r3))):
+            h=str(r3[cix] or "").lower()
+            if ("venta proy" in h) and ("unidad" in h): vpcol=cix; break
+        if vpcol is not None: break
+    if vpcol is None: return {}
     d={}
-    for row in ws.iter_rows(min_row=6, max_row=6000, max_col=110, values_only=True):
+    for row in rr[5:]:
         cod=row[2] if len(row)>2 else None
         if not (cod and str(cod).strip()): continue
         try:
-            v=float(row[col]); v=round(v,3); v=int(v) if v==int(v) else v
+            v=float(row[vpcol]); v=round(v,3); v=int(v) if v==int(v) else v
         except: v=None
         d[str(cod).strip()]=v
     return d
@@ -243,7 +267,7 @@ def build_historico(folder, real_map, real_labels, cache_path):
         key="%04d-%02d"%pr
         if key in cache: continue
         print("  Historico: leyendo",bn,"(una sola vez, puede tardar)...")
-        try: cache[key]=extract_vp_archive(pth)
+        try: cache[key]=extract_vp_archive(pth, pr[1])
         except Exception as e: print("    error:",e); continue
     try: json.dump(cache, open(cache_path,"w",encoding="utf-8"), ensure_ascii=False, separators=(",",":"))
     except Exception: pass
