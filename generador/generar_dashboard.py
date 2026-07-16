@@ -244,6 +244,11 @@ def extract_vp_archive(path, month):
             if ("venta proy" in h) and ("unidad" in h): vpcol=cix; break
         if vpcol is not None: break
     if vpcol is None: return {}
+    mixcol=None
+    for hdr in (r1,r2,r3):
+        for cix,val in enumerate(hdr):
+            if str(val or "").strip().upper()=="MIX": mixcol=cix; break
+        if mixcol is not None: break
     d={}
     for row in rr[5:]:
         cod=row[2] if len(row)>2 else None
@@ -251,7 +256,11 @@ def extract_vp_archive(path, month):
         try:
             v=float(row[vpcol]); v=round(v,3); v=int(v) if v==int(v) else v
         except: v=None
-        d[str(cod).strip()]=v
+        mx=None
+        if mixcol is not None:
+            try: mx=round(float(row[mixcol]),4)
+            except: mx=None
+        d[str(cod).strip()]=[v,mx]
     return d
 def build_historico(folder, real_map, real_labels, cache_path):
     cache={}
@@ -271,26 +280,29 @@ def build_historico(folder, real_map, real_labels, cache_path):
         except Exception as e: print("    error:",e); continue
     try: json.dump(cache, open(cache_path,"w",encoding="utf-8"), ensure_ascii=False, separators=(",",":"))
     except Exception: pass
-    _AB=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+    _MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
     lab2={}
     for i,lab in enumerate(real_labels):
         pr=_parse_label(lab)
-        if pr: lab2["%04d-%02d"%pr]=(i,"%s-%02d"%(_AB[pr[1]-1],pr[0]%100))
+        if pr: lab2["%04d-%02d"%pr]=(i,"%s %d"%(_MN[pr[1]-1], pr[0]))
     keys=sorted(k for k in cache.keys() if k in lab2)
     months=[{"key":k,"label":lab2[k][1]} for k in keys]
     cods=set()
     for k in keys: cods|=set(cache[k].keys())
     cods|=set(real_map.keys())
-    vpm={}; realm={}
+    vpm={}; realm={}; mixm={}
     for cod in cods:
-        vr=[]; rr=[]; any_=False
+        vr=[]; rr=[]; mm=[]; any_=False
         for k in keys:
-            vv=cache[k].get(cod); vr.append(vv)
+            ent=cache[k].get(cod)
+            vv=ent[0] if isinstance(ent,list) else ent
+            mx=ent[1] if (isinstance(ent,list) and len(ent)>1) else None
+            vr.append(vv); mm.append(mx)
             idx=lab2[k][0]; rv=real_map.get(cod)
             rrv=rv[idx] if (rv and idx<len(rv)) else None; rr.append(rrv)
             if vv is not None or rrv is not None: any_=True
-        if any_: vpm[cod]=vr; realm[cod]=rr
-    return {"months":months,"vp":vpm,"real":realm}
+        if any_: vpm[cod]=vr; realm[cod]=rr; mixm[cod]=mm
+    return {"months":months,"vp":vpm,"real":realm,"mix":mixm}
 
 def build(data, out_html, tpl_path):
     tpl=open(tpl_path,encoding="utf-8").read()

@@ -130,6 +130,8 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable td.vpusd{color:var(--verde);font-weight:700;}
 .vptable td.vpcmvc{color:#c0392b;font-weight:700;}
 .vptable td.vpcv{color:#1a237e;font-weight:700;}
+.vptable.histt thead tr.r1 th{height:34px;vertical-align:middle;}
+.vptable.histt thead tr.r2b th{top:34px;}
 .vptable thead tr.r1 th.vpid{vertical-align:middle;text-align:center;}
 .vptable tbody tr.vphdr td{background:#e7e8f0;font-weight:800;color:var(--azul);}
 .vptable tbody tr.vphdr td.vpid{background:#dfe1ee;}
@@ -169,7 +171,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 </header>
 <div class="wrap">
 <div class="filterbar" id="filterbar"></div>
-<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Liquidación</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección VP</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
+<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Liquidación</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
 <div id="view-fc">
 <div class="mes-sel" id="mesSel"></div>
 <div class="res-toggle" onclick="toggleRes()"><span id="resIco">▾</span> Pedidos Forecast <span class="ln"></span></div>
@@ -368,32 +370,38 @@ function renderVP(){const el=document.getElementById('view-vp');const M=DATA.mon
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD')}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$')}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección VP</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Exporta la proyección con los filtros actuales (respeta formato).</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(mode==='cod'?'Mostrando por código.':(mode==='cat'?'Agrupado por categoría.':'Agregado por GA.'))+' VA c/stk = venta ajustada con stock (del Forecast). CMV = costo × V.P. u. CMV/Vta = costo/venta. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Exporta la proyección con los filtros actuales (respeta formato).</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(mode==='cod'?'Mostrando por código.':(mode==='cat'?'Agrupado por categoría.':'Agregado por GA.'))+' VA c/stk = venta ajustada con stock (del Forecast). CMV = costo × V.P. u. CMV/Vta = costo/venta. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
   M.forEach((m,i)=>recalcVP(i));}
-function renderHist(){const el=document.getElementById('view-hist');const H=DATA.hist||{months:[],vp:{},real:{}};const M=H.months||[];
+function renderHist(){const el=document.getElementById('view-hist');const H=DATA.hist||{months:[],vp:{},real:{},mix:{}};const M=H.months||[];
   if(!M.length){el.innerHTML='<div class="empty">Sin histórico disponible todavía (falta cachear los archivos "Forecast MM-AA").</div>';return;}
   const rows=visibleRows();
   if(!rows.length){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';return;}
+  const NL=M.length;
   const mode=st.COD.size>0?'cod':(st.CAT.size===1?'cod':(st.CAT.size>=2?'cat':'ga'));
   const colLbl=mode==='cod'?'Código':(mode==='cat'?'Categoría':'Grupo de artículo');
-  const NL=M.length;
-  const mk=()=>({vp:Array(NL).fill(0),re:Array(NL).fill(0)});
-  const acc=(o,cod)=>{const v=H.vp[cod],r=H.real[cod];for(let i=0;i<NL;i++){if(v&&v[i]!=null)o.vp[i]+=v[i];if(r&&r[i]!=null)o.re[i]+=r[i];}};
+  const mk=()=>({vp:Array(NL).fill(0),re:Array(NL).fill(0),cmv:Array(NL).fill(0),vta:Array(NL).fill(0)});
+  const acc=(o,cod)=>{const v=H.vp[cod],r=H.real[cod],mx=(H.mix&&H.mix[cod])||[];const cc=DATA.costos&&DATA.costos[cod];const co=(cc&&cc[0]!=null)?cc[0]:0;
+    for(let i=0;i<NL;i++){const vp=(v&&v[i]!=null)?v[i]:0;const re=(r&&r[i]!=null)?r[i]:0;const m=(mx[i]!=null)?mx[i]:0;o.vp[i]+=vp;o.re[i]+=re;o.cmv[i]+=co*re;o.vta[i]+=m*re;}};
   const disp=[];
-  if(mode==='cod'){rows.forEach(r=>{const o=mk();acc(o,r[2]);disp.push({label:r[2],o});});disp.sort((a,b)=>a.label.localeCompare(b.label));}
-  else if(mode==='cat'){const map={};rows.forEach(r=>{const k=r[1]+'|'+r[3];let e=map[k];if(!e){e=map[k]={o:mk(),gi:r[1],cti:r[3]};}acc(e.o,r[2]);});Object.keys(map).map(k=>map[k]).sort((a,b)=>gaPrio(a.gi)-gaPrio(b.gi)||String(DATA.CAT[a.cti]||'').localeCompare(String(DATA.CAT[b.cti]||''))).forEach(e=>disp.push({label:(DATA.CAT[e.cti]||'(s/cat)')+' · '+DATA.GA[e.gi],o:e.o}));}
-  else {const gm={};rows.forEach(r=>{const gi=r[1];let o=gm[gi];if(!o)o=gm[gi]=mk();acc(o,r[2]);});Object.keys(gm).map(Number).sort((a,b)=>gaPrio(a)-gaPrio(b)).forEach(gi=>disp.push({label:DATA.GA[gi],o:gm[gi]}));}
+  if(mode==='cod'){rows.forEach(r=>{const o=mk();acc(o,r[2]);disp.push({label:r[2],imp:DATA.UN[r[0]]==='Importados',o});});disp.sort((a,b)=>a.label.localeCompare(b.label));}
+  else if(mode==='cat'){const map={};rows.forEach(r=>{const k=r[1]+'|'+r[3];let e=map[k];if(!e){e=map[k]={o:mk(),imp:DATA.UN[r[0]]==='Importados',gi:r[1],cti:r[3]};}acc(e.o,r[2]);});Object.keys(map).map(k=>map[k]).sort((a,b)=>gaPrio(a.gi)-gaPrio(b.gi)||String(DATA.CAT[a.cti]||'').localeCompare(String(DATA.CAT[b.cti]||''))).forEach(e=>disp.push({label:(DATA.CAT[e.cti]||'(s/cat)')+' · '+DATA.GA[e.gi],imp:e.imp,o:e.o}));}
+  else {const gm={};rows.forEach(r=>{const gi=r[1];let e=gm[gi];if(!e){e=gm[gi]={o:mk(),imp:DATA.UN[r[0]]==='Importados'};}acc(e.o,r[2]);});Object.keys(gm).map(Number).sort((a,b)=>gaPrio(a)-gaPrio(b)).forEach(gi=>disp.push({label:DATA.GA[gi],imp:gm[gi].imp,o:gm[gi].o}));}
+  const impR=disp.filter(d=>d.imp),distR=disp.filter(d=>!d.imp);
+  const segSum=list=>{const s=mk();list.forEach(d=>{for(let i=0;i<NL;i++){s.vp[i]+=d.o.vp[i];s.re[i]+=d.o.re[i];s.cmv[i]+=d.o.cmv[i];s.vta[i]+=d.o.vta[i];}});return s;};
+  const segImp=segSum(impR),segDist=segSum(distR);
   const NF=n=>n==null?'–':Math.round(n).toLocaleString('es-AR');
   let sAbs=0,sVp=0;disp.forEach(d=>{for(let i=0;i<NL;i++){sVp+=d.o.vp[i];sAbs+=Math.abs(d.o.re[i]-d.o.vp[i]);}});
   const prec=sVp>0?(100-sAbs/sVp*100):null;
   let r1='<tr class="r1"><th class="vpid" rowspan="2">'+colLbl+'</th>';
-  M.forEach((m,i)=>{r1+=`<th colspan="3" class="${i%2?'mo':''}"><div class="vpmes">${m.label}</div></th>`;});r1+='</tr>';
-  let r2='<tr class="r2b">';M.forEach((m,i)=>{const cc=i%2?' mo':'';r2+=`<th class="num${cc}">VP</th><th class="num${cc}">Real</th><th class="num${cc}">Desv%</th>`;});r2+='</tr>';
-  const cells=o=>{let s='';for(let i=0;i<NL;i++){const cc=i%2?' mo':'';const vp=o.vp[i],re=o.re[i];let d='–',ds='';if(vp>0){const dv=(re-vp)/vp*100;if(Math.round(dv*10)!==0){d=(dv>=0?'+':'')+dv.toFixed(1)+'%';ds=dv<0?'color:var(--rojo)':'color:var(--verde)';}}s+=`<td class="num${cc}">${NF(vp)}</td><td class="num${cc}">${NF(re)}</td><td class="num${cc}" style="${ds}">${d}</td>`;}return s;};
-  const tot=mk();disp.forEach(d=>{for(let i=0;i<NL;i++){tot.vp[i]+=d.o.vp[i];tot.re[i]+=d.o.re[i];}});
-  let body=`<tr class="vphdr"><td class="vpid">TOTAL</td>${cells(tot)}</tr>`;
-  disp.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o)}</tr>`;});
-  el.innerHTML='<div class="liqbar"><span class="liqlbl">Histórico</span><span style="background:#ffd600;color:#0d1b5e;font-weight:800;border-radius:20px;padding:3px 12px;font-size:.8rem;">Precisión general: '+(prec==null?'–':prec.toFixed(1)+'%')+'</span><span class="liqinfo">VP proyectada del mes vs venta real (respeta filtros). Desv% = (Real − VP) / VP.</span></div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';}
+  M.forEach((m,i)=>{r1+=`<th colspan="6" class="${i%2?'mo':''}"><div class="vpmes">${m.label}</div></th>`;});r1+='</tr>';
+  let r2='<tr class="r2b">';M.forEach((m,i)=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">V.P. u</th><th class="num${c}">%</th><th class="num${c}">V.R. u</th><th class="num${c}">CMV</th><th class="num${c}">CMV/Vta</th><th class="num${c}">Venta $-USD</th>`;});r2+='</tr>';
+  const cells=(o,cur)=>{let s='';for(let i=0;i<NL;i++){const c=i%2?' mo':'';const vp=o.vp[i],re=o.re[i];const rvp=Math.round(vp),rre=Math.round(re);let p='–',ps='';if(rvp&&rre!==rvp){const dv=(rre-rvp)/rvp*100;p=(dv>=0?'+':'')+dv.toFixed(1)+'%';ps=dv<0?'color:var(--rojo)':'color:var(--verde)';}
+      const cv=(o.vta[i]>0)?(o.cmv[i]/o.vta[i]*100):null;
+      s+=`<td class="num${c}">${NF(vp)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(re)}</td><td class="num vpcmvc${c}">${cur} ${NF(o.cmv[i])}</td><td class="num vpcv${c}">${cv==null?'–':cv.toFixed(1)+'%'}</td><td class="num vpusd${c}">${cur} ${NF(o.vta[i])}</td>`;}return s;};
+  let body='';
+  if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD')}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
+  if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$')}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
+  el.innerHTML='<div class="liqbar"><span class="liqlbl">Histórico</span><span style="background:#ffd600;color:#0d1b5e;font-weight:800;border-radius:20px;padding:3px 12px;font-size:.8rem;">Precisión general: '+(prec==null?'–':prec.toFixed(1)+'%')+'</span><span class="liqinfo">V.P. proyectada vs venta real por mes (respeta filtros). CMV = costo × V.R.; Venta = Mix × V.R.</span></div><div class="tablewrap"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';}
 function renderForecast(){renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);}
 function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const _lt=document.getElementById('liqTot');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';if(_lt)_lt.innerHTML='';return;}if(_lt){let sS=0,sE=0,sV=0;rows.forEach(r=>{sS+=r[4]||0;const e=excU(r,st.liq||1);if(e!=null)sE+=e;sV+=mval(r,0,3)||0;});_lt.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(26,35,126,.08);padding:8px 14px;margin-bottom:8px;font-size:.78rem;color:var(--azul)"><span><b>'+rows.length.toLocaleString('es-AR')+'</b> candidatos</span><span style="width:1px;height:20px;background:#e3e7fb"></span><span><span style="color:#7986cb;font-weight:700;text-transform:uppercase;font-size:.58rem">Stock actual</span> <b>'+fmtI(sS)+'</b></span><span><span style="color:#7986cb;font-weight:700;text-transform:uppercase;font-size:.58rem">Exceso unid.</span> <b style="color:var(--azul3)">'+fmtI(sE)+'</b></span><span><span style="color:#7986cb;font-weight:700;text-transform:uppercase;font-size:.58rem">VP (mes)</span> <b style="color:var(--verde)">'+fmtI(sV)+'</b></span></div>';}let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const exc=(r[5]!=null&&id!=null)?(r[5]-id):null;const vp=mval(r,0,3);const excu=excU(r,st.liq||1);b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtI(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${excu==null?'–':fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="${exc!=null&&exc>0?'color:var(--verde);font-weight:700':''}">${exc==null?'–':(exc>=0?'+':'')+exc.toFixed(1)}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Ideal</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
@@ -417,7 +425,7 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   const cmO=st.liqCM;
   const cmG=cmO?'<th class="g-cm" colspan="6" onclick="toggleLiqCM()" style="cursor:pointer" title="Cerrar">▾ Contribución marginal por %</th>':'<th class="g-cm" colspan="1" onclick="toggleLiqCM()" style="cursor:pointer" title="Abrir">▸ CM</th>';
   const cmH=cmO?'<th class="ho">5%</th><th class="ho">10%</th><th class="ho">15%</th><th class="ho">20%</th><th class="ho">25%</th><th class="ho">30%</th>':'<th class="ho" onclick="toggleLiqCM()" style="cursor:pointer">▸</th>';
-  let hd='<thead><tr class="g"><th class="g-art" colspan="7">Artículos liquidación</th><th class="g-act" colspan="4">Stock / Meses</th><th class="g-usd" colspan="5">Unitario USD / %</th><th class="g-tot" colspan="2">Total USD / %</th>'+cmG+'</tr><tr class="h"><th class="hy">Grupo</th><th class="hy">Código</th><th class="hy">Cat.</th><th class="hy">VP</th><th class="hy">Ideal</th><th class="hy">Dto. Máx.</th><th class="hy">Dto. Liq.</th><th class="hb">Stock</th><th class="hb">Exceso u.</th><th class="hb">Meses stk</th><th class="hb">Exceso mes</th><th class="hs">Costo</th><th>CMM</th><th class="hg">Lista 1</th><th class="hg">Precio ponderado</th><th class="hg">PV mín.</th><th class="hs">Costo total</th><th class="hg">Ponderado total</th>'+cmH+'</tr></thead>';
+  let hd='<thead><tr class="g"><th class="g-art" colspan="7">Artículos liquidación</th><th class="g-act" colspan="4">Stock / Meses</th><th class="g-usd" colspan="5">Unitario USD / %</th><th class="g-tot" colspan="2">Total USD / %</th>'+cmG+'</tr><tr class="h"><th class="hy">Grupo</th><th class="hy">Código</th><th class="hy">Cat.</th><th class="hy">VP</th><th class="hy">Ideal</th><th class="hy">Dto. Máx.</th><th class="hy">Dto. Liq.</th><th class="hb">Stock</th><th class="hb">Exceso u.</th><th class="hb">Meses stk</th><th class="hb">Exceso mes</th><th class="hs">Costo</th><th>CMM</th><th class="hg">Lista 1</th><th class="hg">Precio Mix</th><th class="hg">PV mín.</th><th class="hs">Costo total</th><th class="hg">Mix total</th>'+cmH+'</tr></thead>';
   let b='';cand.forEach(o=>{const cmC=cmO?o.cs.map(c=>`<td class="num corange">${(c==null||c<=0)?'–':pcc(c)}</td>`).join(''):'<td class="num corange"></td>';
     b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num vpg">${pI(o.vp)}</td><td class="num">${pI(o.ideal)}</td><td class="num">${pc(o.dmax)}</td><td class="num dred">${pc(o.dliq)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td>`+cmC+'</tr>';});
   el.innerHTML=hd+'<tbody>'+b+'</tbody>';}
@@ -432,7 +440,7 @@ function renderLiqCharts(){const el=document.getElementById('liqCharts');if(!el)
   el.innerHTML='<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(26,35,126,.08);padding:14px 16px;margin-top:12px;"><div style="font-size:.78rem;font-weight:800;color:#1a237e;border-bottom:2px solid #ffd600;padding-bottom:4px;margin-bottom:14px;">Excedente sobre el stock total (SKU filtrados)</div><div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">'
     +donut(pct(exU,toU),'Unidades',fmtI(exU)+' de '+fmtI(toU)+' u')
     +donut(pct(exC,toC),'Costo ('+cur+')','<b style="color:#c0392b">'+money(cur,exC)+'</b> de '+money(cur,toC))
-    +donut(pct(exP,toP),'Precio ponderado ('+cur+')','<b style="color:#c0392b">'+money(cur,exP)+'</b> de '+money(cur,toP))
+    +donut(pct(exP,toP),'Precio Mix ('+cur+')','<b style="color:#c0392b">'+money(cur,exP)+'</b> de '+money(cur,toP))
     +'</div><div style="display:flex;gap:16px;justify-content:center;margin-top:14px;font-size:.7rem;color:#5f6690;"><span><span style="display:inline-block;width:10px;height:10px;background:#ef5350;border-radius:2px;margin-right:4px;"></span>Excedente (a liquidar)</span><span><span style="display:inline-block;width:10px;height:10px;background:#e8eaf6;border:1px solid #c5cae9;border-radius:2px;margin-right:4px;"></span>Colchón ideal</span></div></div>';}
 function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert('No hay candidatos. Elegí un factor de liquidación.');return;}
   const nav='FF1A237E',yel='FFFFD600',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=28;
@@ -440,8 +448,8 @@ function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert
   const H2=Array(NCX).fill('');
   ['Grupo de artículo','Código','Cat.','VP','Ideal','Dto. Máximo','Dto. Liq.'].forEach((t,i)=>H2[i]=t);
   ['Stock','Exceso unid.','Meses de stock','Exceso meses'].forEach((t,i)=>H2[8+i]=t);
-  ['Costo actual','CMM','Lista 1','Precio ponderado','PV mínimo'].forEach((t,i)=>H2[13+i]=t);
-  ['Costo total','Ponderado total'].forEach((t,i)=>H2[19+i]=t);
+  ['Costo actual','CMM','Lista 1','Precio Mix','PV mínimo'].forEach((t,i)=>H2[13+i]=t);
+  ['Costo total','Mix total'].forEach((t,i)=>H2[19+i]=t);
   ['5%','10%','15%','20%','25%','30%'].forEach((t,i)=>H2[22+i]=t);
   const aoa=[H1,H2];const cv=v=>(v==null||v<=0)?'-':v;
   cand.forEach(o=>{const row=Array(NCX).fill('');
