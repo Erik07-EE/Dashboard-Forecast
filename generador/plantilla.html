@@ -111,8 +111,8 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable{border-collapse:separate;border-spacing:0;font-size:.88rem;white-space:nowrap;}
 .vptable th,.vptable td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:6px 10px;}
 .vptable thead th{position:sticky;top:0;background:var(--azul);color:#fff;z-index:3;font-weight:800;font-size:.64rem;text-align:center;}
-.vptable thead tr.r2b th{top:98px;background:var(--azul2);color:#c5cae9;font-size:.6rem;text-transform:uppercase;}
-.vptable thead tr.r1 th{vertical-align:top;height:98px;padding-top:6px;}
+.vptable thead tr.r2b th{top:126px;background:var(--azul2);color:#c5cae9;font-size:.6rem;text-transform:uppercase;}
+.vptable thead tr.r1 th{vertical-align:top;height:126px;padding-top:6px;}
 .vptable .vpmes{font-size:1.05rem;font-weight:800;}
 .vptable .vpratio{font-size:.68rem;color:#ffe066;font-weight:700;margin-top:1px;}
 .vptable .trh{background:#0d1b5e;color:#ffe066;}
@@ -128,6 +128,8 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable thead .vpid{z-index:5;background:var(--azul);color:#fff;}
 .vptable td.num,.vptable th.num{text-align:right;font-variant-numeric:tabular-nums;}
 .vptable td.vpusd{color:var(--verde);font-weight:700;}
+.vptable td.vpcmvc{color:#c0392b;font-weight:700;}
+.vptable thead tr.r1 th.vpid{vertical-align:middle;text-align:center;}
 .vptable tbody tr.vphdr td{background:#e7e8f0;font-weight:800;color:var(--azul);}
 .vptable tbody tr.vphdr td.vpid{background:#dfe1ee;}
 .vptable tbody tr:hover td{background:#fff6c9;}
@@ -146,7 +148,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .prevt{border-collapse:separate;border-spacing:0;font-size:.72rem;white-space:nowrap;width:100%;table-layout:auto;}
 .prevt th,.prevt td{border:1px solid #d5d9ec;padding:4px 8px;}
 .prevt thead tr.g th{color:#fff;font-weight:800;font-size:.64rem;text-transform:uppercase;text-align:center;padding:5px;}
-.prevt .g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm{background:#1a237e;}
+.prevt thead tr.g th.g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm{background:#1a237e;}
 .prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;position:sticky;top:0;color:#1a237e;background:#eef0f8;}
 .prevt thead tr.h th.hy{background:#ffd600;}.prevt thead tr.h th.hb{background:#dceafc;}.prevt thead tr.h th.hs{background:#f5c4b3;color:#712b13;}.prevt thead tr.h th.hg{background:#c0dd97;color:#27500a;}.prevt thead tr.h th.ho{background:#fac775;color:#633806;}
 .prevt td.cusd-c{background:#faece7;color:#c0392b;font-weight:700;}.prevt td.cusd-g{background:#eaf3de;color:#1e7e34;font-weight:700;}.prevt td.cblue{background:#eef4fd;}.prevt td.corange{background:#fdf1de;}.prevt td.vpg{color:#1e7e34;font-weight:700;}.prevt td.dred{color:#c0392b;font-weight:700;}
@@ -192,8 +194,8 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1};
-function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderLiq();}
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,dirty:{fc:true,liq:true,vp:true}};
+function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
 const fmtI=n=>n==null?"–":Math.round(n).toLocaleString("es-AR");
@@ -327,40 +329,40 @@ function exportLiq(){if(!st.liq)return;const rows=visibleRows().filter(r=>r[5]!=
   rows.forEach(r=>{lines.push([DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5],(r[5]-r[IDEAL]).toFixed(1)].join(";"));});
   const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="liquidacion_x"+st.liq+".csv";a.click();}
 let vpRendered=false;
-function showTab(t){st.tab=t;['fc','liq','vp'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});renderActive();}
-function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');}
+function showTab(t){st.tab=t;['fc','liq','vp'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
+function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');}
 function renderVP(){const el=document.getElementById('view-vp');const M=DATA.months;const S=DATA.season||[];const NF=n=>n==null?'–':Math.round(n).toLocaleString('es-AR');const est=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1;
   const rows=visibleRows();
   if(rows.length===0){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';window._vpSeg={imp:[],dist:[]};return;}
   const byCod=st.COD.size>0||st.CAT.size>0;
-  const mk=()=>({b:Array(12).fill(0),v:Array(12).fill(0),u:Array(12).fill(0),aw:0,w:0});
+  const mk=()=>({b:Array(12).fill(0),v:Array(12).fill(0),u:Array(12).fill(0),cmv:Array(12).fill(0),aw:0,w:0});
   const disp=[];
   if(byCod){
-    rows.forEach(r=>{const o=mk();let vpt=0;for(let m=0;m<12;m++){o.b[m]=r[79+m*2]||0;o.v[m]=mval(r,m,3)||0;o.u[m]=r[79+m*2+1]||0;vpt+=o.v[m];}if(r[103]!=null){o.aw=r[103]*vpt;o.w=vpt;}disp.push({label:r[2]+' · '+DATA.GA[r[1]],imp:DATA.UN[r[0]]==='Importados',o});});
+    rows.forEach(r=>{const o=mk();const cc=DATA.costos&&DATA.costos[r[2]];const cst=(cc&&cc[0])?cc[0]:0;let vpt=0;for(let m=0;m<12;m++){o.b[m]=r[79+m*2]||0;o.v[m]=mval(r,m,3)||0;o.u[m]=r[79+m*2+1]||0;o.cmv[m]=cst*o.v[m];vpt+=o.v[m];}if(r[103]!=null){o.aw=r[103]*vpt;o.w=vpt;}disp.push({label:r[2]+' · '+DATA.GA[r[1]],imp:DATA.UN[r[0]]==='Importados',o});});
     disp.sort((a,b)=>a.label.localeCompare(b.label));
   } else {
-    const gaMap={};rows.forEach(r=>{const gi=r[1];let o=gaMap[gi];if(!o){o=gaMap[gi]=mk();o.imp=DATA.UN[r[0]]==='Importados';}let vpt=0;for(let m=0;m<12;m++){o.b[m]+=r[79+m*2]||0;const vv=mval(r,m,3)||0;o.v[m]+=vv;o.u[m]+=r[79+m*2+1]||0;vpt+=vv;}if(r[103]!=null){o.aw+=r[103]*vpt;o.w+=vpt;}});
+    const gaMap={};rows.forEach(r=>{const gi=r[1];let o=gaMap[gi];if(!o){o=gaMap[gi]=mk();o.imp=DATA.UN[r[0]]==='Importados';}const cc=DATA.costos&&DATA.costos[r[2]];const cst=(cc&&cc[0])?cc[0]:0;let vpt=0;for(let m=0;m<12;m++){o.b[m]+=r[79+m*2]||0;const vv=mval(r,m,3)||0;o.v[m]+=vv;o.u[m]+=r[79+m*2+1]||0;o.cmv[m]+=cst*vv;vpt+=vv;}if(r[103]!=null){o.aw+=r[103]*vpt;o.w+=vpt;}});
     Object.keys(gaMap).map(Number).sort((a,b)=>gaPrio(a)-gaPrio(b)).forEach(gi=>disp.push({label:DATA.GA[gi],imp:gaMap[gi].imp,o:gaMap[gi]}));
   }
   const impR=disp.filter(d=>d.imp),distR=disp.filter(d=>!d.imp);
-  const segSum=list=>{const s=mk();list.forEach(d=>{for(let m=0;m<12;m++){s.b[m]+=d.o.b[m];s.v[m]+=d.o.v[m];s.u[m]+=d.o.u[m];}s.aw+=d.o.aw;s.w+=d.o.w;});return s;};
-  const segImp=segSum(impR),segDist=segSum(distR);window._vpSeg={imp:segImp.u,dist:segDist.u};
+  const segSum=list=>{const s=mk();list.forEach(d=>{for(let m=0;m<12;m++){s.b[m]+=d.o.b[m];s.v[m]+=d.o.v[m];s.u[m]+=d.o.u[m];s.cmv[m]+=d.o.cmv[m];}s.aw+=d.o.aw;s.w+=d.o.w;});return s;};
+  const segImp=segSum(impR),segDist=segSum(distR);window._vpSeg={imp:segImp.u,dist:segDist.u,impCmv:segImp.cmv,distCmv:segDist.cmv};
   let r1='<tr class="r1"><th class="vpid" rowspan="2">'+(byCod?'Código':'Grupo de artículo')+'</th>';
-  M.forEach((m,i)=>{const tc=(S[i]&&S[i][2]!=null)?S[i][2]:'';const rat=S[i]?(Math.round((S[i][0]||0)*100)+'% / '+Math.round((S[i][1]||0)*100)+'%'):'';r1+=`<th colspan="4" class="${i%2?'mo':''}"><div class="vpmes">${m}</div><div class="vpratio">${rat}</div><div class="vptc">TC: <input id="tc_${i}" class="tcinput" value="${tc}" oninput="recalcVP(${i})"></div><div class="vptotwrap">Total: <b id="vptot_${i}">–</b></div></th>`;});
+  M.forEach((m,i)=>{const tc=(S[i]&&S[i][2]!=null)?S[i][2]:'';const rat=S[i]?(Math.round((S[i][0]||0)*100)+'% / '+Math.round((S[i][1]||0)*100)+'%'):'';r1+=`<th colspan="5" class="${i%2?'mo':''}"><div class="vpmes">${m}</div><div class="vpratio">${rat}</div><div class="vptc">TC: <input id="tc_${i}" class="tcinput" value="${tc}" oninput="recalcVP(${i})"></div><div class="vptotwrap" style="color:#ff8a80">CMV: <b id="vpcmv_${i}">–</b></div><div class="vptotwrap" style="color:#69f0ae">TVP: <b id="vptot_${i}">–</b></div></th>`;});
   r1+='<th class="trh trsep" colspan="2">Tendencia</th></tr>';
-  let r2='<tr class="r2b">';M.forEach((m,i)=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">Base u</th><th class="num${c}">%</th><th class="num${c}">V.P. u</th><th class="num${c}">$ / USD</th>`;});r2+='<th class="num trh trsep">Mens.</th><th class="num trh">Anual</th></tr>';
+  let r2='<tr class="r2b">';M.forEach((m,i)=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">Base u</th><th class="num${c}">%</th><th class="num${c}">V.P. u</th><th class="num${c}">CMV</th><th class="num${c}">Venta $-USD</th>`;});r2+='<th class="num trh trsep">Mens.</th><th class="num trh">Anual</th></tr>';
   const t2=x=>x==null?'':(x<0?'color:var(--rojo)':(x>0?'color:var(--verde)':''));
-  function cells(o,cur){let s='';for(let m=0;m<12;m++){const c=m%2?' mo':'';const bd=o.b[m]*est(m);const v=o.v[m];let p='–',ps='';if(bd&&v!=null){const d=(v-bd)/bd*100;p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':(d>0?'color:var(--verde)':'');}
-      s+=`<td class="num${c}">${NF(bd)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(v)}</td><td class="num vpusd${c}">${cur} ${NF(o.u[m])}</td>`;}
+  function cells(o,cur){let s='';for(let m=0;m<12;m++){const c=m%2?' mo':'';const bd=o.b[m]*est(m);const v=o.v[m];let p='–',ps='';if(bd&&v!=null){const d=(v-bd)/bd*100;if(Math.round(d*10)!==0){p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':'color:var(--verde)';}}
+      s+=`<td class="num${c}">${NF(bd)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(v)}</td><td class="num vpcmvc${c}">${cur} ${NF(o.cmv[m])}</td><td class="num vpusd${c}">${cur} ${NF(o.u[m])}</td>`;}
     const tm=o.w?o.aw/o.w:null;const ta=tm==null?null:(Math.pow(1+tm,12)-1);
     s+=`<td class="num trh2 trsep" style="${t2(tm)}">${tm==null?'–':(tm*100).toFixed(1)+'%'}</td><td class="num trh2" style="${t2(ta)}">${ta==null?'–':(ta*100).toFixed(1)+'%'}</td>`;return s;}
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD')}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$')}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  el.innerHTML='<div class="vpnote">Calculado desde Forecast (respeta filtros). '+(byCod?'Mostrando por código.':'Agregado por GA.')+' Base = venta base × Estacionalidad. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  window._vpExport={impR,distR,segImp,segDist,byCod};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección VP</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Exporta la proyección con los filtros actuales (respeta formato).</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(byCod?'Mostrando por código.':'Agregado por GA.')+' Base = venta base × Estacionalidad. CMV = costo × V.P. u. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="tablewrap"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
   M.forEach((m,i)=>recalcVP(i));}
 function renderForecast(){renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);}
-function renderLiqTable(rows){const t=document.getElementById('tablaLiq');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';return;}let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const exc=(r[5]!=null&&id!=null)?(r[5]-id):null;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="${exc!=null&&exc>0?'color:var(--verde);font-weight:700':''}">${exc==null?'–':(exc>=0?'+':'')+exc.toFixed(1)}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">Ideal</th><th class="num">Stock act.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
+function renderLiqTable(rows){const t=document.getElementById('tablaLiq');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';return;}let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const exc=(r[5]!=null&&id!=null)?(r[5]-id):null;const vp=mval(r,0,3);const excu=(r[4]&&r[5]&&exc!=null)?r[4]/r[5]*exc:null;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtM(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${excu==null?'–':fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="${exc!=null&&exc>0?'color:var(--verde);font-weight:700':''}">${exc==null?'–':(exc>=0?'+':'')+exc.toFixed(1)}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Ideal</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1])return null;const costo=c[0]||0,lista=c[1],cm=c[2],cur=c[3]||'USD';
   const vp=mval(r,0,3),ideal=r[IDEAL],stock=r[4],meses=r[5];
@@ -369,7 +371,7 @@ function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1])retur
   const dmax=ok.length?ok.reduce((a,b)=>b[1]<a[1]?b:a)[0]:0.05;const dliq=dmax-st.dtoGap;
   const excmes=(meses!=null&&ideal!=null)?meses-ideal:null;const excu=(stock&&meses&&excmes!=null)?stock/meses*excmes:null;const pvmin=lista*0.7*(1-dmax);
   return {ga:DATA.GA[r[1]],cod:r[2],cat:DATA.CAT[r[3]],vp,ideal,dmax,dliq,stock,excu,meses,excmes,costo,lista,cm,pvmin,cs,cur};}
-function setLiqCfg(){const m=parseFloat(document.getElementById('minCM').value);const g=parseFloat(document.getElementById('dtoGap').value);st.minCM=(isNaN(m)?10:m)/100;st.dtoGap=(isNaN(g)?5:g)/100;renderLiq();}
+function setLiqCfg(){const m=parseFloat(document.getElementById('minCM').value);const g=parseFloat(document.getElementById('dtoGap').value);st.minCM=(isNaN(m)?10:m)/100;st.dtoGap=(isNaN(g)?5:g)/100;renderTab('liq');}
 function toggleLiqRes(){const el=document.getElementById('liqResumen'),b=document.getElementById('liqResBtn');const hid=el.style.display==='none';el.style.display=hid?'':'none';b.textContent=hid?'▾ Resumen':'▸ Resumen';}
 function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev');
   const cand=rows.map(computeLiq).filter(Boolean);window._liqExport=cand;
@@ -403,9 +405,69 @@ function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert
   }
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aux. Liq. IMPO');
   XLSX.writeFile(wb,'Liquidacion.xlsx');}
+function exportVPXlsx(){
+  const ex=window._vpExport;if(!ex||(!ex.impR.length&&!ex.distR.length)){alert('No hay datos de proyección con los filtros actuales.');return;}
+  const M=DATA.months,S=DATA.season||[];const est=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1;
+  const tcOf=m=>{const e=document.getElementById('tc_'+m);return e?(parseFloat(e.value)||0):((S[m]&&S[m][2]!=null)?S[m][2]:0);};
+  const nav='FF1A237E',nav2='FF283593',yel='FFFFD600',wht='FFFFFFFF',red='FFC0392B',grn='FF1E7E34';
+  const NC=1+12*5+2;const blank=()=>Array(NC).fill('');
+  const rMonth=blank(),rSub=blank();rMonth[0]='Grupo de artículo';
+  M.forEach((m,i)=>{const b=1+i*5;rMonth[b]=m+'  ('+Math.round((S[i]&&S[i][0]||0)*100)+'% / '+Math.round((S[i]&&S[i][1]||0)*100)+'%)  ·  TC '+tcOf(i);});
+  rMonth[61]='Tendencia';
+  M.forEach((m,i)=>{const b=1+i*5;rSub[b]='Base u';rSub[b+1]='%';rSub[b+2]='V.P. u';rSub[b+3]='CMV';rSub[b+4]='Venta $-USD';});
+  rSub[61]='Mens.';rSub[62]='Anual';
+  const aoa=[rMonth,rSub];const rowMeta=[];
+  function pushRow(label,o,cur,isHdr){const row=blank();row[0]=label;
+    for(let m=0;m<12;m++){const b=1+m*5;const bd=o.b[m]*est(m);const v=o.v[m];row[b]=Math.round(bd);
+      if(bd&&v!=null){const d=(v-bd)/bd;row[b+1]=(Math.round(d*1000)===0)?'-':d;}else row[b+1]='-';
+      row[b+2]=Math.round(v);row[b+3]=Math.round(o.cmv[m]);row[b+4]=Math.round(o.u[m]);}
+    const tm=o.w?o.aw/o.w:null;const ta=tm==null?null:(Math.pow(1+tm,12)-1);
+    row[61]=tm==null?'-':tm;row[62]=ta==null?'-':ta;aoa.push(row);rowMeta.push({isHdr,cur});}
+  if(ex.impR.length){pushRow('TOTAL IMPORTADOS',ex.segImp,'USD',true);ex.impR.forEach(d=>pushRow(d.label,d.o,'USD',false));}
+  if(ex.distR.length){pushRow('TOTAL DISTRIB. / RECONSTR.',ex.segDist,'$',true);ex.distR.forEach(d=>pushRow(d.label,d.o,'$',false));}
+  const rCmv=blank(),rTvp=blank();rCmv[0]='TOTAL CMV ($)';rTvp[0]='TOTAL VENTA PROY. ($)';
+  for(let m=0;m<12;m++){const b=1+m*5;const tc=tcOf(m);rCmv[b]=Math.round(ex.segImp.cmv[m]*tc+ex.segDist.cmv[m]);rTvp[b]=Math.round(ex.segImp.u[m]*tc+ex.segDist.u[m]);}
+  aoa.push(rCmv);aoa.push(rTvp);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const merges=[{s:{r:0,c:0},e:{r:1,c:0}},{s:{r:0,c:61},e:{r:0,c:62}}];
+  for(let m=0;m<12;m++){const b=1+m*5;merges.push({s:{r:0,c:b},e:{r:0,c:b+4}});}
+  const rCmvIdx=aoa.length-2,rTvpIdx=aoa.length-1;
+  for(let m=0;m<12;m++){const b=1+m*5;merges.push({s:{r:rCmvIdx,c:b},e:{r:rCmvIdx,c:b+4}});merges.push({s:{r:rTvpIdx,c:b},e:{r:rTvpIdx,c:b+4}});}
+  ws['!merges']=merges;
+  const cols=[{wch:26}];for(let m=0;m<12;m++){cols.push({wch:9},{wch:8},{wch:9},{wch:13},{wch:13});}cols.push({wch:8},{wch:8});ws['!cols']=cols;
+  ws['!rows']=[{hpt:34},{hpt:18}];
+  const bd={style:'thin',color:{rgb:'FFBFC5E0'}};const border={top:bd,bottom:bd,left:bd,right:bd};
+  const rng=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=0;c<NC;c++){
+    const a0=XLSX.utils.encode_cell({r:0,c});if(ws[a0])ws[a0].s={fill:{fgColor:{rgb:nav}},font:{color:{rgb:c===0?wht:yel},bold:true,sz:c===0?10:9},alignment:{horizontal:'center',vertical:'center',wrapText:true},border};
+    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1])ws[a1].s={fill:{fgColor:{rgb:nav2}},font:{color:{rgb:wht},bold:true,sz:8},alignment:{horizontal:'center',vertical:'center'},border};
+  }
+  for(let i=0;i<rowMeta.length;i++){const r=2+i,mt=rowMeta[i];
+    for(let c=0;c<NC;c++){const a=XLSX.utils.encode_cell({r,c});if(!ws[a])continue;
+      const isLabel=(c===0);const mc=(c>=1&&c<=60)?((c-1)%5):-1;
+      let font={color:{rgb:'FF1A237E'},sz:8,bold:mt.isHdr||isLabel};let fill=mt.isHdr?{fgColor:{rgb:'FFE7E8F0'}}:null;let z='General';
+      if(mc===0)z='#,##0';
+      else if(mc===1){z='0.0%';if(typeof ws[a].v==='number'){font={color:{rgb:ws[a].v<0?red:grn},sz:8,bold:true};}}
+      else if(mc===2)z='#,##0';
+      else if(mc===3){z='"'+mt.cur+'" #,##0';font={color:{rgb:red},sz:8,bold:true};}
+      else if(mc===4){z='"'+mt.cur+'" #,##0';font={color:{rgb:grn},sz:8,bold:true};}
+      else if(c>=61){z='0.0%';if(typeof ws[a].v==='number'){font={color:{rgb:ws[a].v<0?red:grn},sz:8,bold:true};}}
+      const s={font,alignment:{horizontal:isLabel?'left':'center',vertical:'center'},border};if(fill)s.fill=fill;ws[a].s=s;ws[a].z=z;
+    }
+  }
+  [[rCmvIdx,red,'FFFBEAEA'],[rTvpIdx,grn,'FFEAF3DE']].forEach(pair=>{const ri=pair[0],col=pair[1],fl=pair[2];
+    for(let c=0;c<NC;c++){const a=XLSX.utils.encode_cell({r:ri,c});if(!ws[a])continue;const isLabel=(c===0);const mc=(c>=1&&c<=60)?((c-1)%5):-1;
+      ws[a].s={font:{color:{rgb:isLabel?'FF1A237E':col},bold:true,sz:9},alignment:{horizontal:isLabel?'left':'center',vertical:'center'},fill:{fgColor:{rgb:fl}},border};
+      if(c>=1&&mc===0)ws[a].z='"$" #,##0';}
+  });
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
+  XLSX.writeFile(wb,'Proyeccion_VP.xlsx');
+}
 function renderLiq(){let rows=visibleRows();if(st.liq)rows=rows.filter(r=>r[5]!=null&&r[IDEAL]!=null&&r[IDEAL]>0&&r[5]>r[IDEAL]*st.liq);renderLiqTable(rows);renderLiqSum(rows);renderLiqPreview(rows);}
-function renderActive(){if(st.tab==='fc')renderForecast();else if(st.tab==='liq')renderLiq();else renderVP();}
-function renderAll(){updBtns();renderActive();}
+function renderTab(t){if(t==='fc')renderForecast();else if(t==='liq')renderLiq();else renderVP();st.dirty[t]=false;}
+function renderActive(){renderTab(st.tab);}
+let _rt=null;
+function renderAll(){updBtns();st.dirty.fc=st.dirty.liq=st.dirty.vp=true;clearTimeout(_rt);_rt=setTimeout(()=>renderTab(st.tab),80);}
 function exportCSV(){const rows=sortRows(visibleRows());let head=["UN","GA","Codigo","Categoria","Meses/Cat","Stock actual","Meses actual"];ALLM.forEach(m=>MFIELDS.forEach(f=>head.push(DATA.months[m]+" - "+f)));
   let lines=[head.join(";")];rows.forEach(r=>{let l=[DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5]];ALLM.forEach(m=>{for(let f=0;f<6;f++)l.push(mval(r,m,f));});lines.push(l.join(";"));});
   const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="forecast_dashboard.csv";a.click();}
