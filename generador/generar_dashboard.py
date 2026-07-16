@@ -36,7 +36,7 @@ def extract(path):
     BS=88; STRIDE=14
     all_rows=[list(x) for x in ws.iter_rows(min_row=1,max_row=6000,max_col=270,values_only=True)]
     _rl=all_rows[2] if len(all_rows)>2 else []
-    real_labels=[str(_rl[cc]) if (cc<len(_rl) and _rl[cc] is not None) else "" for cc in range(ci("AB")-1, ci("AB")-1+12)]
+    real_labels=[(_rl[cc] if cc<len(_rl) else None) for cc in range(ci("AB")-1, ci("AB")-1+12)]
     r1=all_rows[0]
     months=[str(r1[BS+STRIDE*k]) for k in range(12)]
     def I(v):
@@ -204,6 +204,7 @@ def find_costos(folder):
 
 _MES={'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,'jul':7,'ago':8,'sep':9,'sept':9,'oct':10,'nov':11,'dic':12}
 def _parse_label(s):
+    if isinstance(s,(datetime.datetime, datetime.date)): return (s.year, s.month)
     s=str(s or "").strip().lower().replace('.','')
     m=re.match(r'([a-zñ]+)\s*[-_/ ]\s*(\d{2,4})', s)
     if not m: return None
@@ -246,10 +247,11 @@ def build_historico(folder, real_map, real_labels, cache_path):
         except Exception as e: print("    error:",e); continue
     try: json.dump(cache, open(cache_path,"w",encoding="utf-8"), ensure_ascii=False, separators=(",",":"))
     except Exception: pass
+    _AB=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     lab2={}
     for i,lab in enumerate(real_labels):
         pr=_parse_label(lab)
-        if pr: lab2["%04d-%02d"%pr]=(i,lab)
+        if pr: lab2["%04d-%02d"%pr]=(i,"%s-%02d"%(_AB[pr[1]-1],pr[0]%100))
     keys=sorted(k for k in cache.keys() if k in lab2)
     months=[{"key":k,"label":lab2[k][1]} for k in keys]
     cods=set()
