@@ -35,6 +35,8 @@ def extract(path):
     ws=wb["Forecast"]
     BS=88; STRIDE=14
     all_rows=[list(x) for x in ws.iter_rows(min_row=1,max_row=6000,max_col=270,values_only=True)]
+    _rl=all_rows[2] if len(all_rows)>2 else []
+    real_labels=[str(_rl[cc]) if (cc<len(_rl) and _rl[cc] is not None) else "" for cc in range(ci("AB")-1, ci("AB")-1+12)]
     r1=all_rows[0]
     months=[str(r1[BS+STRIDE*k]) for k in range(12)]
     def I(v):
@@ -54,6 +56,7 @@ def extract(path):
         if v not in lst: lst.append(v)
         return lst.index(v)
     rows=[]
+    realmap={}
     for row in all_rows[3:]:
         cod=row[2]
         if not (cod and str(cod).strip()): continue
@@ -73,7 +76,14 @@ def extract(path):
             vpx += [N(row[b+0-1]), N(row[b+4-1])]  # venta base, venta proy USD/$
         try: an=round(float(row[ci("AN")-1]),4)
         except: an=None
-        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an])
+        try: pp=round(float(row[ci("AS")-1]),4)
+        except: pp=None
+        _rr=[]
+        for cc in range(ci("AB")-1, ci("AB")-1+12):
+            try: _rr.append(abs(float(row[cc])))
+            except: _rr.append(None)
+        realmap[str(cod).strip()]=_rr
+        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp])
     # IMPO por GA
     def estado_of(H1,b):
         for off in (8,9):
@@ -167,6 +177,7 @@ def extract(path):
         mm=re.search(r"(\d{1,2}:\d{2})",str(bo)); hora=mm.group(1) if mm else ""
     stock_ts=ts+(" / "+hora+" hs" if hora else "")
     return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,"vp":vp,"season":season,
+            "real":realmap,"real_labels":real_labels,
             "src":os.path.basename(path),"gen":datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}
 
 def load_costos(path):
@@ -191,6 +202,70 @@ def find_costos(folder):
         if not os.path.basename(p).startswith("~$"): return p
     return None
 
+_MES={'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,'jul':7,'ago':8,'sep':9,'sept':9,'oct':10,'nov':11,'dic':12}
+def _parse_label(s):
+    s=str(s or "").strip().lower().replace('.','')
+    m=re.match(r'([a-zñ]+)\s*[-_/ ]\s*(\d{2,4})', s)
+    if not m: return None
+    tok=m.group(1); mo=_MES.get(tok[:4]) or _MES.get(tok[:3])
+    if not mo: return None
+    y=int(m.group(2)); y=2000+y if y<100 else y
+    return (y,mo)
+def _parse_fname(fn):
+    m=re.search(r'forecast\s+(\d{1,2})\s*[-_ ]\s*(\d{2,4})', fn.lower())
+    if not m: return None
+    mo=int(m.group(1)); y=int(m.group(2)); y=2000+y if y<100 else y
+    return (y,mo)
+def extract_vp_archive(path):
+    wb=openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
+    ws=wb["Forecast"]; col=ci("CJ")
+    d={}
+    for row in ws.iter_rows(min_row=6, max_row=6000, max_col=110, values_only=True):
+        cod=row[2] if len(row)>2 else None
+        if not (cod and str(cod).strip()): continue
+        try:
+            v=float(row[col]); v=round(v,3); v=int(v) if v==int(v) else v
+        except: v=None
+        d[str(cod).strip()]=v
+    return d
+def build_historico(folder, real_map, real_labels, cache_path):
+    cache={}
+    if os.path.exists(cache_path):
+        try: cache=json.load(open(cache_path,encoding="utf-8"))
+        except: cache={}
+    for pth in glob.glob(os.path.join(folder,"Forecast *")):
+        bn=os.path.basename(pth)
+        if bn.startswith("~$"): continue
+        if not bn.lower().endswith((".xlsx",".xlsm")): continue
+        pr=_parse_fname(bn)
+        if not pr: continue
+        key="%04d-%02d"%pr
+        if key in cache: continue
+        print("  Historico: leyendo",bn,"(una sola vez, puede tardar)...")
+        try: cache[key]=extract_vp_archive(pth)
+        except Exception as e: print("    error:",e); continue
+    try: json.dump(cache, open(cache_path,"w",encoding="utf-8"), ensure_ascii=False, separators=(",",":"))
+    except Exception: pass
+    lab2={}
+    for i,lab in enumerate(real_labels):
+        pr=_parse_label(lab)
+        if pr: lab2["%04d-%02d"%pr]=(i,lab)
+    keys=sorted(k for k in cache.keys() if k in lab2)
+    months=[{"key":k,"label":lab2[k][1]} for k in keys]
+    cods=set()
+    for k in keys: cods|=set(cache[k].keys())
+    cods|=set(real_map.keys())
+    vpm={}; realm={}
+    for cod in cods:
+        vr=[]; rr=[]; any_=False
+        for k in keys:
+            vv=cache[k].get(cod); vr.append(vv)
+            idx=lab2[k][0]; rv=real_map.get(cod)
+            rrv=rv[idx] if (rv and idx<len(rv)) else None; rr.append(rrv)
+            if vv is not None or rrv is not None: any_=True
+        if any_: vpm[cod]=vr; realm[cod]=rr
+    return {"months":months,"vp":vpm,"real":realm}
+
 def build(data, out_html, tpl_path):
     tpl=open(tpl_path,encoding="utf-8").read()
     html=tpl.replace("/*__DATA__*/", json.dumps(data,ensure_ascii=False,separators=(",",":")))
@@ -207,4 +282,11 @@ if __name__=="__main__":
     cp = sys.argv[3] if len(sys.argv)>3 else find_costos(folder)
     data["costos"]=load_costos(cp) if cp else {}
     print("Costos:",cp,"->",len(data["costos"]),"codigos")
+    try:
+        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"))
+        data["hist"]=hist
+        print("Historico: meses",len(hist["months"]),"| codigos",len(hist["vp"]))
+    except Exception as e:
+        print("Historico: error",e); data["hist"]={"months":[],"vp":{},"real":{}}
+    data.pop("real",None); data.pop("real_labels",None)
     build(data, out, tpl)
