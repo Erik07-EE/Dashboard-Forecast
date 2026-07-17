@@ -111,8 +111,9 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable{border-collapse:separate;border-spacing:0;font-size:.88rem;white-space:nowrap;}
 .vptable th,.vptable td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:6px 10px;}
 .vptable thead th{position:sticky;top:0;background:var(--azul);color:#fff;z-index:3;font-weight:800;font-size:.64rem;text-align:center;}
-.vptable thead tr.r2b th{top:126px;background:var(--azul2);color:#c5cae9;font-size:.6rem;text-transform:uppercase;}
+.vptable thead tr.r2b th{top:126px;background:var(--azul2);color:#c5cae9;font-size:.6rem;text-transform:uppercase;box-shadow:inset 0 -3px 0 var(--amarillo);}
 .vptable thead tr.r1 th{vertical-align:top;height:126px;padding-top:6px;}
+.vptable thead tr.r1 th.mcol{box-shadow:none;}
 .vptable .vpmes{font-size:1.05rem;font-weight:800;}
 .vptable .vpratio{font-size:.68rem;color:#ffe066;font-weight:700;margin-top:1px;}
 .vptable .trh{background:#0d1b5e;color:#ffe066;}
@@ -155,11 +156,11 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .btnpri{font:inherit;font-size:.72rem;font-weight:700;background:var(--verde);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;}
 .prevt{border-collapse:separate;border-spacing:0;font-size:.72rem;white-space:nowrap;width:100%;table-layout:auto;}
 .prevt th,.prevt td{border:1px solid #d5d9ec;padding:4px 8px;}
-.prevt thead tr.g th{color:#fff;font-weight:800;font-size:.64rem;text-transform:uppercase;text-align:center;padding:5px;position:sticky;top:0;z-index:3;}
+.prevt thead tr.g th{color:#fff;background:#1a237e;font-weight:800;font-size:.64rem;text-transform:uppercase;text-align:center;padding:5px;position:sticky;top:0;z-index:3;}
 .prevt thead tr.g th.g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm,.prevt .g-tot{background:#1a237e;}
-.prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;position:sticky;top:20px;color:#1a237e;background:#eef0f8;z-index:3;}
+.prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;position:sticky;top:24px;color:#fff;background:#1a237e;z-index:3;box-shadow:inset 0 -3px 0 #ffd600;padding:4px 8px;}
 .prevt thead tr.tot th{position:sticky;top:40px;z-index:3;font-size:.72rem;}
-.prevt thead tr.h th.hy{background:#ffd600;}.prevt thead tr.h th.hb{background:#dceafc;}.prevt thead tr.h th.hs{background:#f5c4b3;color:#712b13;}.prevt thead tr.h th.hg{background:#c0dd97;color:#27500a;}.prevt thead tr.h th.ho{background:#fac775;color:#633806;}.prevt thead tr.g th.g-prod{background:#002060;color:#ffff00;}.prevt thead tr.h th.hn{background:#002060;color:#fff;}.prevt thead tr.h th.hyr{background:#ffd600;color:#e30613;}
+.prevt thead tr.g th.g-prod{background:#1a237e;color:#fff;}.prevt thead tr.g th.g-liq{background:#ffd600;color:#1a237e;}.prevt thead tr.h th.liq{background:#ffd600;color:#1a237e;box-shadow:inset 0 -3px 0 #1a237e;}
 .prevt td.cusd-c{background:#faece7;color:#c0392b;font-weight:700;}.prevt td.cusd-g{background:#eaf3de;color:#1e7e34;font-weight:700;}.prevt td.cblue{background:#eef4fd;}.prevt td.corange{background:#fdf1de;}.prevt td.vpg{color:#1e7e34;font-weight:700;}.prevt td.dred{color:#c0392b;font-weight:700;}
 .prevt td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .prevt td.code{font-weight:800;color:#1a237e;}
@@ -204,7 +205,7 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},dirty:{fc:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -407,7 +408,7 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   const pctCell=(a,b)=>{const ra=Math.round(a),rb=Math.round(b);if(rb&&ra!==rb){const dv=(ra-rb)/rb*100;return {t:(dv>=0?'+':'')+dv.toFixed(1)+'%',s:dv<0?'color:var(--rojo)':'color:var(--verde)'};}return {t:'–',s:''};};
   const cells=(o,cur)=>{let s='';IW.forEach(i=>{const c=i%2?' mo':'';const vp=o.vp[i],re=o.re[i],vpd=o.vpd[i],vrd=o.vrd[i];
       const pu=pctCell(re,vp);const pm=pctCell(vrd,vpd);
-      s+=`<td class="num${c}">${NF(vp)}</td><td class="num${c}" style="${pu.s}">${pu.t}</td><td class="num${c}">${NF(re)}</td><td class="num vpusd${c}">${cur} ${NF(vpd)}</td><td class="num${c}" style="${pm.s}">${pm.t}</td><td class="num vpusd${c}">${cur} ${NF(vrd)}</td>`;});return s;};
+      s+=`<td class="num${c}">${NF(vp)}</td><td class="num${c}" style="${pu.s}">${pu.t}</td><td class="num${c}">${NF(re)}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vpd)}</td><td class="num${c}" style="${pm.s}">${pm.t}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vrd)}</td>`;});return s;};
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD')}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$')}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
@@ -428,14 +429,15 @@ function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1])retur
 function setLiqCfg(){const m=parseFloat(document.getElementById('minCM').value);const g=parseFloat(document.getElementById('dtoGap').value);st.minCM=(isNaN(m)?10:m)/100;st.dtoGap=(isNaN(g)?5:g)/100;renderTab('liq');}
 function toggleLiqRes(){const el=document.getElementById('liqResumen'),b=document.getElementById('liqResBtn');const hid=el.style.display==='none';el.style.display=hid?'':'none';b.textContent=hid?'▾ Resumen':'▸ Resumen';}
 function toggleLiqCM(){st.liqCM=!st.liqCM;renderTab('liq');}
+function setLiqSort(f){st.liqSort=f;renderTab('liq');}
 function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev');
-  const cand=rows.map(computeLiq).filter(Boolean);window._liqExport=cand;
+  const cand=rows.map(computeLiq).filter(Boolean);if(st.liqSort){const _f=st.liqSort;cand.sort((a,b)=>((b[_f]==null?-1e18:b[_f])-(a[_f]==null?-1e18:a[_f])));}window._liqExport=cand;
   if(!cand.length){el.innerHTML='<tbody><tr><td class="empty">Elegí un factor de liquidación para ver el preview (códigos con datos de costo).</td></tr></tbody>';return;}
   const pI=n=>n==null?'':Math.round(n).toLocaleString('es-AR');const p1=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});const p2=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});const pc=n=>n==null?'':Math.round(n*100)+'%';const pcc=n=>n==null?'':(n*100).toFixed(1)+'%';
   const cmO=st.liqCM;
   const cmG=cmO?'<th class="g-cm" colspan="6" onclick="toggleLiqCM()" style="cursor:pointer" title="Cerrar">▾ Contribución marginal por %</th>':'<th class="g-cm" colspan="1" onclick="toggleLiqCM()" style="cursor:pointer" title="Abrir">▸ CM</th>';
   const cmH=cmO?'<th class="ho">5%</th><th class="ho">10%</th><th class="ho">15%</th><th class="ho">20%</th><th class="ho">25%</th><th class="ho">30%</th>':'<th class="ho" onclick="toggleLiqCM()" style="cursor:pointer">▸</th>';
-  let hd='<thead><tr class="g"><th class="g-prod" colspan="9">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="2">Exceso $-USD</th><th class="g-art" colspan="5">Liquidación</th>'+cmG+'</tr><tr class="h"><th class="hn">Grupo</th><th class="hn">Código</th><th class="hn">Cat.</th><th class="hn">Ideal</th><th class="hg">VP</th><th class="hs">Costo</th><th class="hn">CMM</th><th class="hg">Lista Base</th><th class="hg">Lista Mix</th><th class="hb">Stock U.</th><th class="hb">Exceso U.</th><th class="hb">Meses stk</th><th class="hb">Exceso mes</th><th class="hs">Costo total</th><th class="hg">Mix total</th><th class="hy">Dto. Máx.</th><th class="hy">Lista 30% / Dto. Máx.</th><th class="hyr">Dto. Liq.</th><th class="hyr">Mix / Dto. Liq.</th><th class="hy">CMM Liq.</th>'+cmH+'</tr></thead>';
+  const sar=f=>st.liqSort===f?' ▼':'';let hd='<thead><tr class="g"><th class="g-prod" colspan="9">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="2">Exceso $-USD</th><th class="g-liq" colspan="5">Liquidación</th>'+cmG+'</tr><tr class="h"><th>Grupo</th><th onclick="setLiqSort(null)" style="cursor:pointer" title="Quitar orden">Código'+(st.liqSort?' ✕':'')+'</th><th>Cat.</th><th>Ideal</th><th>VP</th><th>Costo</th><th>CMM</th><th>Lista Base</th><th>Lista Mix</th><th>Stock U.</th><th>Exceso U.</th><th>Meses stk</th><th onclick="setLiqSort(\'excmes\')" style="cursor:pointer" title="Ordenar mayor a menor">Exceso mes'+sar('excmes')+'</th><th onclick="setLiqSort(\'costoTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Costo total'+sar('costoTot')+'</th><th onclick="setLiqSort(\'pondTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Mix total'+sar('pondTot')+'</th><th class="liq">Dto. Máx.</th><th class="liq">Lista Dto. Máx.</th><th class="liq">Dto. Liq.</th><th class="liq">Mix total Liq.</th><th class="liq">CMM Liq.</th>'+cmH+'</tr></thead>';
   let b='';cand.forEach(o=>{const cmC=cmO?o.cs.map(x=>`<td class="num corange">${(x==null||x<=0)?'–':pcc(x)}</td>`).join(''):'<td class="num corange"></td>';
     b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num">${pI(o.ideal)}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(o.dliq)}</td><td class="num cusd-g">${o.objLiq==null?'–':o.cur+' '+pI(o.objLiq)}</td><td class="num">${o.cmmLiq==null?'–':pcc(o.cmmLiq)}</td>`+cmC+'</tr>';});
   let tVP=0,tST=0,tEX=0,tCT=0,tMT=0,tOL=0;const _cs=new Set();cand.forEach(o=>{tVP+=o.vp||0;tST+=o.stock||0;if(o.excu!=null)tEX+=o.excu;if(o.costoTot!=null)tCT+=o.costoTot;if(o.pondTot!=null)tMT+=o.pondTot;if(o.objLiq!=null)tOL+=o.objLiq;if(o.cur)_cs.add(o.cur);});
@@ -448,7 +450,7 @@ function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert
   const acc=(cur,d)=>d?('_-"'+cur+'"* #,##0.00_-;\\-"'+cur+'"* #,##0.00_-;_-"'+cur+'"* "-"??_-;_-@_-'):('_-"'+cur+'"* #,##0_-;\\-"'+cur+'"* #,##0_-;_-"'+cur+'"* "-"_-;_-@_-');
   const H1=Array(NCX).fill('');H1[0]='Producto';H1[10]='Exceso stock';H1[15]='Exceso $-USD';H1[18]='Liquidación';H1[24]='Contribución marginal por %';
   const H2=Array(NCX).fill('');
-  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'Ideal'],[4,'VP'],[5,'Costo'],[6,'CMM'],[7,'Lista Base'],[8,'Lista Mix'],[10,'Stock U.'],[11,'Exceso U.'],[12,'Meses de stock'],[13,'Exceso meses'],[15,'Costo total'],[16,'Mix total'],[18,'Dto. Máximo'],[19,'Lista 30% / Dto. Máx.'],[20,'Dto. Liq.'],[21,'Mix / Dto. Liq.'],[22,'CMM Liq.'],[24,'5%'],[25,'10%'],[26,'15%'],[27,'20%'],[28,'25%'],[29,'30%']].forEach(x=>H2[x[0]]=x[1]);
+  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'Ideal'],[4,'VP'],[5,'Costo'],[6,'CMM'],[7,'Lista Base'],[8,'Lista Mix'],[10,'Stock U.'],[11,'Exceso U.'],[12,'Meses de stock'],[13,'Exceso meses'],[15,'Costo total'],[16,'Mix total'],[18,'Dto. Máximo'],[19,'Lista Dto. Máx.'],[20,'Dto. Liq.'],[21,'Mix total Liq.'],[22,'CMM Liq.'],[24,'5%'],[25,'10%'],[26,'15%'],[27,'20%'],[28,'25%'],[29,'30%']].forEach(x=>H2[x[0]]=x[1]);
   const aoa=[H1,H2];const cv=v=>(v==null||v<=0)?'-':v;
   cand.forEach(o=>{const r=Array(NCX).fill('');
     r[0]=o.ga;r[1]=o.cod;r[2]=o.cat;r[3]=o.ideal;r[4]=o.vp;r[5]=o.costo;r[6]=o.cm;r[7]=o.lista;r[8]=o.pp;
