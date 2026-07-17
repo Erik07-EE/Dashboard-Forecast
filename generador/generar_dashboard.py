@@ -262,7 +262,44 @@ def extract_vp_archive(path, month):
             except: mx=None
         d[str(cod).strip()]=[v,mx]
     return d
-def build_historico(folder, real_map, real_labels, cache_path):
+def read_realusd(folder):
+    import glob as _g
+    cand=None
+    for pat in ["Venta_real*.xls*","Venta real*.xls*"]:
+        for pp in _g.glob(os.path.join(folder,pat)):
+            if not os.path.basename(pp).startswith("~$"): cand=pp; break
+        if cand: break
+    if not cand:
+        print("  Venta real: no se encontro archivo 'Venta_real*.xlsx' en la carpeta"); return {}
+    try:
+        wb=openpyxl.load_workbook(cand, read_only=True, data_only=True, keep_links=False)
+        ws=wb.active
+        rr=[list(x) for x in ws.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
+        r1=rr[0] if rr else []; r2=rr[1] if len(rr)>1 else []
+        mcol={}; cur=None
+        for c in range(len(r1)):
+            mo=_month_of(r1[c]) if r1[c] else None
+            if mo: cur=mo
+            sub=str((r2[c] if c<len(r2) else "") or "").strip().lower()
+            if sub=="usd" and cur: mcol[cur]=c
+        codcol=1
+        for c in range(len(r1)):
+            if "digo" in str(r1[c] or "").lower(): codcol=c; break
+        d={}
+        for row in rr[2:]:
+            cod=row[codcol] if codcol<len(row) else None
+            if not (cod and str(cod).strip()) or str(cod).strip().upper()=="TOTAL": continue
+            m={}
+            for mo,c in mcol.items():
+                try: m[mo]=float(row[c])
+                except: pass
+            if m: d[str(cod).strip()]=m
+        print("  Venta real: %s -> %d codigos, meses %s"%(os.path.basename(cand),len(d),sorted(mcol.keys())))
+        return d
+    except Exception as e:
+        print("  Venta real: error",e); return {}
+
+def build_historico(folder, real_map, real_labels, cache_path, realusd):
     cache={}
     if os.path.exists(cache_path):
         try: cache=json.load(open(cache_path,encoding="utf-8"))
@@ -289,10 +326,10 @@ def build_historico(folder, real_map, real_labels, cache_path):
     months=[{"key":k,"label":lab2[k][1]} for k in keys]
     cods=set()
     for k in keys: cods|=set(cache[k].keys())
-    cods|=set(real_map.keys())
-    vpm={}; realm={}; mixm={}
+    cods|=set(real_map.keys()); cods|=set(realusd.keys())
+    vpm={}; realm={}; mixm={}; reald={}
     for cod in cods:
-        vr=[]; rr=[]; mm=[]; any_=False
+        vr=[]; rr=[]; mm=[]; rd=[]; any_=False
         for k in keys:
             ent=cache[k].get(cod)
             vv=ent[0] if isinstance(ent,list) else ent
@@ -300,9 +337,10 @@ def build_historico(folder, real_map, real_labels, cache_path):
             vr.append(vv); mm.append(mx)
             idx=lab2[k][0]; rv=real_map.get(cod)
             rrv=rv[idx] if (rv and idx<len(rv)) else None; rr.append(rrv)
-            if vv is not None or rrv is not None: any_=True
-        if any_: vpm[cod]=vr; realm[cod]=rr; mixm[cod]=mm
-    return {"months":months,"vp":vpm,"real":realm,"mix":mixm}
+            mo=int(k[5:7]); rud=realusd.get(cod,{}).get(mo); rd.append(rud)
+            if vv is not None or rrv is not None or rud is not None: any_=True
+        if any_: vpm[cod]=vr; realm[cod]=rr; mixm[cod]=mm; reald[cod]=rd
+    return {"months":months,"vp":vpm,"real":realm,"mix":mixm,"reald":reald}
 
 def build(data, out_html, tpl_path):
     tpl=open(tpl_path,encoding="utf-8").read()
@@ -321,7 +359,7 @@ if __name__=="__main__":
     data["costos"]=load_costos(cp) if cp else {}
     print("Costos:",cp,"->",len(data["costos"]),"codigos")
     try:
-        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"))
+        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"), read_realusd(os.path.dirname(os.path.abspath(src))))
         data["hist"]=hist
         print("Historico: meses",len(hist["months"]),"| codigos",len(hist["vp"]))
     except Exception as e:
