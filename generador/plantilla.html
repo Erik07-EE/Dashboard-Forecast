@@ -67,8 +67,8 @@ header{background:var(--azul);padding:0 22px;display:flex;align-items:center;gap
 table{border-collapse:separate;border-spacing:0;font-size:.73rem;white-space:nowrap;width:max-content;}
 th,td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:5px 8px;color:#1c1c1a;overflow:hidden;text-overflow:ellipsis;}
 thead th{position:sticky;font-weight:800;z-index:3;}
-thead tr.r1 th{top:0;height:28px;background:var(--azul);color:#fff;font-size:.7rem;text-align:center;box-shadow:inset 0 -3px 0 var(--amarillo);}
-thead tr.r2 th{top:28px;height:24px;background:var(--azul2);color:#c5cae9;font-size:.55rem;text-transform:uppercase;letter-spacing:.03em;}
+thead tr.r1 th{top:0;height:28px;background:var(--azul);color:#fff;font-size:.7rem;text-align:center;}
+thead tr.r2 th{top:28px;height:24px;background:var(--azul2);color:#c5cae9;font-size:.55rem;text-transform:uppercase;letter-spacing:.03em;box-shadow:inset 0 -3px 0 var(--amarillo);}
 .ar{font-size:.56rem;margin-left:2px;}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 .f0{width:66px;min-width:66px;max-width:66px;}.f1{width:62px;min-width:62px;max-width:62px;}.f2{width:58px;min-width:58px;max-width:58px;}.f3{width:64px;min-width:64px;max-width:64px;}.f4{width:66px;min-width:66px;max-width:66px;}.f5{width:62px;min-width:62px;max-width:62px;}
@@ -114,6 +114,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable thead tr.r2b th{top:126px;background:var(--azul2);color:#c5cae9;font-size:.6rem;text-transform:uppercase;box-shadow:inset 0 -3px 0 var(--amarillo);}
 .vptable thead tr.r1 th{vertical-align:top;height:126px;padding-top:6px;}
 .vptable thead tr.r1 th.mcol{box-shadow:none;}
+.vptable thead tr.r1 th.vpid{box-shadow:inset 0 -3px 0 var(--amarillo);}
 .vptable .vpmes{font-size:1.05rem;font-weight:800;}
 .vptable .vpratio{font-size:.68rem;color:#ffe066;font-weight:700;margin-top:1px;}
 .vptable .trh{background:#0d1b5e;color:#ffe066;}
@@ -139,9 +140,8 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .mpager button:hover{background:var(--azul3);}
 .mpager span{font-size:.6rem;color:#7986cb;text-transform:uppercase;font-weight:700;letter-spacing:.04em;}
 .vptable thead tr.r1 th.vpid{vertical-align:middle;text-align:center;}
-.vptable tbody tr.vphdr td{background:var(--azul2);font-weight:800;color:#c5cae9;}
-.vptable tbody tr.vphdr td.vpcmvc,.vptable tbody tr.vphdr td.vpusd,.vptable tbody tr.vphdr td.vpcv{color:#c5cae9;}
-.vptable tbody tr.vphdr td.vpid{background:var(--azul);color:#fff;}
+.vptable tbody tr.vphdr td{background:#eceef7;font-weight:800;color:#1c1c1a;}
+.vptable tbody tr.vphdr td.vpid{background:#dfe1ee;color:#1c1c1a;}
 .vptable tbody tr:hover td{background:#fff6c9;}
 .vptable td.mo{background:var(--tint);}
 .vptable tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:2px solid var(--amarillo);color:var(--azul);z-index:2;}
@@ -159,14 +159,14 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .prevt th,.prevt td{border:1px solid #d5d9ec;padding:4px 8px;}
 .prevt thead tr.g th{color:#fff;background:#1a237e;font-weight:800;font-size:.64rem;text-transform:uppercase;text-align:center;padding:4px;height:22px;position:sticky;top:0;z-index:4;}
 .prevt thead tr.g th.g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm,.prevt .g-tot{background:#1a237e;}
-.prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;white-space:nowrap;height:22px;position:sticky;top:22px;color:#fff;background:#1a237e;z-index:4;box-shadow:inset 0 -3px 0 #ffd600;padding:3px 8px;}
-.prevt thead tr.tot th{position:sticky;top:44px;z-index:4;font-size:.72rem;}
-.prevt thead tr.g th.g-prod{background:#1a237e;color:#fff;}.prevt thead tr.g th.g-liq{background:#ffd600;color:#1a237e;}.prevt thead tr.h th.liq{background:#ffd600;color:#1a237e;box-shadow:inset 0 -3px 0 #1a237e;}
+.prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;white-space:nowrap;height:22px;position:sticky;top:22px;color:#fff;background:#1a237e;z-index:4;padding:3px 8px;}
+.prevt thead tr.tot th{position:sticky;top:44px;z-index:4;font-size:.72rem;box-shadow:inset 0 -3px 0 #ffd600;}
+.prevt thead tr.g th.g-prod{background:#1a237e;color:#fff;}.prevt thead tr.g th.g-liq{background:#ffd600;color:#1a237e;}.prevt thead tr.h th.liq{background:#ffd600;color:#1a237e;}
 .prevt td.cusd-c{background:#faece7;color:#c0392b;font-weight:700;}.prevt td.cusd-g{background:#eaf3de;color:#1e7e34;font-weight:700;}.prevt td.cblue{background:#eef4fd;}.prevt td.corange{background:#fdf1de;}.prevt td.vpg{color:#1e7e34;font-weight:700;}.prevt td.dred{color:#c0392b;font-weight:700;}
 .prevt td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .prevt td.code{font-weight:800;color:#1a237e;}
 .prevt tbody tr:hover td{background:#fff6c9;}
-.liqcfg{font-size:.68rem;color:#5f6690;}.liqcfg input{width:46px;font:inherit;font-size:.7rem;text-align:center;border:1px solid #c5cae9;border-radius:5px;padding:1px 3px;color:var(--azul);font-weight:700;}
+.liqcfg{font-size:.68rem;color:#5f6690;}.liqcfg input{width:80px;font:inherit;font-size:.78rem;text-align:center;border:1px solid #c5cae9;border-radius:7px;padding:5px 9px;color:var(--azul);font-weight:700;background:#f8f9ff;}
 @media print{.filterbar,.btns,.res-toggle{display:none;}.tablewrap,#resumen{max-height:none;overflow:visible;}body{background:#fff;}}
 </style>
 </head>
@@ -221,11 +221,12 @@ function mUN(r){return st.UN.size===0||st.UN.has(r[0]);}
 function mGA(r){return st.GA.size===0||st.GA.has(r[1]);}
 function mCAT(r){return st.CAT.size===0||st.CAT.has(r[3]);}
 function mCOD(r){return st.COD.size===0||st.COD.has(r[2]);}
-function visibleRows(){return DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r)&&mCOD(r));}
+let _vrK='',_vrC=null;function visibleRows(){const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',');if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r)&&mCOD(r));return _vrC;}
 function countBy(rows,k){const m=new Map();rows.forEach(r=>m.set(r[k],(m.get(r[k])||0)+1));return m;}
 function resMonths(){return st.RMES.size?[...st.RMES].sort((a,b)=>a-b):[0];}
 
-function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="${d}"><span class="cap">${cap}</span><button class="dd-btn empty" onclick="openPanel('${d}',event)"><span class="cnt" id="cnt-${d}">Todos</span><span class="dd-cnt" id="qty-${d}"></span><span class="arw">▾</span></button><div class="dd-panel"><input class="mini" id="srch-${d}" placeholder="${ph}" oninput="renderPanel('${d}')"><div class="dd-list" id="list-${d}"></div><div class="dd-foot"><button class="linkbtn" onclick="selectAllF('${d}',event)">Seleccionar todos</button><span id="info-${d}"></span><button class="linkbtn" onclick="clearF('${d}',event)">Limpiar</button></div></div></div>`).join("");
+let _sd=null;function srchDeb(d){clearTimeout(_sd);_sd=setTimeout(()=>renderPanel(d),110);}
+function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="${d}"><span class="cap">${cap}</span><button class="dd-btn empty" onclick="openPanel('${d}',event)"><span class="cnt" id="cnt-${d}">Todos</span><span class="dd-cnt" id="qty-${d}"></span><span class="arw">▾</span></button><div class="dd-panel"><input class="mini" id="srch-${d}" placeholder="${ph}" oninput="srchDeb('${d}')"><div class="dd-list" id="list-${d}"></div><div class="dd-foot"><button class="linkbtn" onclick="selectAllF('${d}',event)">Seleccionar todos</button><span id="info-${d}"></span><button class="linkbtn" onclick="clearF('${d}',event)">Limpiar</button></div></div></div>`).join("");
   h+='<div class="clearall"><button class="linkbtn" onclick="clearAll()">✕ Limpiar todo</button></div>';
   document.getElementById('filterbar').innerHTML=h;}
 function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("");}
@@ -372,11 +373,11 @@ function renderVP(){const el=document.getElementById('view-vp');const M=DATA.mon
   r1+='<th class="trh trsep" colspan="2">Tendencia</th></tr>';
   let r2='<tr class="r2b">';IW.forEach(i=>{const c=i%2?' mo':'';r2+=`<th class="num${c}">VA c/stk</th><th class="num${c}">%</th><th class="num${c}">V.P. u</th><th class="num${c}">CMV</th><th class="num${c}">CMV/Vta</th><th class="num${c}">Venta $-USD</th>`;});r2+='<th class="num trh trsep">Mens.</th><th class="num trh">Anual</th></tr>';
   const t2=x=>x==null?'':(x<0?'color:var(--rojo)':(x>0?'color:var(--verde)':''));
-  function cells(o,cur,isT){let s='';IW.forEach(m=>{const c=m%2?' mo':'';const bd=o.b[m];const v=o.v[m];const rb=Math.round(bd),rv=Math.round(v);let p='–',ps='';if(rb&&rv!==rb){const d=(rv-rb)/rb*100;p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':'color:var(--verde)';}if(isT)ps='';
+  function cells(o,cur,isT){let s='';IW.forEach(m=>{const c=m%2?' mo':'';const bd=o.b[m];const v=o.v[m];const rb=Math.round(bd),rv=Math.round(v);let p='–',ps='';if(rb&&rv!==rb){const d=(rv-rb)/rb*100;p=(d>=0?'+':'')+d.toFixed(1)+'%';ps=d<0?'color:var(--rojo)':'color:var(--verde)';}
       const cv=(o.u[m]>0)?(o.cmv[m]/o.u[m]*100):null;
       s+=`<td class="num${c}">${NF(bd)}</td><td class="num${c}" style="${ps}">${p}</td><td class="num${c}">${NF(v)}</td><td class="num vpcmvc${c}">${cur} ${NF(o.cmv[m])}</td><td class="num vpcv${c}">${cv==null?'–':cv.toFixed(1)+'%'}</td><td class="num vpusd${c}">${cur} ${NF(o.u[m])}</td>`;});
     const tm=o.w?o.aw/o.w:null;const ta=tm==null?null:(Math.pow(1+tm,12)-1);
-    s+=`<td class="num trh2 trsep" style="${isT?'':t2(tm)}">${tm==null?'–':(tm*100).toFixed(1)+'%'}</td><td class="num trh2" style="${isT?'':t2(ta)}">${ta==null?'–':(ta*100).toFixed(1)+'%'}</td>`;return s;}
+    s+=`<td class="num trh2 trsep" style="${t2(tm)}">${tm==null?'–':(tm*100).toFixed(1)+'%'}</td><td class="num trh2" style="${t2(ta)}">${ta==null?'–':(ta*100).toFixed(1)+'%'}</td>`;return s;}
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
@@ -409,7 +410,7 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   const pctCell=(a,b)=>{const ra=Math.round(a),rb=Math.round(b);if(rb&&ra!==rb){const dv=(ra-rb)/rb*100;return {t:(dv>=0?'+':'')+dv.toFixed(1)+'%',s:dv<0?'color:var(--rojo)':'color:var(--verde)'};}return {t:'–',s:''};};
   const cells=(o,cur,isT)=>{let s='';IW.forEach(i=>{const c=i%2?' mo':'';const vp=o.vp[i],re=o.re[i],vpd=o.vpd[i],vrd=o.vrd[i];
       const pu=pctCell(re,vp);const pm=pctCell(vrd,vpd);
-      s+=`<td class="num${c}">${NF(vp)}</td><td class="num${c}" style="${isT?'':pu.s}">${pu.t}</td><td class="num${c}">${NF(re)}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vpd)}</td><td class="num${c}" style="${isT?'':pm.s}">${pm.t}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vrd)}</td>`;});return s;};
+      s+=`<td class="num${c}">${NF(vp)}</td><td class="num${c}" style="${pu.s}">${pu.t}</td><td class="num${c}">${NF(re)}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vpd)}</td><td class="num${c}" style="${pm.s}">${pm.t}</td><td class="num${c}" style="font-weight:700">${cur} ${NF(vrd)}</td>`;});return s;};
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
@@ -442,8 +443,8 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   let b='';cand.forEach(o=>{const cmC=cmO?o.cs.map(x=>`<td class="num corange">${(x==null||x<=0)?'–':pcc(x)}</td>`).join(''):'<td class="num corange"></td>';
     b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num">${pI(o.ideal)}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(o.dliq)}</td><td class="num cusd-g">${o.objLiq==null?'–':o.cur+' '+pI(o.objLiq)}</td><td class="num">${o.cmmLiq==null?'–':pcc(o.cmmLiq)}</td>`+cmC+'</tr>';});
   let tVP=0,tST=0,tEX=0,tCT=0,tMT=0,tOL=0;const _cs=new Set();cand.forEach(o=>{tVP+=o.vp||0;tST+=o.stock||0;if(o.excu!=null)tEX+=o.excu;if(o.costoTot!=null)tCT+=o.costoTot;if(o.pondTot!=null)tMT+=o.pondTot;if(o.objLiq!=null)tOL+=o.objLiq;if(o.cur)_cs.add(o.cur);});
-  const _cur=_cs.size===1?[..._cs][0]:'USD/$';const _bg='background:#283593;font-weight:800;color:#c5cae9';const _e='<th style="'+_bg+'"></th>';
-  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+'">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+'">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+'">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
+  const _cur=_cs.size===1?[..._cs][0]:'USD/$';const _bg='background:#eceef7;font-weight:800;color:#1c1c1a';const _e='<th style="'+_bg+'"></th>';
+  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
   hd=hd.replace('</thead>',totRow+'</thead>');
   el.innerHTML=hd+'<tbody>'+b+'</tbody>';}
 function renderLiqCharts(){const el=document.getElementById('liqCharts');if(!el)return;
