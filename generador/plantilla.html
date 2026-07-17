@@ -463,8 +463,8 @@ function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert
   ws['!cols']=[16.6,21.6,6.8,6.8,10.8,14.9,8.8,15.1,15.8,1.8,10.8,13,13,13,1.8,15.8,13,1.8,9.6,15.1,9.6,13.8,10.8,1.8,11.6,13,13,13,13,13].map(w=>({wch:w}));
   ws['!rows']=[{hpt:25},{hpt:25}];
   const bd={style:'thin',color:{rgb:'FFBFC5E0'}};const border={top:bd,bottom:bd,left:bd,right:bd};
-  const grp0=c=>(c<=8)?[nav2,yel]:((c>=10&&c<=13)?[nav,wht]:((c===15||c===16)?[nav,wht]:((c>=18&&c<=22)?[yel,red]:((c>=24)?[nav,wht]:null))));
-  const sub=c=>([0,1,2,3,6].indexOf(c)>=0)?[nav2,wht]:((c===4||c===7||c===8||c===16)?['FFC0DD97','FF27500A']:((c===5||c===15)?['FFF5C4B3','FF712B13']:((c>=10&&c<=13)?['FFDCEAFC',nav]:((c===18||c===19)?[yel,nav]:((c===20||c===21||c===22)?[yel,red]:((c>=24)?['FFFAC775','FF633806']:[wht,nav]))))));
+  const grp0=c=>(c>=18&&c<=22)?[yel,nav]:((c<=8||(c>=10&&c<=13)||c===15||c===16||c>=24)?[nav,wht]:null);
+  const sub=c=>(c>=18&&c<=22)?[yel,nav]:(([9,14,17,23].indexOf(c)>=0)?[wht,nav]:[nav,wht]);
   const dfill=c=>(c===5||c===15)?'FFFAECE7':((c===7||c===8||c===16||c===19||c===21)?'FFEAF3DE':(((c>=10&&c<=13)||c===22)?'FFEEF4FD':((c>=24)?'FFFDF1DE':null)));
   const dcolor=c=>(c===4||c===7||c===8||c===16||c===19||c===21)?grn:((c===5||c===15||c===20)?red:nav);
   const dbold=c=>([1,4,5,15,20].indexOf(c)>=0);
@@ -473,7 +473,7 @@ function exportLiqXlsx(){const cand=window._liqExport||[];if(!cand.length){alert
   const rng=XLSX.utils.decode_range(ws['!ref']);
   for(let c=0;c<NCX;c++){
     const a0=XLSX.utils.encode_cell({r:0,c});if(ws[a0]){const g=grp0(c);ws[a0].s=g?{fill:{fgColor:{rgb:g[0]}},font:{color:{rgb:g[1]},bold:true,sz:12},alignment:{horizontal:'center',vertical:'center'},border}:{fill:{fgColor:{rgb:wht}},border};}
-    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border};}
+    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);const ub=(c>=18&&c<=22)?'FF1A237E':'FFFFD600';const b1={top:bd,left:bd,right:bd,bottom:{style:'medium',color:{rgb:ub}}};ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:b1};}
     for(let r=2;r<=rng.e.r;r++){const ad=XLSX.utils.encode_cell({r,c});if(!ws[ad])continue;const cur=(cand[r-2]&&cand[r-2].cur)||'USD';const s={font:{color:{rgb:dcolor(c)},sz:10,bold:dbold(c)},alignment:{horizontal:(c<=1?'left':'center'),vertical:'center'},border};const fl=dfill(c);if(fl)s.fill={fgColor:{rgb:fl}};ws[ad].s=s;ws[ad].z=dz(c,cur);}
   }
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aux. Liq. IMPO');
