@@ -191,7 +191,7 @@ def load_costos(path):
             cod=r[1]
             if cod and str(cod).strip():
                 cur=r[ci("I")-1]; cur="USD" if (cur and "USD" in str(cur).upper()) else "$"
-                d[str(cod).strip()]=[nf(r[ci("AC")-1]), nf(r[ci("J")-1]), nf(r[ci("F")-1]), cur]
+                d[str(cod).strip()]=[nf(r[ci("AC")-1]), nf(r[ci("J")-1]), nf(r[ci("F")-1]), cur, nf(r[ci("Q")-1])]
         return d
     except Exception:
         return {}
