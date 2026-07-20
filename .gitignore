@@ -1,0 +1,9 @@
+# Cache de Python (se regenera solo)
+__pycache__/
+*.pyc
+
+# Temporales de Office / sistema
+~$*
+*.tmp
+Thumbs.db
+.DS_Store
