@@ -44,6 +44,14 @@ Por código: Costo=AC, Lista 1=J, Moneda=I, CMM=F (referencia, NO se usa), Q(17)
 - **Proyección:** VA c/stk = valor de "V.Ajust. c/stock" (sin ×estacionalidad); CMV=Costo×VPu; CMV/Vta=CMV/Venta.
 - **Histórico:** VPu=CJ+1 del archivo; VRu=AB–AM (abs); VP$=MIX×VPu; VR$=venta real facturada; %=(real−proy)/proy.
 
+## Archivo de venta real (V.R. mensual)
+
+Alimenta la columna **V.R. $-USD** del Histórico. Se arma desde `Libro1.xlsx` (export de facturación SAP). Columnas: Fecha=G, Código=O, Grupo=P, Cantidad=Q, Total S/Desc.=U, TC=W.
+
+- **Criterio (una sola columna $-USD):** por línea, si TC>0 (Importados) → USD = Total/TC; si TC=0/None (Nacionales) → pesos = Total. Se suma por código y por mes.
+- **Formato:** fila 1 = Grupo / Código / Cantidad tot. / VR $-USD + rótulo de mes; fila 2 = Cant / $-USD; datos desde fila 3.
+- **read_realusd:** detecta el archivo con los patrones `Venta_real*`, `Venta real*`, `V.R*`, `VR *`, `V R *`; y toma como columna de valor la subcolumna cuyo rótulo **contiene** "usd" (`if "usd" in sub`), lo que acepta `$-USD` y `USD`. El código está en la col con "digo" en fila 1.
+
 ## Lectura de Excel (openpyxl)
 
 Usar `openpyxl.load_workbook(path, read_only=True, data_only=True)` por el tamaño del .xlsm.

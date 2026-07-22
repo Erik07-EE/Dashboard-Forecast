@@ -4,7 +4,7 @@ title Actualizar y publicar Dashboard Forecast
 setlocal
 
 REM ================== CONFIGURACION (editar una sola vez) ==================
-set "FORECAST=G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast Compra-Venta mensual\Forecast.xlsm"
+set "FORECAST=G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast\Forecast.xlsm"
 set "COSTOS=G:\Unidades compartidas\7. Compras y producto\7.6. Costos\Costos.xlsm"
 set "REPO_URL=https://github.com/Erik07-EE/Dashboard-Forecast.git"
 set "PAGES_URL=https://erik07-ee.github.io/Dashboard-Forecast/Dashboard_Forecast.html"

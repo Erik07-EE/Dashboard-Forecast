@@ -265,7 +265,7 @@ def extract_vp_archive(path, month):
 def read_realusd(folder):
     import glob as _g
     cand=None
-    for pat in ["Venta_real*.xls*","Venta real*.xls*"]:
+    for pat in ["Venta_real*.xls*","Venta real*.xls*","V.R*.xls*","VR *.xls*","V R *.xls*"]:
         for pp in _g.glob(os.path.join(folder,pat)):
             if not os.path.basename(pp).startswith("~$"): cand=pp; break
         if cand: break
@@ -281,7 +281,7 @@ def read_realusd(folder):
             mo=_month_of(r1[c]) if r1[c] else None
             if mo: cur=mo
             sub=str((r2[c] if c<len(r2) else "") or "").strip().lower()
-            if sub=="usd" and cur: mcol[cur]=c
+            if ("usd" in sub) and cur: mcol[cur]=c  # acepta "USD" y "$-USD"
         codcol=1
         for c in range(len(r1)):
             if "digo" in str(r1[c] or "").lower(): codcol=c; break
