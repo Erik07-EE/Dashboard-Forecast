@@ -289,8 +289,10 @@ function renderResumen(){const rms=resMonths();const inner=document.getElementBy
       gas.sort((a,b)=>prioName(a.ga)-prioName(b.ga));nums[num].gas=gas;nums[num].tot=gas.reduce((s,x)=>s+(x.cant||0),0);nums[num].piT=gas.reduce((s,x)=>s+(x.pi||0),0);
       nums[num].prio=Math.min.apply(null,gas.map(g=>prioName(g.ga)));});
     keys.sort((a,b)=>nums[a].prio-nums[b].prio || nums[b].tot-nums[a].tot);
+    const projByGa={};visibleRows().forEach(r=>{const ga=DATA.GA[r[1]];const im=DATA.impo[ga]&&DATA.impo[ga][m];const hasNum=im&&im.impo&&/\d/.test(im.impo);if(hasNum)return;const cc=mval(r,m,2)||0;if(cc>0)projByGa[ga]=(projByGa[ga]||0)+cc;});
+    const projGas=Object.keys(projByGa).sort((a,b)=>prioName(a)-prioName(b));const projTot=projGas.reduce((s,g)=>s+projByGa[g],0);
     let block=`<div class="mes-block"><div class="mes-h"><span>${DATA.months[m]}</span><button class="mtog" id="mtog_${m}" onclick="toggleMB(${m})">Ocultar</button></div><div class="mb" id="mb_${m}">`;
-    if(keys.length===0){block+='<div class="impo-hint">Sin pedidos de importación para este filtro/mes.</div></div></div>';html+=block;return;}
+    if(keys.length===0&&projGas.length===0){block+='<div class="impo-hint">Sin pedidos de importación para este filtro/mes.</div></div></div>';html+=block;return;}
     keys.forEach(num=>{const o=nums[num];const cls=o.estado==='confirmado'?'b-ok':o.estado==='proyectado'?'b-proy':'b-neu';const lbl=o.estado==='confirmado'?'Confirmado':o.estado==='proyectado'?'Proyectado':'—';
       const totcls=o.estado==='confirmado'?'tot-ok':o.estado==='proyectado'?'tot-proy':'';
       const gasH=o.gas.map(g=>`<div class="g"><span>${g.ga}</span><b>${fmtI(g.cant)}</b><i>${fmtU(g.pi)}</i></div>`).join("");
@@ -301,6 +303,12 @@ function renderResumen(){const rms=resMonths();const inner=document.getElementBy
       <div class="impo-sub"><div>Disponible: <b>${o.disp||'—'}</b></div><div>ETA (−10 días): <b>${o.eta||'—'}</b></div></div>
       <div class="impo-gas">${gasH}</div><div class="impo-tot ${totcls}"><span>Total pedido: ${fmtI(o.tot)} u</span><span>${fmtU(o.piT)}</span></div></div>
       <div class="pdonuts">${dono}</div></div>`;});
+    if(projGas.length){const gasH=projGas.map(g=>`<div class="g"><span>${g}</span><b>${fmtI(projByGa[g])}</b><i>proyectado</i></div>`).join("");
+      let dono="";projGas.filter(g=>projByGa[g]>0).slice(0,6).forEach(g=>{const id="dn_"+m+"_proy_"+sane(g);jobs.push({id,ga:g,m});dono+=`<div class="pdonut"><div class="gname">${g}</div><div class="dc"><canvas id="${id}"></canvas><div class="ctr"><b id="${id}_p">–</b><span>VP/stk</span></div></div><div class="cap" id="${id}_c"></div></div>`;});
+      block+=`<div class="pedido"><div class="impo"><div class="impo-h"><span class="badge b-proy">Proyectado</span><span class="code">Sin nº</span></div>`+
+      `<div class="impo-sub"><div>Compra proyectada (sin pedido asignado)</div></div>`+
+      `<div class="impo-gas">${gasH}</div><div class="impo-tot tot-proy"><span>Total proyectado: ${fmtI(projTot)} u</span><span></span></div></div>`+
+      `<div class="pdonuts">${dono}</div></div>`;}
     block+="</div></div>";html+=block;
   });
   inner.innerHTML=html||'<div class="impo-hint">Elegí un mes.</div>';
