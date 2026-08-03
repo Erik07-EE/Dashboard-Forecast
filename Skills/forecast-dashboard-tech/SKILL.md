@@ -83,6 +83,11 @@ node --check /tmp/chk.js && echo "JS OK"
 ```
 Para lógica numérica: probar en Node con stubs de DATA/DOM (excU, CMM Liq, Obj Liq, totales, % de gráficos, ventana de meses) antes de publicar.
 
+## Panel de pedidos IMPO (renderPanel)
+
+- Las tarjetas con **número de pedido** salen del banner IMPO del GA (`DATA.impo[ga][m]`, número en H1 offset +10).
+- Los meses con **compra proyectada pero sin número** (número vacío tipo "IMPO-") muestran una tarjeta **"Proyectado"**: por GA en scope se suma `mval(r,m,2)` (columna COMPRA / cant. confirmada, índice 2) de las filas visibles, solo si el GA no tiene número ese mes. Así el panel queda consistente con la columna COMPRA de la tabla. Si no hay ni número ni compra proyectada → "Sin pedidos".
+
 ## Rendimiento
 
 - Cache Histórico (`historico_vp.json`): los "Forecast MM-AA" se abren 1 vez; un mes nuevo se detecta y se agrega solo.
