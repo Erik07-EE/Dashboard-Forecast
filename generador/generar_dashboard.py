@@ -304,7 +304,11 @@ def build_historico(folder, real_map, real_labels, cache_path, realusd):
     if os.path.exists(cache_path):
         try: cache=json.load(open(cache_path,encoding="utf-8"))
         except: cache={}
-    for pth in glob.glob(os.path.join(folder,"Forecast *")):
+    _bases=[os.path.join(folder,"Histórico"), os.path.join(folder,"Historico")]
+    _cand=[]
+    for _b in _bases:
+        _cand += glob.glob(os.path.join(_b,"Forecast *"))
+    for pth in _cand:
         bn=os.path.basename(pth)
         if bn.startswith("~$"): continue
         if not bn.lower().endswith((".xlsx",".xlsm")): continue
