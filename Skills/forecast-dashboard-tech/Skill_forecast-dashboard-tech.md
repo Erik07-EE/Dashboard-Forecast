@@ -18,6 +18,7 @@ Código, estructura de datos y fórmulas del Dashboard Forecast.
 - HTML final: `/sessions/*/mnt/Forecast/Dashboard_Forecast.html` (generado; no editar)
 - Generador: `/sessions/*/mnt/Forecast/generador/generar_dashboard.py`
 - Cache: `/sessions/*/mnt/Forecast/generador/historico_vp.json`
+- **Archivos congelados (histórico):** el generador (`build_historico`) los busca en la **subcarpeta `Forecast\Histórico\`** (variantes con/sin tilde), NO en la carpeta principal. Nombre `Forecast MM-AA.xlsm` (ej. `Forecast 07-26.xlsm`).
 - Los Excel viven en Google Drive (G:); puede que no monten en bash → operar vía el .bat en la PC.
 
 ## Estructura Forecast.xlsm (hoja Forecast)

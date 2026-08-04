@@ -53,6 +53,11 @@ Forecast · Liquidación · Proyección · Histórico. Filtros globales UN→GA�
 - Las descargas de Excel deben ser **idénticas al preview** en pantalla.
 - Editar la plantilla, nunca el HTML final; regenerar con el .bat.
 
+
+## Flujo mensual del Histórico
+
+A mes cerrado, después de sacar los pedidos de ese mes, Erik guarda una copia congelada del Forecast como `Forecast MM-26.xlsm` en la subcarpeta `...\Forecast\Histórico\` y sigue trabajando en el `Forecast.xlsm` vivo. El generador lee esa subcarpeta y suma el mes al Histórico una sola vez (cache). El `08-26` entra solo el mes siguiente.
+
 ## Convenciones visuales
 
 - Marca: navy `#1a237e` + amarillo `#ffd600`, logo Electroestrada, Segoe UI.
