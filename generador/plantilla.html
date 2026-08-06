@@ -233,7 +233,7 @@ const fmtCat=n=>n==null?"–":(Number.isInteger(n)?n:Number(n).toFixed(1));
 const fmtU=n=>n==null?"–":"U$D "+Number(n).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const mval=(r,m,f)=>r[6+m*6+f];
 const sane=s=>String(s).replace(/[^a-zA-Z0-9]/g,"_");
-function mcell(v,ideal,green){let c="";if(green)c="d-grn";else if(v!=null&&ideal!=null&&ideal>0&&v<ideal-st.dotGap)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}"></span><span class="mn">${fmtM(v)}</span></span>`;}
+function mcell(v,ideal,green){let c="";if(green)c="d-grn";else if(v!=null&&ideal!=null&&ideal>0&&v<ideal-st.dotGap)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}" data-v="${v==null?'':v}" data-id="${ideal==null?'':ideal}" data-g="${green?1:0}"></span><span class="mn">${fmtM(v)}</span></span>`;}
 function mUN(r){return st.UN.size===0||st.UN.has(r[0]);}
 function mGA(r){return st.GA.size===0||st.GA.has(r[1]);}
 function mCAT(r){return st.CAT.size===0||st.CAT.has(r[3]);}
@@ -248,7 +248,8 @@ function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="
   document.getElementById('filterbar').innerHTML=h;}
 function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("");}
 function tglRMes(i){st.RMES.has(i)?st.RMES.delete(i):st.RMES.add(i);renderAll();}
-function setDotGap(el){let v=parseFloat(el.value);st.dotGap=isNaN(v)?2:v;renderForecast();}
+function setDotGap(el){let v=parseFloat(el.value);st.dotGap=isNaN(v)?2:v;updateDots();}
+function updateDots(){document.querySelectorAll('#tabla .dot').forEach(d=>{if(d.dataset.g==='1')return;const v=parseFloat(d.dataset.v),id=parseFloat(d.dataset.id);const red=(!isNaN(v)&&!isNaN(id)&&id>0&&v<id-st.dotGap);d.className='dot '+(red?'d-red':'dnone');});}
 function optionsFor(dim){
   if(dim==='UN'){const c=countBy(DATA.rows,0);return DATA.UN.map((v,i)=>({key:i,label:v,n:c.get(i)||0}));}
   if(dim==='GA'){const b=DATA.rows.filter(mUN);const c=countBy(b,1);return DATA.GA.map((v,i)=>({key:i,label:v,n:c.get(i)||0})).filter(o=>o.n>0).sort((a,b)=>prioName(a.label)-prioName(b.label));}
