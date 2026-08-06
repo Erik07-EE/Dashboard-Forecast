@@ -77,6 +77,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 tbody .id0,tbody .id1,tbody .id2,tbody .id3,tbody .id4,tbody .id5,tbody .id6{background:var(--base);z-index:2;}
 thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thead tr.r2 th.id4,thead tr.r2 th.id5,thead tr.r2 th.id6{z-index:5;}
 .idpanel{position:sticky;left:0;z-index:6;width:calc(398px + var(--cw,92px));}
+.idc{position:sticky;}tbody td.idc{background:var(--base);z-index:2;}thead tr.r2 th.idc{z-index:5;}
+.colx{cursor:pointer;color:#ff8a80;font-weight:800;margin-left:4px;font-size:.72rem;}.colx:hover{color:#fff;}
+.colshow{cursor:pointer;color:var(--amarillo);text-decoration:underline;font-weight:700;margin-left:6px;}
 tbody td.mo{background:var(--tint);}
 tbody tr:hover td{background:#fff6c9!important;}
 td.code{font-weight:800;color:var(--azul);}
@@ -211,12 +214,12 @@ const DATA = /*__DATA__*/;
 const MFIELDS=["Stock inicio","Meses inicio","Compra","Venta proy.","Stock final","Meses fin"];
 const MSHORT=["Stock I.","Meses I.","Compra","VP","Stock F.","Meses F."];
 const ALLM=DATA.months.map((_,i)=>i);
-const IDEAL=78;
+const IDEAL=78;const CAJAX=105;
 const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alternadores","Estatores","Rotores","Bujes de plástico","Portaescobillas de arranque","Portaescobillas de alternador","Escobillas de arranque","Escobillas de alternador","Impulsores","Poleas de alternador","Extractores de polea","Reductores","Planetarios","Reguladores de voltaje","Plaquetas rectificadoras","Diodos","Rodamientos","Lámparas principales","Lámparas auxiliares","Faros y barras"];
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -332,23 +335,24 @@ function sortRows(rows){if(!st.sort){return rows.slice().sort((a,b)=>{const pa=g
   return rows.slice().sort((a,b)=>{const x=val(a),y=val(b);if(typeof x==='string')return d*x.localeCompare(y);return d*(x-y);});}
 function setSort(k){const same=JSON.stringify(st.sort)===JSON.stringify(k);st.dir=same?-st.dir:1;st.sort=k;renderTable(visibleRows());}
 function ar(k){return JSON.stringify(st.sort)===JSON.stringify(k)?`<span class="ar">${st.dir>0?'▲':'▼'}</span>`:"";}
+function hideCol(k,e){if(e)e.stopPropagation();st.hideCols.add(k);renderForecast();}
+function showAllCols(){st.hideCols.clear();renderForecast();}
 function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);rows=sortRows(rows);let _ms=st.mstart.fc||0;_ms=Math.max(0,Math.min(_ms,ALLM.length-4));if(ALLM.length<=4)_ms=0;const MW=ALLM.slice(_ms,_ms+4);
   if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados con los filtros actuales.</td></tr></tbody>';return;}
-  let r1=`<tr class="r1"><th class="idpanel" colspan="7">Stock al ${DATA.stock_ts}</th>`;MW.forEach(m=>{r1+=`<th colspan="6" class="mcol">${DATA.months[m]}</th>`;});r1+="</tr>";
-  let r2='<tr class="r2">'+`<th class="id0">UN</th><th class="id1">GA</th><th class="id2">Código</th><th class="id3">Cat</th><th class="id4 num">Ideal</th><th class="id5 num">Stock</th><th class="id6 num">Meses</th>`;
-  MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+=`<th class="num f${fi}${fi===0?' mg-a':''}${mc}">${f}</th>`;});});r2+="</tr>";
-  const cap=1200;const show=rows.slice(0,cap);let body="";
-  show.forEach(r=>{const id=r[IDEAL];body+="<tr>"+
-    `<td class="id0">${DATA.UN[r[0]]}</td><td class="id1">${DATA.GA[r[1]]}</td><td class="id2 code">${r[2]}</td><td class="id3"><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="id4 num">${fmtCat(id)}</td><td class="id5 num">${fmtI(r[4])}</td><td class="id6 num">${mcell(r[5],id,!!(greenLiq&&st.liq&&id>0&&r[5]>id*st.liq))}</td>`;
-    MW.forEach((m,mi)=>{const mc=(mi%2)?' mo':'';for(let f=0;f<6;f++){const v=mval(r,m,f);const isM=(f===1||f===5);let cl="num f"+f+(f===0?" mg-a":"")+mc;
-      if(f===2)cl+=(v>0?" t-buy":" t-zero"); else if(f===3)cl+=" t-grn";
-      body+=`<td class="${cl}">${isM?mcell(v,id,false):fmtI(v)}</td>`;}});
-    body+="</tr>";});
-  let foot=`<tr><td class="idpanel" colspan="7">TOTAL · ${rows.length.toLocaleString("es-AR")} códigos${rows.length>cap?' (muestra '+cap+')':''}</td>`;
-  MW.forEach((m,mi)=>{let sc=0,sv=0;rows.forEach(r=>{sc+=mval(r,m,2)||0;sv+=mval(r,m,3)||0;});const mc=(mi%2)?' mo':'';
-    foot+=`<td class="num f0 mg-a"></td><td class="num f1"></td><td class="num f2 t-buy">${fmtI(sc)}</td><td class="num f3 t-grn">${fmtI(sv)}</td><td class="num f4"></td><td class="num f5"></td>`;});foot+="</tr>";
-  const maxLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(maxLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');const idW=[66,110,cw,48,48,62,64],fW=[66,62,58,64,66,62];let cg='<colgroup>'+idW.map(w=>`<col style="width:${w}px">`).join('');MW.forEach(()=>{cg+=fW.map(w=>`<col style="width:${w}px">`).join('');});cg+='</colgroup>';
-  t.innerHTML=cg+`<thead>${r1}${r2}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot>`;}
+  let cwLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(cwLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');
+  const IDCOLS=[{k:'un',lbl:'UN',w:66,td:r=>DATA.UN[r[0]]},{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'ideal',lbl:'Ideal',w:48,num:1,td:r=>fmtCat(r[IDEAL])},{k:'cajax',lbl:'Caja x',w:58,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock',w:62,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses',w:64,num:1,td:(r,id,gl)=>mcell(r[5],id,!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
+  const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach(c=>{c._left=_lx;_lx+=c.w;});const idW=_lx;const nHid=st.hideCols.size;
+  let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{r1+='<th colspan="6" class="mcol">'+DATA.months[m]+'</th>';});r1+='</tr>';
+  let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+'" style="position:sticky;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span></th>').join('');
+  MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
+  const cap=1200;const show=rows.slice(0,cap);let body='';
+  show.forEach(r=>{const id=r[IDEAL];body+='<tr>'+vis.map(c=>'<td class="idc'+(c.num?' num':'')+(c.cls?' '+c.cls:'')+'" style="left:'+c._left+'px">'+c.td(r,id,greenLiq)+'</td>').join('');
+    MW.forEach((m,mi)=>{const mc=(mi%2)?' mo':'';for(let f=0;f<6;f++){const v=mval(r,m,f);const isM=(f===1||f===5);let cl="num f"+f+(f===0?" mg-a":"")+mc;if(f===2)cl+=(v>0?" t-buy":" t-zero");else if(f===3)cl+=" t-grn";body+='<td class="'+cl+'">'+(isM?mcell(v,id,false):fmtI(v))+'</td>';}});
+    body+='</tr>';});
+  let foot='<tr><td class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">TOTAL \u00b7 '+rows.length.toLocaleString("es-AR")+' c\u00f3digos'+(rows.length>cap?' (muestra '+cap+')':'')+'</td>';
+  MW.forEach((m,mi)=>{let sc=0,sv=0;rows.forEach(r=>{sc+=mval(r,m,2)||0;sv+=mval(r,m,3)||0;});foot+='<td class="num f0 mg-a"></td><td class="num f1"></td><td class="num f2 t-buy">'+fmtI(sc)+'</td><td class="num f3 t-grn">'+fmtI(sv)+'</td><td class="num f4"></td><td class="num f5"></td>';});foot+='</tr>';
+  const fW=[66,62,58,64,66,62];let cg='<colgroup>'+vis.map(c=>'<col style="width:'+c.w+'px">').join('');MW.forEach(()=>{cg+=fW.map(w=>'<col style="width:'+w+'px">').join('');});cg+='</colgroup>';
+  t.innerHTML=cg+'<thead>'+r1+r2+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot>';}
 
 function renderLiqSum(rows){const el=document.getElementById('liqResumen');if(!st.liq){el.innerHTML='<div class="liqsum"><div class="impo-hint">Elegí un factor de liquidación (arriba) para ver los candidatos y el resumen.</div></div>';return;}
   const byGa={};rows.forEach(r=>{const g=DATA.GA[r[1]];(byGa[g]=byGa[g]||{tot:0,cat:{}});byGa[g].tot++;const c=DATA.CAT[r[3]];byGa[g].cat[c]=(byGa[g].cat[c]||0)+1;});

@@ -70,6 +70,7 @@ def extract(path):
             if sf is None and si is not None and comp is not None and ven is not None: sf=si+comp-ven
             flat += [si, prev, comp, ven, sf, mf]; prev=mf
         ideal=F1(row[ci("H")-1])
+        cajax=N(row[ci("L")-1])
         vpx=[]
         for k in range(12):
             b=BS+STRIDE*k
@@ -83,7 +84,7 @@ def extract(path):
             try: _rr.append(abs(float(row[cc])))
             except: _rr.append(None)
         realmap[str(cod).strip()]=_rr
-        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp])
+        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax])
     # IMPO por GA
     def estado_of(H1,b):
         for off in (8,9):
