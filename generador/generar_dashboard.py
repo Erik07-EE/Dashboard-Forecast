@@ -124,12 +124,30 @@ def extract(path):
                 "cant":_total(str(H2[b-1+10] or "")),"pi":uc[0],"ci":uc[1],
                 "cant_proy":_total(str(H2[b-1+8] or "")),"pi_proy":up[0],"ci_proy":up[1]})
         impo[ga]=arr
-    # ---- Estacionalidad / Evento especial / TC por mes (row2 de cada bloque) ----
+    # ---- Estacionalidad / Evento especial / TC por mes ----
+    # Estac. y Evento se leen DIRECTO de la hoja "Estacionalidad" (lo que edita el usuario),
+    # con 2 decimales para no perder los pasos de 5% (0.95, 1.05). No dependen del cache
+    # de la fórmula XLOOKUP, así siempre reflejan el valor actual sin recalcular.
+    def P2(v):
+        try: return round(float(v),2)
+        except: return None
+    _estac={}
+    try:
+        for _r in wb["Estacionalidad"].iter_rows(min_row=1, max_col=3, values_only=True):
+            if isinstance(_r[0], str) and isinstance(_r[1], (int, float)):
+                _estac[_r[0].strip().lower()] = (P2(_r[1]), P2(_r[2]))
+    except Exception as _e:
+        print("  Estacionalidad: no se pudo leer la hoja, uso cache:", _e)
     season=[]
     for k in range(12):
         b=BS+STRIDE*k
         def r2(off): return all_rows[1][b+off-1]
-        season.append([F1(r2(9)), F1(r2(12)), F1(r2(4))])  # estac, evento, TC
+        _mn=str(months[k]).strip().lower()
+        if _mn in _estac:
+            _es_v,_ev_v=_estac[_mn]
+        else:
+            _es_v,_ev_v=P2(r2(9)),P2(r2(12))  # fallback al cache de la fórmula (2 dec)
+        season.append([_es_v, _ev_v, F1(r2(4))])  # estac, evento, TC
     # ---- Hoja VP-$ U$D (proyeccion comercial) ----
     vp=None
     try:
