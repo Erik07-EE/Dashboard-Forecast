@@ -81,7 +81,8 @@ thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thea
 .colx{position:absolute;right:4px;top:50%;transform:translateY(-50%);cursor:pointer;color:#ff8a80;font-weight:800;font-size:.74rem;line-height:1;}.colx:hover{color:#fff;}
 thead tr.r2 th.hcol{padding-right:15px;}
 .colshow{cursor:pointer;color:var(--amarillo);text-decoration:underline;font-weight:700;margin-left:6px;}
-.dotcfg{margin-left:14px;font-size:.72rem;color:#5f6690;display:inline-flex;align-items:center;}
+.dotbar{display:flex;justify-content:flex-start;padding:2px 2px 6px;}
+.dotcfg{font-size:.72rem;color:#5f6690;display:inline-flex;align-items:center;}
 .dotinp{width:42px;text-align:center;border:1px solid var(--azul3);border-radius:5px;padding:2px 4px;font:inherit;font-size:.72rem;margin-left:4px;}
 tbody td.mo{background:var(--tint);}
 tbody tr:hover td{background:#fff6c9!important;}
@@ -200,7 +201,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 <div class="mes-sel" id="mesSel"></div>
 <div class="res-toggle" onclick="toggleRes()"><span id="resIco">▾</span> Pedidos Forecast <span class="ln"></span></div>
 <div id="resumen"><div id="resumenInner"></div></div>
-<div class="mpager"><button onclick="pageMonths('fc',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths('fc',1)">▶</button></div><div class="tablewrap pg" id="tw-fc"><table id="tabla"></table></div>
+<div class="mpager"><button onclick="pageMonths('fc',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths('fc',1)">▶</button></div><div class="dotbar"><span class="dotcfg">Alerta <span class="dot d-red" style="position:static;margin:0 4px 0 0;vertical-align:middle"></span>si Meses &lt; Ideal − <input id="dotGapInp" class="dotinp" value="2" onchange="setDotGap(this)"></span></div><div class="tablewrap pg" id="tw-fc"><table id="tabla"></table></div>
 </div>
 <div id="view-liq" style="display:none">
 <div class="liqbar"><span class="liqlbl">Liquidación</span><select id="liqSel" onchange="setLiq()"><option value="">— sin filtro</option><option value="1">× 1</option><option value="1.5">× 1.5</option><option value="2">× 2</option><option value="2.5">× 2.5</option><option value="3">× 3</option><option value="4">× 4</option></select><button class="linkbtn" id="liqResBtn" onclick="toggleLiqRes()">▸ Resumen</button><button class="btnpri" onclick="exportLiqXlsx()">⬇ Generar Excel</button><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">% · Dto Liq = Máx − <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span></div>
@@ -245,7 +246,7 @@ let _sd=null;function srchDeb(d){clearTimeout(_sd);_sd=setTimeout(()=>renderPane
 function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="${d}"><span class="cap">${cap}</span><button class="dd-btn empty" onclick="openPanel('${d}',event)"><span class="cnt" id="cnt-${d}">Todos</span><span class="dd-cnt" id="qty-${d}"></span><span class="arw">▾</span></button><div class="dd-panel"><input class="mini" id="srch-${d}" placeholder="${ph}" oninput="srchDeb('${d}')"><div class="dd-list" id="list-${d}"></div><div class="dd-foot"><button class="linkbtn" onclick="selectAllF('${d}',event)">Seleccionar todos</button><span id="info-${d}"></span><button class="linkbtn" onclick="clearF('${d}',event)">Limpiar</button></div></div></div>`).join("");
   h+='<div class="clearall"><button class="linkbtn" onclick="clearAll()">✕ Limpiar todo</button></div>';
   document.getElementById('filterbar').innerHTML=h;}
-function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("")+'<span class="dotcfg">Alerta <span class="dot d-red" style="position:static;margin:0 4px 0 0;vertical-align:middle"></span>si Meses &lt; Ideal \u2212 <input id="dotGapInp" class="dotinp" value="'+st.dotGap+'" onchange="setDotGap(this)"></span>';}
+function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("");}
 function tglRMes(i){st.RMES.has(i)?st.RMES.delete(i):st.RMES.add(i);renderAll();}
 function setDotGap(el){let v=parseFloat(el.value);st.dotGap=isNaN(v)?2:v;renderForecast();}
 function optionsFor(dim){
