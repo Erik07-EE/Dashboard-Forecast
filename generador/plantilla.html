@@ -78,8 +78,11 @@ tbody .id0,tbody .id1,tbody .id2,tbody .id3,tbody .id4,tbody .id5,tbody .id6{bac
 thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thead tr.r2 th.id4,thead tr.r2 th.id5,thead tr.r2 th.id6{z-index:5;}
 .idpanel{position:sticky;left:0;z-index:6;width:calc(398px + var(--cw,92px));}
 .idc{position:sticky;}tbody td.idc{background:var(--base);z-index:2;}thead tr.r2 th.idc{z-index:5;}
-.colx{cursor:pointer;color:#ff8a80;font-weight:800;margin-left:4px;font-size:.72rem;}.colx:hover{color:#fff;}
+.colx{position:absolute;right:4px;top:50%;transform:translateY(-50%);cursor:pointer;color:#ff8a80;font-weight:800;font-size:.74rem;line-height:1;}.colx:hover{color:#fff;}
+thead tr.r2 th.hcol{padding-right:15px;}
 .colshow{cursor:pointer;color:var(--amarillo);text-decoration:underline;font-weight:700;margin-left:6px;}
+.dotcfg{margin-left:14px;font-size:.72rem;color:#5f6690;display:inline-flex;align-items:center;}
+.dotinp{width:42px;text-align:center;border:1px solid var(--azul3);border-radius:5px;padding:2px 4px;font:inherit;font-size:.72rem;margin-left:4px;}
 tbody td.mo{background:var(--tint);}
 tbody tr:hover td{background:#fff6c9!important;}
 td.code{font-weight:800;color:var(--azul);}
@@ -219,7 +222,7 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:2,liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -229,7 +232,7 @@ const fmtCat=n=>n==null?"–":(Number.isInteger(n)?n:Number(n).toFixed(1));
 const fmtU=n=>n==null?"–":"U$D "+Number(n).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const mval=(r,m,f)=>r[6+m*6+f];
 const sane=s=>String(s).replace(/[^a-zA-Z0-9]/g,"_");
-function mcell(v,ideal,green){let c="";if(green)c="d-grn";else if(v!=null&&ideal!=null&&ideal>0&&v<ideal-2)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}"></span><span class="mn">${fmtM(v)}</span></span>`;}
+function mcell(v,ideal,green){let c="";if(green)c="d-grn";else if(v!=null&&ideal!=null&&ideal>0&&v<ideal-st.dotGap)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}"></span><span class="mn">${fmtM(v)}</span></span>`;}
 function mUN(r){return st.UN.size===0||st.UN.has(r[0]);}
 function mGA(r){return st.GA.size===0||st.GA.has(r[1]);}
 function mCAT(r){return st.CAT.size===0||st.CAT.has(r[3]);}
@@ -242,8 +245,9 @@ let _sd=null;function srchDeb(d){clearTimeout(_sd);_sd=setTimeout(()=>renderPane
 function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="${d}"><span class="cap">${cap}</span><button class="dd-btn empty" onclick="openPanel('${d}',event)"><span class="cnt" id="cnt-${d}">Todos</span><span class="dd-cnt" id="qty-${d}"></span><span class="arw">▾</span></button><div class="dd-panel"><input class="mini" id="srch-${d}" placeholder="${ph}" oninput="srchDeb('${d}')"><div class="dd-list" id="list-${d}"></div><div class="dd-foot"><button class="linkbtn" onclick="selectAllF('${d}',event)">Seleccionar todos</button><span id="info-${d}"></span><button class="linkbtn" onclick="clearF('${d}',event)">Limpiar</button></div></div></div>`).join("");
   h+='<div class="clearall"><button class="linkbtn" onclick="clearAll()">✕ Limpiar todo</button></div>';
   document.getElementById('filterbar').innerHTML=h;}
-function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("");}
+function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("")+'<span class="dotcfg">Alerta <span class="dot d-red" style="position:static;margin:0 4px 0 0;vertical-align:middle"></span>si Meses &lt; Ideal \u2212 <input id="dotGapInp" class="dotinp" value="'+st.dotGap+'" onchange="setDotGap(this)"></span>';}
 function tglRMes(i){st.RMES.has(i)?st.RMES.delete(i):st.RMES.add(i);renderAll();}
+function setDotGap(el){let v=parseFloat(el.value);st.dotGap=isNaN(v)?2:v;renderForecast();}
 function optionsFor(dim){
   if(dim==='UN'){const c=countBy(DATA.rows,0);return DATA.UN.map((v,i)=>({key:i,label:v,n:c.get(i)||0}));}
   if(dim==='GA'){const b=DATA.rows.filter(mUN);const c=countBy(b,1);return DATA.GA.map((v,i)=>({key:i,label:v,n:c.get(i)||0})).filter(o=>o.n>0).sort((a,b)=>prioName(a.label)-prioName(b.label));}
@@ -340,10 +344,10 @@ function showAllCols(){st.hideCols.clear();renderForecast();}
 function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);rows=sortRows(rows);let _ms=st.mstart.fc||0;_ms=Math.max(0,Math.min(_ms,ALLM.length-4));if(ALLM.length<=4)_ms=0;const MW=ALLM.slice(_ms,_ms+4);
   if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados con los filtros actuales.</td></tr></tbody>';return;}
   let cwLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(cwLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');
-  const IDCOLS=[{k:'un',lbl:'UN',w:66,td:r=>DATA.UN[r[0]]},{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'ideal',lbl:'Ideal',w:48,num:1,td:r=>fmtCat(r[IDEAL])},{k:'cajax',lbl:'Caja x',w:58,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock',w:62,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses',w:64,num:1,td:(r,id,gl)=>mcell(r[5],id,!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
+  const IDCOLS=[{k:'un',lbl:'UN',w:66,hid:1,td:r=>DATA.UN[r[0]]},{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'ideal',lbl:'Ideal',w:70,num:1,hid:1,td:r=>fmtCat(r[IDEAL])},{k:'cajax',lbl:'Caja x',w:70,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock',w:70,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses',w:70,num:1,td:(r,id,gl)=>mcell(r[5],id,!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
   const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach(c=>{c._left=_lx;_lx+=c.w;});const idW=_lx;const nHid=st.hideCols.size;
   let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{r1+='<th colspan="6" class="mcol">'+DATA.months[m]+'</th>';});r1+='</tr>';
-  let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+'" style="position:sticky;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span></th>').join('');
+  let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+(c.hid?' hcol':'')+'" style="position:sticky;white-space:nowrap;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+(c.hid?'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span>':'')+'</th>').join('');
   MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
   const cap=1200;const show=rows.slice(0,cap);let body='';
   show.forEach(r=>{const id=r[IDEAL];body+='<tr>'+vis.map(c=>'<td class="idc'+(c.num?' num':'')+(c.cls?' '+c.cls:'')+'" style="left:'+c._left+'px">'+c.td(r,id,greenLiq)+'</td>').join('');

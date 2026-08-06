@@ -60,6 +60,7 @@ def extract(path):
     for row in all_rows[3:]:
         cod=row[2]
         if not (cod and str(cod).strip()): continue
+        if str(row[1]).strip()=="Adicionales": continue  # GA sin valor estadistico
         ui=idx(UN,row[0]); gi=idx(GA,row[1]); cti=idx(CAT,row[5])
         sa=N(row[ci("BN")-1]); ma=F1(row[ci("BO")-1])
         flat=[]; prev=ma
