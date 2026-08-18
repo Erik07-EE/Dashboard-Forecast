@@ -135,11 +135,17 @@ def extract(path):
         except: return None
     _estac={}
     try:
-        for _r in wb["Estacionalidad"].iter_rows(min_row=1, max_col=3, values_only=True):
+        _essheet=None
+        for _sn in wb.sheetnames:
+            if _sn.strip().lower()=="estacionalidad": _essheet=wb[_sn]; break
+        if _essheet is None:
+            raise Exception("no hay hoja 'Estacionalidad'. Hojas disponibles: "+", ".join(wb.sheetnames))
+        for _r in _essheet.iter_rows(min_row=1, max_col=3, values_only=True):
             if isinstance(_r[0], str) and isinstance(_r[1], (int, float)):
                 _estac[_r[0].strip().lower()] = (P2(_r[1]), P2(_r[2]))
+        print("  Estacionalidad: %d meses leidos de la hoja '%s'"%(len(_estac), _essheet.title))
     except Exception as _e:
-        print("  Estacionalidad: no se pudo leer la hoja, uso cache:", _e)
+        print("  Estacionalidad: uso valores cacheados del bloque (2 dec):", _e)
     season=[]
     for k in range(12):
         b=BS+STRIDE*k
