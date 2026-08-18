@@ -196,7 +196,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 </header>
 <div class="wrap">
 <div class="filterbar" id="filterbar"></div>
-<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Liquidación</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
+<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Acción comercial</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
 <div id="view-fc">
 <div class="mes-sel" id="mesSel"></div>
 <div class="res-toggle" onclick="toggleRes()"><span id="resIco">▾</span> Pedidos Forecast <span class="ln"></span></div>
@@ -204,7 +204,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 <div class="mpager"><button onclick="pageMonths('fc',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths('fc',1)">▶</button></div><div class="dotbar"><span class="dotcfg">Alerta <span class="dot d-red" style="position:static;margin:0 4px 0 0;vertical-align:middle"></span>si Meses &lt; Ideal − <input id="dotGapInp" class="dotinp" value="2" onchange="setDotGap(this)"></span></div><div class="tablewrap pg" id="tw-fc"><table id="tabla"></table></div>
 </div>
 <div id="view-liq" style="display:none">
-<div class="liqbar"><span class="liqlbl">Liquidación</span><select id="liqSel" onchange="setLiq()"><option value="">— sin filtro</option><option value="1">× 1</option><option value="1.5">× 1.5</option><option value="2">× 2</option><option value="2.5">× 2.5</option><option value="3">× 3</option><option value="4">× 4</option></select><button class="linkbtn" id="liqResBtn" onclick="toggleLiqRes()">▸ Resumen</button><button class="btnpri" onclick="exportLiqXlsx()">⬇ Generar Excel</button><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">% · Dto Liq = Máx − <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span></div>
+<div class="liqbar"><span class="liqlbl">Acción comercial</span><select id="liqSel" onchange="setLiq()"><option value="">— elegí acción —</option><option value="qr">Posibles quiebres (punto rojo)</option><option value="q0">Quiebres (stock 0)</option><option value="all">Todos</option><option value="2">× 2 (ideal × 2)</option><option value="3">× 3 (ideal × 3)</option><option value="4">× 4 (ideal × 4)</option></select><button class="linkbtn" id="liqResBtn" onclick="toggleLiqRes()">▸ Resumen</button><button class="btnpri" onclick="exportLiqXlsx()">⬇ Generar Excel</button><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">% · Dto. Máx vs A.C. <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span></div>
 <div id="liqResumen" style="display:none"></div>
 <div id="liqTot"></div><div class="tablewrap" style="max-height:360px"><table id="tablaLiq"></table></div>
 <div class="sec-h" style="margin-top:14px">📄 Preview Excel de liquidación</div>
@@ -223,8 +223,8 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:2,liq:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
-function setLiq(){const v=document.getElementById("liqSel").value;st.liq=v?parseFloat(v):null;renderTab('liq');}
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:2,liq:null,liqMode:null,minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,dirty:{fc:true,liq:true,vp:true,hist:true}};
+function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
 const fmtI=n=>n==null?"–":Math.round(n).toLocaleString("es-AR");
@@ -337,7 +337,7 @@ function renderResumen(){const rms=resMonths();const inner=document.getElementBy
     if(cv)donutCharts[j.id]=new Chart(cv,{type:'doughnut',data:{labels:['Venta proy.','Remanente'],datasets:[{data:[cov.vp,Math.max(cov.stk-cov.vp,0)],backgroundColor:['#3949ab','#e8eaf6'],borderWidth:0}]},options:{cutout:'62%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});});}
 
 function sortRows(rows){if(!st.sort){return rows.slice().sort((a,b)=>{const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}
-  const s=st.sort,d=st.dir;const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;return mval(r,s.m,s.f)??-1;};
+  const s=st.sort,d=st.dir;const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;const raw=mval(r,s.m,s.f);if(s&&(s.f===1||s.f===5)){const id=r[IDEAL];return (raw==null?1e9:raw)-((id!=null?id:0)-st.dotGap);}return raw??-1;};
   return rows.slice().sort((a,b)=>{const x=val(a),y=val(b);if(typeof x==='string')return d*x.localeCompare(y);return d*(x-y);});}
 function setSort(k){const same=JSON.stringify(st.sort)===JSON.stringify(k);st.dir=same?-st.dir:1;st.sort=k;renderTable(visibleRows());}
 function ar(k){return JSON.stringify(st.sort)===JSON.stringify(k)?`<span class="ar">${st.dir>0?'▲':'▼'}</span>`:"";}
@@ -350,7 +350,7 @@ function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);row
   const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach(c=>{c._left=_lx;_lx+=c.w;});const idW=_lx;const nHid=st.hideCols.size;
   let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{r1+='<th colspan="6" class="mcol">'+DATA.months[m]+'</th>';});r1+='</tr>';
   let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+(c.hid?' hcol':'')+'" style="position:sticky;white-space:nowrap;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+(c.hid?'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span>':'')+'</th>').join('');
-  MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
+  MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'"'+((fi===1||fi===5)?' onclick="setSort({m:'+m+',f:'+fi+'})" style="cursor:pointer" title="Ordenar: puntos rojos arriba"':'')+'>'+f+((fi===1||fi===5)?ar({m:m,f:fi}):'')+'</th>';});});r2+='</tr>';
   const cap=1200;const show=rows.slice(0,cap);let body='';
   show.forEach(r=>{const id=r[IDEAL];body+='<tr>'+vis.map(c=>'<td class="idc'+(c.num?' num':'')+(c.cls?' '+c.cls:'')+'" style="left:'+c._left+'px">'+c.td(r,id,greenLiq)+'</td>').join('');
     MW.forEach((m,mi)=>{const mc=(mi%2)?' mo':'';for(let f=0;f<6;f++){const v=mval(r,m,f);const isM=(f===1||f===5);let cl="num f"+f+(f===0?" mg-a":"")+mc;if(f===2)cl+=(v>0?" t-buy":" t-zero");else if(f===3)cl+=" t-grn";body+='<td class="'+cl+'">'+(isM?mcell(v,id,false):fmtI(v))+'</td>';}});
@@ -466,7 +466,7 @@ function toggleLiqCM(){st.liqCM=!st.liqCM;renderTab('liq');}
 function setLiqSort(f){st.liqSort=f;renderTab('liq');}
 function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev');
   const cand=rows.map(computeLiq).filter(Boolean);if(st.liqSort){const _f=st.liqSort;cand.sort((a,b)=>((b[_f]==null?-1e18:b[_f])-(a[_f]==null?-1e18:a[_f])));}window._liqExport=cand;
-  if(!cand.length){el.innerHTML='<tbody><tr><td class="empty">Elegí un factor de liquidación para ver el preview (códigos con datos de costo).</td></tr></tbody>';return;}
+  if(!cand.length){el.innerHTML='<tbody><tr><td class="empty">Elegí una acción arriba para ver el preview (códigos con datos de costo).</td></tr></tbody>';return;}
   const pI=n=>n==null?'':Math.round(n).toLocaleString('es-AR');const p1=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});const p2=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});const pc=n=>n==null?'':Math.round(n*100)+'%';const pcc=n=>n==null?'':(n*100).toFixed(1)+'%';
   const cmO=st.liqCM;
   const cmG=cmO?'<th class="g-cm" colspan="6" onclick="toggleLiqCM()" style="cursor:pointer" title="Cerrar">▾ Contribución marginal por %</th>':'<th class="g-cm" colspan="1" onclick="toggleLiqCM()" style="cursor:pointer" title="Abrir">▸ CM</th>';
@@ -583,7 +583,7 @@ function exportVPXlsx(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
   XLSX.writeFile(wb,'Proyeccion_VP.xlsx');
 }
-function renderLiq(){let rows=visibleRows();const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});renderLiqTable(rows);renderLiqSum(rows);renderLiqPreview(rows);renderLiqCharts();}
+function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];return id!=null&&id>0&&r[5]!=null&&r[5]<id-st.dotGap;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}renderLiqTable(rows);renderLiqSum(rows);renderLiqPreview(rows);renderLiqCharts();}
 function renderTab(t){if(t==='fc')renderForecast();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;}
 function renderActive(){renderTab(st.tab);}
 let _rt=null;
