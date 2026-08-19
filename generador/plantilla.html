@@ -213,7 +213,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 <div id="liqResumen" style="display:none"></div>
 <div id="liqTot"></div>
 <div class="sec-h" style="margin-top:14px">📄 Preview Excel de liquidación</div>
-<div class="tablewrap" style="max-height:360px"><table id="tablaLiqPrev" class="prevt"></table></div><div id="liqCharts"></div>
+<div class="tablewrap" style="max-height:700px"><table id="tablaLiqPrev" class="prevt"></table></div><div id="liqCharts"></div>
 </div>
 <div id="view-vp" style="display:none"></div>
 <div id="view-hist" style="display:none"></div>
@@ -483,7 +483,7 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   const _cur=_cs.size===1?[..._cs][0]:'USD/$';const _bg='background:#eceef7;font-weight:800;color:#1c1c1a';const _e='<th style="'+_bg+'"></th>';
   const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
   hd=hd.replace('</thead>',totRow+'</thead>');
-  const _cw=[130,90,40,60,55,90,62,90,90,70,70,70,70,90,90,62,90,62,90,62];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
+  const _cw=[130,90,40,60,70,140,55,140,140,70,70,70,70,140,140,55,140,55,140,55];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
 function renderLiqCharts(){const el=document.getElementById('liqCharts');if(!el)return;
   const rows=visibleRows();const f=st.liq||1;
   const money=(cur,n)=>cur+' '+Math.round(n).toLocaleString('es-AR');
