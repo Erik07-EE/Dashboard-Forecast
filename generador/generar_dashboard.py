@@ -208,8 +208,15 @@ def extract(path):
 
 def load_costos(path):
     try:
+        if not os.path.exists(path):
+            print("  Costos: NO existe el archivo en la ruta:", path); return {}
         wb=openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
-        gs=wb["General"]; d={}
+        gs=None
+        for sn in wb.sheetnames:
+            if sn.strip().lower()=="general": gs=wb[sn]; break
+        if gs is None:
+            print("  Costos: no hay hoja 'General'. Hojas:", ", ".join(wb.sheetnames)); return {}
+        d={}
         def nf(x):
             try: return round(float(x),4)
             except: return None
@@ -218,9 +225,10 @@ def load_costos(path):
             if cod and str(cod).strip():
                 cur=r[ci("I")-1]; cur="USD" if (cur and "USD" in str(cur).upper()) else "$"
                 d[str(cod).strip()]=[nf(r[ci("AC")-1]), nf(r[ci("J")-1]), nf(r[ci("F")-1]), cur, nf(r[ci("Q")-1])]
+        if not d: print("  Costos: la hoja '%s' se leyó pero 0 códigos (¿código en col B, datos desde fila 4?)"%gs.title)
         return d
-    except Exception:
-        return {}
+    except Exception as e:
+        print("  Costos: error leyendo el archivo:", e); return {}
 
 def find_costos(folder):
     import glob as _g

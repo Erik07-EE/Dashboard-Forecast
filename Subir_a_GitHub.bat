@@ -5,7 +5,7 @@ setlocal
 
 REM ================== CONFIGURACION (editar una sola vez) ==================
 set "FORECAST=G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast\Forecast.xlsm"
-set "COSTOS=G:\Unidades compartidas\7. Compras y producto\7.4. Producto\7.4.5. Gestor de precios\Costos.xlsm"
+set "COSTOS=G:\Unidades compartidas\7. Compras y producto\7.4. Producto\7.4.5. Gestor de precios\Masters\Costos.xlsm"
 set "REPO_URL=https://github.com/Erik07-EE/Dashboard-Forecast.git"
 set "PAGES_URL=https://erik07-ee.github.io/Dashboard-Forecast/Dashboard_Forecast.html"
 REM =========================================================================
