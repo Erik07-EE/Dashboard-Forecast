@@ -264,7 +264,58 @@ def extract_vp_archive(path, month):
             except: mx=None
         d[str(cod).strip()]=[v,mx]
     return d
-def read_realusd(folder):
+def _parse_realusd_rows(rr, origen):
+    r1=rr[0] if rr else []; r2=rr[1] if len(rr)>1 else []
+    # cada mes tiene 3 columnas: Cant / Pesos / Dólares
+    col_c={}; col_p={}; col_d={}; cur=None
+    for c in range(len(r1)):
+        mo=_month_of(r1[c]) if r1[c] else None
+        if mo: cur=mo
+        sub=str((r2[c] if c<len(r2) else "") or "").strip().lower()
+        sub=sub.replace("ó","o").replace("á","a").replace("é","e").replace("í","i").replace("ú","u")
+        if cur:
+            if "cant" in sub or "unid" in sub: col_c[cur]=c
+            elif "peso" in sub: col_p[cur]=c
+            elif ("dolar" in sub or "usd" in sub or "u$" in sub): col_d[cur]=c
+    codcol=1
+    for c in range(len(r1)):
+        if "digo" in str(r1[c] or "").lower(): codcol=c; break
+    allmo=sorted(set(list(col_c)+list(col_p)+list(col_d)))
+    d={}
+    for row in rr[2:]:
+        cod=row[codcol] if codcol<len(row) else None
+        if not (cod and str(cod).strip()) or str(cod).strip().upper()=="TOTAL": continue
+        def _f(col):
+            try: return float(row[col])
+            except: return None
+        m={}
+        for mo in allmo:
+            cant=_f(col_c[mo]) if mo in col_c else None
+            pesos=_f(col_p[mo]) if mo in col_p else None
+            dol=_f(col_d[mo]) if mo in col_d else None
+            if cant is not None: cant=abs(cant)
+            if cant is not None or pesos is not None or dol is not None:
+                m[mo]=[cant,pesos,dol]  # [unidades, pesos, dolares]
+        if m: d[str(cod).strip()]=m
+    print("  Venta real: %s -> %d codigos, meses %s (cant/pesos/dolares)"%(origen,len(d),allmo))
+    return d
+
+def read_realusd(folder, forecast_path=None):
+    # 1) Preferencia: hoja "V.R. mensual" dentro del propio Forecast.xlsm
+    if forecast_path and os.path.exists(forecast_path):
+        try:
+            wb=openpyxl.load_workbook(forecast_path, read_only=True, data_only=True, keep_links=False)
+            hoja=None
+            for sn in wb.sheetnames:
+                nn=sn.strip().lower().replace(".","").replace(" ","")
+                if nn in ("vrmensual","ventareal","vr"):
+                    hoja=wb[sn]; break
+            if hoja is not None:
+                rr=[list(x) for x in hoja.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
+                return _parse_realusd_rows(rr, "hoja '%s' de %s"%(hoja.title, os.path.basename(forecast_path)))
+        except Exception as e:
+            print("  Venta real: no pude leer la hoja interna, uso archivo suelto:", e)
+    # 2) Respaldo: archivo suelto V.R. mensual en la carpeta
     import glob as _g
     cand=None
     for pat in ["Venta_real*.xls*","Venta real*.xls*","V.R*.xls*","VR *.xls*","V R *.xls*"]:
@@ -272,36 +323,17 @@ def read_realusd(folder):
             if not os.path.basename(pp).startswith("~$"): cand=pp; break
         if cand: break
     if not cand:
-        print("  Venta real: no se encontro archivo 'Venta_real*.xlsx' en la carpeta"); return {}
+        print("  Venta real: no hay hoja 'V.R. mensual' ni archivo suelto"); return {}
     try:
         wb=openpyxl.load_workbook(cand, read_only=True, data_only=True, keep_links=False)
         ws=wb.active
         rr=[list(x) for x in ws.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
-        r1=rr[0] if rr else []; r2=rr[1] if len(rr)>1 else []
-        mcol={}; cur=None
-        for c in range(len(r1)):
-            mo=_month_of(r1[c]) if r1[c] else None
-            if mo: cur=mo
-            sub=str((r2[c] if c<len(r2) else "") or "").strip().lower()
-            if ("usd" in sub) and cur: mcol[cur]=c  # acepta "USD" y "$-USD"
-        codcol=1
-        for c in range(len(r1)):
-            if "digo" in str(r1[c] or "").lower(): codcol=c; break
-        d={}
-        for row in rr[2:]:
-            cod=row[codcol] if codcol<len(row) else None
-            if not (cod and str(cod).strip()) or str(cod).strip().upper()=="TOTAL": continue
-            m={}
-            for mo,c in mcol.items():
-                try: m[mo]=float(row[c])
-                except: pass
-            if m: d[str(cod).strip()]=m
-        print("  Venta real: %s -> %d codigos, meses %s"%(os.path.basename(cand),len(d),sorted(mcol.keys())))
-        return d
+        return _parse_realusd_rows(rr, os.path.basename(cand))
     except Exception as e:
         print("  Venta real: error",e); return {}
 
-def build_historico(folder, real_map, real_labels, cache_path, realusd):
+def build_historico(folder, real_map, real_labels, cache_path, realusd, imp_cods=None):
+    imp_cods=imp_cods or set()
     cache={}
     if os.path.exists(cache_path):
         try: cache=json.load(open(cache_path,encoding="utf-8"))
@@ -341,10 +373,15 @@ def build_historico(folder, real_map, real_labels, cache_path, realusd):
             vv=ent[0] if isinstance(ent,list) else ent
             mx=ent[1] if (isinstance(ent,list) and len(ent)>1) else None
             vr.append(vv); mm.append(mx)
-            idx=lab2[k][0]; rv=real_map.get(cod)
-            rrv=rv[idx] if (rv and idx<len(rv)) else None; rr.append(rrv)
-            mo=int(k[5:7]); rud=realusd.get(cod,{}).get(mo); rd.append(rud)
-            if vv is not None or rrv is not None or rud is not None: any_=True
+            mo=int(k[5:7]); _ru=realusd.get(cod,{}).get(mo)
+            if isinstance(_ru,list):
+                run=_ru[0] if len(_ru)>0 else None   # V.R. u (unidades)
+                # V.R. $-USD: Dolares si es importado, Pesos si no (misma logica de moneda del dashboard)
+                rud=(_ru[2] if len(_ru)>2 else None) if (cod in imp_cods) else (_ru[1] if len(_ru)>1 else None)
+            else:
+                run=None; rud=_ru
+            rr.append(run); rd.append(rud)
+            if vv is not None or run is not None or rud is not None: any_=True
         if any_: vpm[cod]=vr; realm[cod]=rr; mixm[cod]=mm; reald[cod]=rd
     return {"months":months,"vp":vpm,"real":realm,"mix":mixm,"reald":reald}
 
@@ -365,7 +402,8 @@ if __name__=="__main__":
     data["costos"]=load_costos(cp) if cp else {}
     print("Costos:",cp,"->",len(data["costos"]),"codigos")
     try:
-        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"), read_realusd(os.path.dirname(os.path.abspath(src))))
+        imp_cods={data["rows"][i][2] for i in range(len(data["rows"])) if data["UN"][data["rows"][i][0]]=="Importados"}
+        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"), read_realusd(os.path.dirname(os.path.abspath(src)), os.path.abspath(src)), imp_cods)
         data["hist"]=hist
         print("Historico: meses",len(hist["months"]),"| codigos",len(hist["vp"]))
     except Exception as e:
