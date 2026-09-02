@@ -137,13 +137,16 @@ def extract(path):
     try:
         _essheet=None
         for _sn in wb.sheetnames:
-            if _sn.strip().lower()=="estacionalidad": _essheet=wb[_sn]; break
+            if _sn.strip().lower().replace("ó","o")=="configuracion": _essheet=wb[_sn]; break
         if _essheet is None:
-            raise Exception("no hay hoja 'Estacionalidad'. Hojas disponibles: "+", ".join(wb.sheetnames))
-        for _r in _essheet.iter_rows(min_row=1, max_col=3, values_only=True):
-            if isinstance(_r[0], str) and isinstance(_r[1], (int, float)):
-                _estac[_r[0].strip().lower()] = (P2(_r[1]), P2(_r[2]))
-        print("  Estacionalidad: %d meses leidos de la hoja '%s'"%(len(_estac), _essheet.title))
+            raise Exception("no hay hoja 'Configuracion'. Hojas disponibles: "+", ".join(wb.sheetnames))
+        for _r in _essheet.iter_rows(min_row=1, max_col=14, values_only=True):
+            mn=_r[ci("L")-1] if len(_r)>ci("L")-1 else None
+            es=_r[ci("M")-1] if len(_r)>ci("M")-1 else None
+            ev=_r[ci("N")-1] if len(_r)>ci("N")-1 else None
+            if isinstance(mn, str) and isinstance(es, (int, float)):
+                _estac[mn.strip().lower()] = (P2(es), P2(ev))
+        print("  Estacionalidad: %d meses leidos de 'Configuracion' (cols L/M/N)"%len(_estac))
     except Exception as _e:
         print("  Estacionalidad: uso valores cacheados del bloque (2 dec):", _e)
     season=[]
@@ -156,41 +159,6 @@ def extract(path):
         else:
             _es_v,_ev_v=P2(r2(9)),P2(r2(12))  # fallback al cache de la fórmula (2 dec)
         season.append([_es_v, _ev_v, F1(r2(4))])  # estac, evento, TC
-    # ---- Hoja VP-$ U$D (proyeccion comercial) ----
-    vp=None
-    try:
-        vs=wb["VP-$ U$D"]
-        VR=[list(x) for x in vs.iter_rows(min_row=1,max_row=44,max_col=55,values_only=True)]
-        def vg(r,c): return VR[r-1][c-1] if (r-1<len(VR) and c-1<len(VR[r-1])) else None
-        def numf(x):
-            try: return round(float(x),2)
-            except: return None
-        def numi(x):
-            try: return int(round(float(x)))
-            except: return None
-        vmonths=[str(vg(1,2+4*m)) for m in range(12)]
-        vratio=[(str(vg(1,2+4*m+2)).strip() if vg(1,2+4*m+2) else "") for m in range(12)]
-        vtotal=[numf(vg(3,2+4*m)) for m in range(12)]
-        vtc=[]
-        for m in range(12):
-            val=None
-            for off in (1,2,3):
-                v=numf(vg(2,2+4*m+off))
-                if v is not None: val=v; break
-            vtc.append(val)
-        vrows=[]
-        for r in range(6,44):
-            ga=vg(r,1)
-            if not (ga and str(ga).strip()): continue
-            ser=[]
-            for m in range(12):
-                b=2+4*m
-                ser.append([numi(vg(r,b)), numi(vg(r,b+1)), numi(vg(r,b+2))])
-            trend=[numf(vg(r,51)), numf(vg(r,52))]
-            vrows.append([str(ga).strip(), ser, trend])
-        vp={"months":vmonths,"ratio":vratio,"total":vtotal,"tc":vtc,"rows":vrows}
-    except Exception as e:
-        vp={"error":str(e)}
     # fecha/hora del stock (BN2 + BO2)
     bn=all_rows[1][ci("BN")-1]; bo=all_rows[1][ci("BO")-1]
     dias=["Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
@@ -202,7 +170,7 @@ def extract(path):
     if bo:
         mm=re.search(r"(\d{1,2}:\d{2})",str(bo)); hora=mm.group(1) if mm else ""
     stock_ts=ts+(" / "+hora+" hs" if hora else "")
-    return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,"vp":vp,"season":season,
+    return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,"season":season,
             "real":realmap,"real_labels":real_labels,
             "src":os.path.basename(path),"gen":datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}
 
