@@ -51,8 +51,11 @@ CLAUDE.md                     este archivo (NO MOVER: Claude Code lo lee de la r
 .nojekyll                     NO BORRAR: sin esto GitHub Pages no publica
 .claude/skills/               instrucciones del proyecto, se cargan solas
 scripts/                      el generador, la plantilla y el chequeo
-Historial/                    cómo se llegó hasta acá y por qué
+Historial/                    cómo se llegó hasta acá y por qué (NO se publica: es interno)
 ```
+
+⚠️ El repo de GitHub es **público**. `Historial/` está en `.gitignore` a propósito:
+es documentación interna y **no debe subirse**. No sacarlo del `.gitignore`.
 
 `Historial/Historial_Proyecto.md` es el resumen de la etapa Cowork (jul–sep 2026): qué se
 construyó, qué criterios se definieron y por qué. **Leerlo antes de cambiar una regla de

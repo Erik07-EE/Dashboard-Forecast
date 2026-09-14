@@ -10,3 +10,6 @@ Thumbs.db
 
 # Ajustes locales de Claude Code (no se comparten)
 .claude/settings.local.json
+
+# Documentacion interna: queda solo en la PC, no se publica
+Historial/
