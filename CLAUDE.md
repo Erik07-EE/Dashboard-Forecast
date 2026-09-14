@@ -100,9 +100,20 @@ Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
       326 códigos y 849 unidades al año. Se sacó el `*estac$2*evento$2` de la condición,
       en las 12 columnas × 5.581 filas. Verificado: 0 casos mal.
 
-Ya no quedan pendientes del Excel. Las mejoras que siguen abiertas están en
-`Historial/Mejoras_Dashboard_Forecast.pdf`: validar la estructura del Excel al generar,
-alertas/KPIs arriba, automatizar la generación, toggle de moneda e histórico acumulado.
+Ya no quedan pendientes del Excel.
+
+## Mejoras: anuladas el 14/09
+
+Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló 5 de 6**.
+**No volver a proponerlas** salvo que él las traiga:
+
+1. ~~Confidencialidad~~ (sacar costos/márgenes o poner login) — deja el dashboard público.
+2. ~~Validar la estructura del Excel al generar~~
+3. ~~Alertas / KPIs arriba~~
+4. ~~Automatizar la generación~~ (tarea programada)
+5. ~~Toggle de moneda~~ (USD / pesos)
+
+Sigue abierta solo la **6: histórico acumulado** (a definir).
 
 ## Confidencialidad (decidido el 14/09)
 
