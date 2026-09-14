@@ -102,9 +102,9 @@ Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
 
 Ya no quedan pendientes del Excel.
 
-## Mejoras: anuladas el 14/09
+## Mejoras: todas anuladas el 14/09
 
-Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló 5 de 6**.
+Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló las 6**.
 **No volver a proponerlas** salvo que él las traiga:
 
 1. ~~Confidencialidad~~ (sacar costos/márgenes o poner login) — deja el dashboard público.
@@ -112,8 +112,10 @@ Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló 5
 3. ~~Alertas / KPIs arriba~~
 4. ~~Automatizar la generación~~ (tarea programada)
 5. ~~Toggle de moneda~~ (USD / pesos)
+6. ~~Histórico acumulado~~ (exportar a Excel para tendencias multi-año)
 
-Sigue abierta solo la **6: histórico acumulado** (a definir).
+**No queda ninguna mejora abierta.** El proyecto está cerrado en su alcance actual: se
+usa para actualizar y publicar el dashboard, nada más.
 
 ## Confidencialidad (decidido el 14/09)
 
