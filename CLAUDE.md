@@ -18,8 +18,10 @@ publica en GitHub Pages.
 
 ## Cómo trabajar (IMPORTANTE)
 
-Cuando el usuario diga **"actualizar forecast"** (o publicar/regenerar el dashboard),
-seguir la skill `forecast-dashboard`, que se carga sola al abrir esta carpeta.
+Cuando Erik diga **«actualizar»** — a secas, o «actualiza el dashboard», «actualizá los
+costos», lo que sea — seguir la skill `forecast-dashboard`, que se carga sola al abrir
+esta carpeta. **No preguntarle qué actualizar:** siempre es todo (bajar el Gestor de
+precios, regenerar desde el Forecast.xlsm, chequear y dejarlo listo para publicar).
 
 - `.claude/skills/forecast-dashboard/` — flujo, pestañas y reglas
 - `.claude/skills/forecast-dashboard-tech/` — estructura de los Excel y detalle técnico

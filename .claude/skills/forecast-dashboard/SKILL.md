@@ -2,10 +2,12 @@
 name: forecast-dashboard
 description: >-
   Actualizar y publicar el Dashboard Forecast de Electroestrada (compras/producto:
-  motores de arranque, alternadores y repuestos). Usar cuando el usuario diga
-  "actualizar forecast", "regenerar dashboard forecast", "publicar forecast",
-  "subir el forecast" o pida cambios de UI/lógica. Regenera el HTML desde los Excel
-  y lo publica en GitHub Pages. Complementaria: forecast-dashboard-tech.
+  motores de arranque, alternadores y repuestos). Usar cuando Erik diga
+  **"actualizar", "actualiza", "actualizar dashboard", "actualiza el forecast",
+  "actualiza los costos"** o cualquier variante de actualizar/regenerar/publicar el
+  forecast, y también si pide cambios de UI o de lógica. Baja el Gestor de precios,
+  regenera el HTML desde el Forecast.xlsm y lo deja listo para publicar en GitHub
+  Pages. Complementaria: forecast-dashboard-tech.
 ---
 
 # SKILL: forecast-dashboard
@@ -35,7 +37,18 @@ Instrucciones principales para actualizar/editar y publicar el Dashboard Forecas
 - **Proyección:** por mes VA c/stk, %, V.P.u, CMV, CMV/Vta, Venta $-USD. Encabezado con **Estac./Ev./TC editables** (simulador what-if: escala la proyección al instante; ↺ reset por mes) + CMV/TVP. Mes en amarillo/mayúscula.
 - **Histórico:** por mes V.P.u/%/V.R.u/V.P.$/%/V.R.$. Encabezado con **TC editable** (vacío) que **totaliza el mes** = (Importados USD × TC) + Distribuidos $, con badge Real/Proy coloreado.
 
-## Flujo de trabajo
+## Al decir «actualizar» (el caso normal)
+Erik dice **«actualizar»** y con eso alcanza — no preguntarle qué actualizar. Hacer todo:
+
+1. **Bajar el Gestor de precios** con el conector de Drive
+   (`download_file_content`, fileId `1-X6PyLTioEo_mhMI_P2hKq5zIOywnsIkOPGfKFYRg2Y`,
+   exportMimeType xlsx). La respuesta excede el límite de tokens y queda en un `.txt`:
+   decodificar el base64 del campo `content` y guardarlo en `scripts/costos_gestor.xlsx`.
+2. **Regenerar:** `python scripts/generar_dashboard.py "<Forecast.xlsm de G:>" Dashboard_Forecast.html`
+3. **Chequear:** `python scripts/chequear_actualizacion.py`. Si avisa algo, frenar y preguntarle.
+4. **Contarle qué cambió** y pedirle que corra `Subir_a_GitHub.bat` (publicar es de él).
+
+## Flujo de trabajo (cambios de UI o lógica)
 1. Cambios de UI/lógica: editar **solo `scripts/plantilla.html`** (string-replacement con `assert count==1`).
 2. **Validar** el JS con `node --check` (ver skill técnica). No cerrar si falla.
 3. Cambios grandes: **mostrar preview/mock y esperar OK**.
