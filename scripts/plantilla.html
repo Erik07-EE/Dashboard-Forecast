@@ -213,7 +213,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 <div id="liqResumen" style="display:none"></div>
 <div id="liqTot"></div>
 <div class="sec-h" style="margin-top:14px">📄 Preview Excel de liquidación</div>
-<div class="tablewrap" style="max-height:460px"><table id="tablaLiqPrev" class="prevt"></table></div><div id="liqCharts"></div>
+<div class="tablewrap" style="max-height:460px"><table id="tablaLiqPrev" class="prevt"></table></div>
 </div>
 <div id="view-vp" style="display:none"></div>
 <div id="view-hist" style="display:none"></div>
@@ -490,19 +490,6 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
   hd=hd.replace('</thead>',totRow+'</thead>');
   const _codLen=cand.reduce((m,o)=>Math.max(m,String(o.cod||'').length),6);const _codW=Math.max(96,_codLen*8+18);const _cw=[150,_codW,45,76,72,140,68,140,140,80,80,80,80,140,140,68,140,68,140,68];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
-function renderLiqCharts(){const el=document.getElementById('liqCharts');if(!el)return;
-  const rows=visibleRows();const f=st.liq||1;
-  const money=(cur,n)=>cur+' '+Math.round(n).toLocaleString('es-AR');
-  let exU=0,toU=0,exC=0,toC=0,exP=0,toP=0;const curs=new Set();
-  rows.forEach(r=>{const s=r[4]||0;const e=excU(r,f);const ex=(e!=null&&e>0)?e:0;const cc=DATA.costos&&DATA.costos[r[2]];const co=(cc&&cc[0]!=null)?cc[0]:null;const pp=r[104];toU+=s;exU+=ex;if(co!=null){toC+=s*co;exC+=ex*co;if(cc[3])curs.add(cc[3]);}if(pp!=null){toP+=s*pp;exP+=ex*pp;if(cc&&cc[3])curs.add(cc[3]);}});
-  if(toU<=0){el.innerHTML='';return;}
-  const cur=curs.size===1?[...curs][0]:'USD/$';const pct=(a,b)=>b>0?Math.round(a/b*100):0;
-  const donut=(pv,tit,sub)=>`<div style="text-align:center;width:184px;"><div style="width:132px;height:132px;border-radius:50%;margin:0 auto;background:conic-gradient(#ef5350 0 ${pv}%,#e8eaf6 ${pv}% 100%);display:flex;align-items:center;justify-content:center;"><div style="width:90px;height:90px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;"><b style="font-size:1.3rem;color:#1a237e;line-height:1;">${pv}%</b><span style="font-size:.5rem;color:#7986cb;text-transform:uppercase;">excedente</span></div></div><div style="font-size:.8rem;font-weight:800;color:#1a237e;margin-top:8px;">${tit}</div><div style="font-size:.66rem;color:#5f6690;margin-top:2px;">${sub}</div></div>`;
-  el.innerHTML='<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(26,35,126,.08);padding:14px 16px;margin-top:12px;"><div style="font-size:.78rem;font-weight:800;color:#1a237e;border-bottom:2px solid #ffd600;padding-bottom:4px;margin-bottom:14px;">Excedente sobre el stock total (SKU filtrados)</div><div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">'
-    +donut(pct(exU,toU),'Unidades',fmtI(exU)+' de '+fmtI(toU)+' u')
-    +donut(pct(exC,toC),'Costo ('+cur+')','<b style="color:#c0392b">'+money(cur,exC)+'</b> de '+money(cur,toC))
-    +donut(pct(exP,toP),'Precio Mix ('+cur+')','<b style="color:#c0392b">'+money(cur,exP)+'</b> de '+money(cur,toP))
-    +'</div><div style="display:flex;gap:16px;justify-content:center;margin-top:14px;font-size:.7rem;color:#5f6690;"><span><span style="display:inline-block;width:10px;height:10px;background:#ef5350;border-radius:2px;margin-right:4px;"></span>Excedente (a liquidar)</span><span><span style="display:inline-block;width:10px;height:10px;background:#e8eaf6;border:1px solid #c5cae9;border-radius:2px;margin-right:4px;"></span>Colchón ideal</span></div></div>';}
 function exportLiqXlsx(){const _of=st.acMode==='of';const cand=window._liqExport||[];if(!cand.length){alert('No hay candidatos. Elegí una acción.');return;}
   const nav='FF1A237E',nav2='FF002060',yel='FFFFFF00',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=30;
   const acc=(cur,d)=>d?('_-"'+cur+'"* #,##0.00_-;\\-"'+cur+'"* #,##0.00_-;_-"'+cur+'"* "-"??_-;_-@_-'):('_-"'+cur+'"* #,##0_-;\\-"'+cur+'"* #,##0_-;_-"'+cur+'"* "-"_-;_-@_-');
@@ -594,7 +581,7 @@ function exportVPXlsx(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
   XLSX.writeFile(wb,'Proyeccion_VP.xlsx');
 }
-function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<id-st.dotGap);return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML=rows.length?'<div style="font-size:.72rem;color:#7986cb;font-weight:700;margin:2px 0 6px">'+rows.length.toLocaleString('es-AR')+' candidatos</div>':'';renderLiqSum(rows);renderLiqPreview(rows);renderLiqCharts();}
+function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<id-st.dotGap);return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML=rows.length?'<div style="font-size:.72rem;color:#7986cb;font-weight:700;margin:2px 0 6px">'+rows.length.toLocaleString('es-AR')+' candidatos</div>':'';renderLiqSum(rows);renderLiqPreview(rows);}
 function renderTab(t){const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 function renderActive(){renderTab(st.tab);}
 let _rt=null;
