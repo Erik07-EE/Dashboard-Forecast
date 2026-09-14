@@ -83,11 +83,29 @@ Los dos Excel fuente están en Drive:
 - Se sumó el chequeo previo a publicar, después de que el 14/09 el stock saliera del 04/09
   cuando lo publicado ya era del 07/09.
 
+- Carpeta limpiada: se borraron las copias en PDF de las skills y el prompt viejo de
+  Cowork (`Instrucciones_Proyecto.docx`), todo reemplazado por este archivo y
+  `.claude/skills/`. Siguen recuperables desde el historial de git si hicieran falta.
+- Confidencialidad: Erik decidió (14/09) **dejar el dashboard público como está**. Ver
+  abajo.
+
 Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
 
-- [ ] Validar la fórmula "Meses fin de mes" en CQ12 (caso MA-0040 debe dar 0.0).
-- [ ] Si cierra, replicarla a los otros 11 meses.
-- [ ] Revisar la doble estacionalidad en CK (no decidido).
+- [x] Fórmula "Meses fin de mes" corregida (numerador = Stock ini + Compra − VP).
+      Verificado el 14/09 en el Forecast.xlsm: **5.581 filas × 12 meses, todas OK**.
+      MA-0040 (fila 12) da 0.0 en septiembre, como se esperaba.
+- [ ] Revisar la doble estacionalidad en CK (no decidido). En la condición del IF compara
+      `CJ*CS$2*CV$2` contra el stock, pero CJ **ya trae** estacionalidad y evento. Con
+      factor <1 no se nota; en temporada alta puede topear mal la venta.
+
+## Confidencialidad (decidido el 14/09)
+
+El dashboard está público en GitHub Pages **con códigos, costos y márgenes adentro**.
+Erik lo sabe y eligió dejarlo así por ahora. **No volver a plantearlo salvo que él lo
+traiga.** Si alguna vez se retoma, las opciones eran: sacar costos/márgenes de la versión
+pública, o mover el hosting a uno con login.
+
+Sí se sacó del repo la documentación interna (`Historial/`, vía `.gitignore`).
 
 ## Preferencias del usuario
 
