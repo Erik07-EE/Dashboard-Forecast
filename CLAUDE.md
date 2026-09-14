@@ -83,6 +83,12 @@ Las fuentes de datos son dos:
 ⚠️ El viejo `Costos.xlsm` quedó **obsoleto el 14/09/2026**. Ya no se lee. Si alguien lo
 sigue actualizando, ignorarlo: la verdad está en el Sheet.
 
+**El circuito de los costos lo eligió Erik el 14/09 y es este** (no proponerle otro):
+cuando actualiza algo en el Gestor, **le pide a Claude que baje la planilla**, Claude
+regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que el `.bat`
+bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
+la PC — y las descartó: prefiere el paso manual.
+
 ## Estado actual (14/09/2026)
 
 - Proyecto ordenado y migrado a Claude Code. El generador pasó de `Generador/` a `scripts/`.
