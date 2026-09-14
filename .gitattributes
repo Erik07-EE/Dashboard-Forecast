@@ -1,0 +1,5 @@
+# El .bat necesita finales de linea de Windows o cmd lo lee mal
+*.bat text eol=crlf
+
+# El resto se guarda tal cual (el HTML del dashboard va en LF)
+* -text

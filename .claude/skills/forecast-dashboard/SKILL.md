@@ -14,9 +14,10 @@ Instrucciones principales para actualizar/editar y publicar el Dashboard Forecas
 
 ## Contexto
 - **Salida:** `Dashboard_Forecast.html` (autocontenido). No editar a mano.
-- **Plantilla (fuente única):** `Generador/plantilla.html` (HTML/CSS/JS; el dato va en `/*__DATA__*/`). **Editar siempre acá.**
-- **Generador:** `Generador/generar_dashboard.py`. **Cache Histórico:** `Generador/historico_vp.json`.
-- **Publicar:** doble clic en `Subir_a_GitHub.bat` (regenera + push). `.gitignore` excluye `__pycache__`; **`.nojekyll`** desactiva Jekyll en Pages (necesario: los PDF del repo rompían el build).
+- **Plantilla (fuente única):** `scripts/plantilla.html` (HTML/CSS/JS; el dato va en `/*__DATA__*/`). **Editar siempre acá.**
+- **Generador:** `scripts/generar_dashboard.py`. **Cache Histórico:** `scripts/historico_vp.json`.
+- **Publicar:** doble clic en `Subir_a_GitHub.bat` (regenera → chequea → pide confirmación → push).
+- **Chequeo previo:** `scripts/chequear_actualizacion.py` compara contra lo publicado y frena si el stock va para atrás. `.gitignore` excluye `__pycache__`; **`.nojekyll`** desactiva Jekyll en Pages (necesario: los PDF del repo rompían el build).
 - **Repo:** https://github.com/Erik07-EE/Dashboard-Forecast · **Online:** https://erik07-ee.github.io/Dashboard-Forecast/Dashboard_Forecast.html
 
 ## Fuentes de datos (carpeta del Forecast en Drive)
@@ -32,11 +33,12 @@ Instrucciones principales para actualizar/editar y publicar el Dashboard Forecas
 - **Histórico:** por mes V.P.u/%/V.R.u/V.P.$/%/V.R.$. Encabezado con **TC editable** (vacío) que **totaliza el mes** = (Importados USD × TC) + Distribuidos $, con badge Real/Proy coloreado.
 
 ## Flujo de trabajo
-1. Cambios de UI/lógica: editar **solo `Generador/plantilla.html`** (string-replacement con `assert count==1`).
+1. Cambios de UI/lógica: editar **solo `scripts/plantilla.html`** (string-replacement con `assert count==1`).
 2. **Validar** el JS con `node --check` (ver skill técnica). No cerrar si falla.
 3. Cambios grandes: **mostrar preview/mock y esperar OK**.
-4. Pedir correr **`Subir_a_GitHub.bat`** + Ctrl+F5. Validar visual.
-5. Al terminar: actualizar Prompt + Skills (.md/.pdf/.skill).
+4. Regenerar y correr **`scripts/chequear_actualizacion.py`**. Si avisa que el stock va para atrás, **frenar y preguntarle a Erik**.
+5. Pedir correr **`Subir_a_GitHub.bat`** + Ctrl+F5. Validar visual.
+6. Al terminar: actualizar el estado en `CLAUDE.md` y, si cambió una regla, `Historial/Historial_Proyecto.md`.
 
 ## Flujo mensual del Histórico
 A mes cerrado, tras sacar los pedidos, guardar una **copia congelada** del Forecast como `Forecast MM-26.xlsm` en `...\Forecast\Histórico\`. Se sigue trabajando en el `Forecast.xlsm` vivo. El `.bat` la suma una vez (cache).

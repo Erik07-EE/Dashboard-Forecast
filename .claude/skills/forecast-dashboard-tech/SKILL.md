@@ -11,10 +11,11 @@ description: >-
 
 Código, estructura y fórmulas del Dashboard Forecast.
 
-## Rutas (bash VM)
-- Plantilla: `.../Forecast/Generador/plantilla.html` (editar). HTML final: `.../Dashboard_Forecast.html` (no editar).
-- Generador: `.../Generador/generar_dashboard.py`. Cache: `.../Generador/historico_vp.json`.
-- Los Excel viven en Drive (G:); a veces no montan en bash → operar vía el `.bat`.
+## Rutas (Claude Code sobre Windows)
+- Plantilla: `scripts/plantilla.html` (editar). HTML final: `Dashboard_Forecast.html` (no editar).
+- Generador: `scripts/generar_dashboard.py`. Cache: `scripts/historico_vp.json`. Chequeo previo: `scripts/chequear_actualizacion.py`.
+- Los Excel viven en Drive (`G:\Unidades compartidas\...`) y **desde Claude Code se leen bien**: se puede correr el generador directo, sin depender del `.bat`.
+- Node no está en el PATH de bash: usar la ruta completa `C:\Program Files\nodejs\node.exe` para `node --check`.
 
 ## Estructura Forecast.xlsm (hoja Forecast)
 - Fila 3 headers; datos desde fila 6. Bloques mensuales **stride 14 desde col CJ(88)**: VP unidades=+1, VP USD=+4, Stock inicio=+5, Meses=+7, Cant. confirmada=+10.

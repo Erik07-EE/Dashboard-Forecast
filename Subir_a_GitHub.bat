@@ -12,61 +12,118 @@ REM =========================================================================
 
 cd /d "%~dp0"
 
-REM ---- Detectar Python (py launcher o python real, ignorando el stub de Store) ----
+echo(
+echo  ==================================================
+echo    Publicar Dashboard Forecast
+echo  ==================================================
+
+REM ---- Detectar Python (py launcher o python real) ----
 set "PY="
 py -3 --version >nul 2>nul && set "PY=py -3"
 if not defined PY (
   python --version >nul 2>nul && set "PY=python"
 )
+if not defined PY goto :sin_python
 
 echo(
-echo === 1/3  Regenerando dashboard desde el Forecast + Costos ===
-if defined PY (
-  %PY% "generador\generar_dashboard.py" "%FORECAST%" "Dashboard_Forecast.html" "%COSTOS%"
-  if errorlevel 1 (
-    echo.
-    echo ERROR al generar el dashboard. Revisa las rutas FORECAST y COSTOS arriba.
-    pause
-    exit /b 1
-  )
-) else (
-  echo ATENCION: no se encontro Python en esta PC.
-  echo Se subira la version ACTUAL del dashboard sin regenerar.
-  echo Para que se actualice solo, instala Python desde python.org
-  echo y tilda "Add python.exe to PATH". Luego corre: pip install openpyxl
-)
+echo === 1/4  Regenerando el dashboard desde el Forecast + Costos ===
+%PY% "scripts\generar_dashboard.py" "%FORECAST%" "Dashboard_Forecast.html" "%COSTOS%"
+if errorlevel 1 goto :error_generar
 
 echo(
-echo === 2/3  Preparando publicacion en GitHub ===
-if not exist ".git" (
-  echo Primera vez: inicializando repositorio git...
-  git init
-  git branch -M main
-  git remote add origin "%REPO_URL%"
-) else (
-  git remote set-url origin "%REPO_URL%" 2>nul
-)
+echo === 2/4  Revisando que los datos esten al dia ===
+%PY% "scripts\chequear_actualizacion.py"
+if errorlevel 2 goto :preguntar_igual
+if errorlevel 1 goto :error_chequeo
+goto :mostrar_cambios
 
+:preguntar_igual
 echo(
-echo === 3/3  Subiendo a GitHub ===
+set "RTA2=N"
+set /p "RTA2=  Publicar igual? (S/N): "
+if /i not "%RTA2%"=="S" goto :cancelado
+
+:mostrar_cambios
+echo(
+echo === 3/4  Esto es lo que se va a publicar ===
+echo(
+git rev-parse --is-inside-work-tree >nul 2>&1
+if errorlevel 1 goto :primera_vez
+git status --short
+echo(
+set "RTA=N"
+set /p "RTA=  Publicar estos cambios? (S/N): "
+if /i not "%RTA%"=="S" goto :cancelado
+git remote set-url origin "%REPO_URL%" 2>nul
+goto :subir
+
+:primera_vez
+echo  Primera vez: preparando la carpeta para publicar...
+git init
+git branch -M main
+git remote add origin "%REPO_URL%"
+
+:subir
+echo(
+echo === 4/4  Subiendo a GitHub ===
 git add -A
 git commit -m "Actualiza dashboard %date% %time%"
 git push -u origin main
-if errorlevel 1 (
-  echo.
-  echo ================== ATENCION ==================
-  echo El push fallo. Suele ser por login la primera vez.
-  echo Si se abrio una ventana de GitHub, inicia sesion con Erik07-EE
-  echo y volve a correr este .bat.
-  echo ==============================================
-  pause
-  exit /b 1
-)
+if errorlevel 1 goto :error_subir
 
 echo(
-echo ================== LISTO ==================
-echo Dashboard publicado. Tu URL de GitHub Pages:
+echo  --------------------------------------------------
+echo   OK - Dashboard publicado.
+echo(
 echo   %PAGES_URL%
-echo (La primera vez, activa Pages en Settings ^> Pages ^> Branch: main / root)
-echo ===========================================
+echo(
+echo   Abrilo con Ctrl+F5 para ver la version nueva.
+echo   Puede tardar un minuto en actualizarse.
+echo  --------------------------------------------------
+goto :fin
+
+:cancelado
+echo(
+echo  Cancelado. No se subio nada a GitHub.
+echo  (El dashboard de tu PC si quedo regenerado.)
+goto :fin
+
+:sin_python
+echo(
+echo  ERROR: no se encontro Python en esta PC.
+echo  Instalalo desde python.org y tilda "Add python.exe to PATH".
+echo  Despues corre:  pip install openpyxl
+goto :fin
+
+:error_generar
+echo(
+echo  --------------------------------------------------
+echo   ERROR al generar el dashboard.
+echo   Revisa que estas rutas existan y que Drive este andando:
+echo     %FORECAST%
+echo     %COSTOS%
+echo   No se subio nada.
+echo  --------------------------------------------------
+goto :fin
+
+:error_chequeo
+echo(
+echo  --------------------------------------------------
+echo   ERROR al revisar el dashboard. Mira el detalle arriba.
+echo   No se subio nada.
+echo  --------------------------------------------------
+goto :fin
+
+:error_subir
+echo(
+echo  --------------------------------------------------
+echo   ERROR al publicar. Mira el detalle arriba.
+echo   Si se abrio una ventana de GitHub, inicia sesion
+echo   con Erik07-EE y volve a correr este archivo.
+echo   Los cambios quedaron guardados en tu PC: no se perdio nada.
+echo  --------------------------------------------------
+goto :fin
+
+:fin
+echo(
 pause
