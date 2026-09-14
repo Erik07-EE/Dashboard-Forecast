@@ -94,9 +94,15 @@ Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
 - [x] Fórmula "Meses fin de mes" corregida (numerador = Stock ini + Compra − VP).
       Verificado el 14/09 en el Forecast.xlsm: **5.581 filas × 12 meses, todas OK**.
       MA-0040 (fila 12) da 0.0 en septiembre, como se esperaba.
-- [ ] Revisar la doble estacionalidad en CK (no decidido). En la condición del IF compara
-      `CJ*CS$2*CV$2` contra el stock, pero CJ **ya trae** estacionalidad y evento. Con
-      factor <1 no se nota; en temporada alta puede topear mal la venta.
+- [x] Doble estacionalidad en la Venta proyectada, **corregida el 14/09**. La condición
+      del IF multiplicaba la demanda por estacionalidad y evento cuando la demanda **ya
+      los traía**, así que proyectaba ventas por encima del stock disponible. Afectaba a
+      326 códigos y 849 unidades al año. Se sacó el `*estac$2*evento$2` de la condición,
+      en las 12 columnas × 5.581 filas. Verificado: 0 casos mal.
+
+Ya no quedan pendientes del Excel. Las mejoras que siguen abiertas están en
+`Historial/Mejoras_Dashboard_Forecast.pdf`: validar la estructura del Excel al generar,
+alertas/KPIs arriba, automatizar la generación, toggle de moneda e histórico acumulado.
 
 ## Confidencialidad (decidido el 14/09)
 
