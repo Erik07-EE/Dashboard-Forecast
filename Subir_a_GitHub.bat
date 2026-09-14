@@ -5,7 +5,6 @@ setlocal
 
 REM ================== CONFIGURACION (editar una sola vez) ==================
 set "FORECAST=G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast\Forecast.xlsm"
-set "COSTOS=G:\Unidades compartidas\7. Compras y producto\7.4. Producto\7.4.5. Gestor de precios\Masters\Costos.xlsm"
 set "REPO_URL=https://github.com/Erik07-EE/Dashboard-Forecast.git"
 set "PAGES_URL=https://erik07-ee.github.io/Dashboard-Forecast/Dashboard_Forecast.html"
 REM =========================================================================
@@ -27,7 +26,7 @@ if not defined PY goto :sin_python
 
 echo(
 echo === 1/4  Regenerando el dashboard desde el Forecast + Costos ===
-%PY% "scripts\generar_dashboard.py" "%FORECAST%" "Dashboard_Forecast.html" "%COSTOS%"
+%PY% "scripts\generar_dashboard.py" "%FORECAST%" "Dashboard_Forecast.html"
 if errorlevel 1 goto :error_generar
 
 echo(
@@ -99,9 +98,8 @@ goto :fin
 echo(
 echo  --------------------------------------------------
 echo   ERROR al generar el dashboard.
-echo   Revisa que estas rutas existan y que Drive este andando:
+echo   Revisa que el Forecast exista y que Drive este andando:
 echo     %FORECAST%
-echo     %COSTOS%
 echo   No se subio nada.
 echo  --------------------------------------------------
 goto :fin

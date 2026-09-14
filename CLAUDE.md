@@ -70,10 +70,18 @@ negocio.** El estado actual, en cambio, está en este archivo.
 | Node.js | v24 en `C:\Program Files\nodejs\node.exe` (no está en el PATH de bash) |
 | Google Drive | unidad `G:` — desde Claude Code los Excel se leen bien |
 
-Los dos Excel fuente están en Drive:
+Las fuentes de datos son dos:
 
-- `G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast\Forecast.xlsm`
-- `G:\Unidades compartidas\7. Compras y producto\7.4. Producto\7.4.5. Gestor de precios\Masters\Costos.xlsm`
+- **Forecast.xlsm** en Drive:
+  `G:\Unidades compartidas\7. Compras y producto\7.3. Compras\7.3.3. Rotación\Forecast\Forecast.xlsm`
+- **Gestor de precios**: Google Sheet «Gestor de precios - DATOS»
+  (id `1-X6PyLTioEo_mhMI_P2hKq5zIOywnsIkOPGfKFYRg2Y`). Es **privado**, así que el `.bat` no
+  puede bajarlo: lo baja Claude con el conector de Drive y deja la copia en
+  `scripts/costos_gestor.xlsx`. Esa copia está en `.gitignore` — es el master de costos y
+  márgenes de la empresa y el repo es público.
+
+⚠️ El viejo `Costos.xlsm` quedó **obsoleto el 14/09/2026**. Ya no se lee. Si alguien lo
+sigue actualizando, ignorarlo: la verdad está en el Sheet.
 
 ## Estado actual (14/09/2026)
 
@@ -88,6 +96,13 @@ Los dos Excel fuente están en Drive:
   `.claude/skills/`. Siguen recuperables desde el historial de git si hicieran falta.
 - Confidencialidad: Erik decidió (14/09) **dejar el dashboard público como está**. Ver
   abajo.
+- **Costos migrados al Gestor de precios (14/09).** El `Costos.xlsm` quedó obsoleto. El
+  CMM ya no lo calcula el dashboard: lo trae del Gestor. Resultado del cambio: 3.943
+  códigos con el CMM casi igual, 1.535 que cambian (0,6 puntos típico, por costos más
+  frescos) y 46 genéricos «reconstruidos» que salen de Liquidación por no tener CMM
+  cargado — correcto según Erik: son códigos de uso especial, no llevan ese dato.
+- La venta real ahora sale **solo** de la hoja `V.R. mensual` del Forecast.xlsm. Se eliminó
+  el respaldo a un archivo suelto: uno viejo olvidado en la carpeta pisaba el dato bueno.
 
 Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
 

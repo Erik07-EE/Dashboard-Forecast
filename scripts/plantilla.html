@@ -455,9 +455,14 @@ function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const 
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 function idealU(r,h){let need=h;if(need==null||need<=0)return 0;let acc=0;for(let m=0;m<12&&need>0;m++){const vp=mval(r,m,3)||0;const take=Math.min(1,need);acc+=vp*take;need-=take;}return acc;}
 function excU(r,f){const id=r[IDEAL];if(id==null||id<=0||r[4]==null)return null;return r[4]-idealU(r,id*f);}
-function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1])return null;const costo=c[0]||0,lista=c[1],cur=c[3]||'USD';
+function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1]||c[2]==null)return null;const costo=c[0]||0,lista=c[1],cur=c[3]||'USD';
   const vp=mval(r,0,3),ideal=r[IDEAL],stock=r[4],meses=r[5];
-  const cf=d=>{const pv=lista*(1-d)*0.7;return pv?(pv*0.93-costo)/pv:null;};const cm=cf(0);
+  // CMM: viene del Gestor de precios (col F). Los CMM con descuento se derivan de ese
+  // mismo numero, asi todo cierra aunque la receta del costo este incompleta.
+  // Sin CMM en el Gestor no se evalua liquidacion: no se inventa con una formula
+  // propia (daba numeros absurdos en los codigos con lista 0,01).
+  const cmmBase=c[2];
+  const cf=d=>(cmmBase==null||d>=1)?null:0.93-(0.93-cmmBase)/(1-d);const cm=cf(0);
   const cs=LIQDS.map(cf);const ok=LIQDS.map((d,i)=>[d,cs[i]]).filter(x=>x[1]!=null&&x[1]>=st.minCM);
   const dmax=ok.length?ok.reduce((a,b)=>b[1]<a[1]?b:a)[0]:0.05;const dliq=dmax-st.dtoGap;
   const _em=(meses!=null&&ideal!=null)?meses-ideal:null;const excmes=(_em!=null&&_em>0)?_em:0;const _eu=excU(r,st.liq||1);const excu=(_eu!=null&&_eu>0)?_eu:0;const pvmin=lista*0.7*(1-dmax);

@@ -22,7 +22,10 @@ Instrucciones principales para actualizar/editar y publicar el Dashboard Forecas
 
 ## Fuentes de datos (carpeta del Forecast en Drive)
 - **Forecast.xlsm** (hoja Forecast): stock, VP, compras, IMPO, tendencia (AN), precio Mix (AS), venta real unidades (AB–AM), Caja x (col L), hoja **Estacionalidad**.
-- **Costos.xlsm** (hoja General): Costo=AC, Lista 1=J, Moneda=I, Q=17. CMM la calcula el dashboard con J.
+- **Gestor de precios** (Google Sheet «Gestor de precios - DATOS», hoja General, desde la fila 2):
+  Código=B, **CMM %=F**, Moneda=H, Lista vigente=I, Costo=M. El Sheet es privado → lo baja
+  Claude con el conector de Drive y deja la copia en `scripts/costos_gestor.xlsx` (no se sube
+  al repo). El `Costos.xlsm` quedó **obsoleto el 14/09/2026**: no usarlo.
 - **V.R. mensual.xlsx**: venta real facturada por código/mes, columna **$-USD** (USD para Importados, $ para Nacionales). Se arma desde Libro1.xlsx (SAP).
 - **Forecast MM-AA** (fotos congeladas): en la **subcarpeta `Forecast\Histórico\`**. Para el Histórico. Se leen una vez (cache).
 

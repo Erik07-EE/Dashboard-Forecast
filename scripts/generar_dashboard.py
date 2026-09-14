@@ -174,35 +174,53 @@ def extract(path):
             "real":realmap,"real_labels":real_labels,
             "src":os.path.basename(path),"gen":datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}
 
+COSTOS_LOCAL = 'costos_gestor.xlsx'   # copia del Google Sheet, al lado de este script
+
 def load_costos(path):
+    """Costos y CMM del Gestor de precios.
+
+    Fuente: Google Sheet 'Gestor de precios - DATOS', hoja 'General'.
+    Encabezados en la fila 1, datos desde la fila 2:
+
+        B = Codigo | F = CMM % | H = Moneda | I = Lista vigente | M = Costo
+
+    El Sheet es privado, asi que no se puede bajar desde un script suelto: lo baja
+    Claude desde el chat (conector de Google Drive) y deja la copia en
+    scripts/costos_gestor.xlsx. Esa copia es la que se lee aca.
+
+    Reemplaza al viejo Costos.xlsm, obsoleto desde el 14/09/2026.
+
+    Devuelve {codigo: [costo, lista, cmm, moneda]}. El CMM viene del Gestor: el
+    dashboard ya no lo calcula (ver computeLiq en plantilla.html)."""
     try:
         if not os.path.exists(path):
-            print("  Costos: NO existe el archivo en la ruta:", path); return {}
+            print('  Costos: NO existe la copia del Gestor en:', path)
+            print('          Pedile a Claude que baje la planilla de nuevo.')
+            return {}
         wb=openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
         gs=None
         for sn in wb.sheetnames:
-            if sn.strip().lower()=="general": gs=wb[sn]; break
+            if sn.strip().lower()=='general': gs=wb[sn]; break
         if gs is None:
-            print("  Costos: no hay hoja 'General'. Hojas:", ", ".join(wb.sheetnames)); return {}
+            print('  Costos: no hay hoja General. Hojas:', ', '.join(wb.sheetnames)); return {}
         d={}
         def nf(x):
             try: return round(float(x),4)
             except: return None
-        for r in gs.iter_rows(min_row=4, max_row=6000, max_col=30, values_only=True):
+        for r in gs.iter_rows(min_row=2, max_row=8000, max_col=16, values_only=True):
             cod=r[1]
             if cod and str(cod).strip():
-                cur=r[ci("I")-1]; cur="USD" if (cur and "USD" in str(cur).upper()) else "$"
-                d[str(cod).strip()]=[nf(r[ci("AC")-1]), nf(r[ci("J")-1]), nf(r[ci("F")-1]), cur, nf(r[ci("Q")-1])]
-        if not d: print("  Costos: la hoja '%s' se leyó pero 0 códigos (¿código en col B, datos desde fila 4?)"%gs.title)
+                cur=r[ci('H')-1]; cur='USD' if (cur and 'USD' in str(cur).upper()) else '$'
+                d[str(cod).strip()]=[nf(r[ci('M')-1]), nf(r[ci('I')-1]), nf(r[ci('F')-1]), cur]
+        if not d:
+            print('  Costos: la hoja %s se leyo pero 0 codigos (codigo en col B, datos desde fila 2?)'%gs.title)
+        else:
+            import datetime as _dt
+            _m=_dt.datetime.fromtimestamp(os.path.getmtime(path))
+            print('  Costos: Gestor de precios -> %d codigos (copia del %s)'%(len(d), _m.strftime('%d/%m/%Y %H:%M')))
         return d
     except Exception as e:
-        print("  Costos: error leyendo el archivo:", e); return {}
-
-def find_costos(folder):
-    import glob as _g
-    for p in _g.glob(os.path.join(folder,"*ostos*.xlsm")):
-        if not os.path.basename(p).startswith("~$"): return p
-    return None
+        print('  Costos: error leyendo la copia del Gestor:', e); return {}
 
 _MES={'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,'jul':7,'ago':8,'sep':9,'sept':9,'oct':10,'nov':11,'dic':12}
 def _parse_label(s):
@@ -300,37 +318,29 @@ def _parse_realusd_rows(rr, origen):
     print("  Venta real: %s -> %d codigos, meses %s (cant/pesos/dolares)"%(origen,len(d),allmo))
     return d
 
-def read_realusd(folder, forecast_path=None):
-    # 1) Preferencia: hoja "V.R. mensual" dentro del propio Forecast.xlsm
-    if forecast_path and os.path.exists(forecast_path):
-        try:
-            wb=openpyxl.load_workbook(forecast_path, read_only=True, data_only=True, keep_links=False)
-            hoja=None
-            for sn in wb.sheetnames:
-                nn=sn.strip().lower().replace(".","").replace(" ","")
-                if nn in ("vrmensual","ventareal","vr"):
-                    hoja=wb[sn]; break
-            if hoja is not None:
-                rr=[list(x) for x in hoja.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
-                return _parse_realusd_rows(rr, "hoja '%s' de %s"%(hoja.title, os.path.basename(forecast_path)))
-        except Exception as e:
-            print("  Venta real: no pude leer la hoja interna, uso archivo suelto:", e)
-    # 2) Respaldo: archivo suelto V.R. mensual en la carpeta
-    import glob as _g
-    cand=None
-    for pat in ["Venta_real*.xls*","Venta real*.xls*","V.R*.xls*","VR *.xls*","V R *.xls*"]:
-        for pp in _g.glob(os.path.join(folder,pat)):
-            if not os.path.basename(pp).startswith("~$"): cand=pp; break
-        if cand: break
-    if not cand:
-        print("  Venta real: no hay hoja 'V.R. mensual' ni archivo suelto"); return {}
-    try:
-        wb=openpyxl.load_workbook(cand, read_only=True, data_only=True, keep_links=False)
-        ws=wb.active
-        rr=[list(x) for x in ws.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
-        return _parse_realusd_rows(rr, os.path.basename(cand))
-    except Exception as e:
-        print("  Venta real: error",e); return {}
+def read_realusd(forecast_path):
+    """Venta real: SIEMPRE de la hoja "V.R. mensual" del propio Forecast.xlsm.
+
+    Sin respaldo a un archivo suelto (decision de Erik, 14/09/2026): un archivo viejo
+    olvidado en la carpeta pisaba el dato bueno sin que se notara. Si la hoja no esta,
+    se corta la generacion en vez de publicar un Historico sin venta real."""
+    if not (forecast_path and os.path.exists(forecast_path)):
+        raise SystemExit("ERROR: no se encontro el Forecast.xlsm para leer la venta real.")
+    wb=openpyxl.load_workbook(forecast_path, read_only=True, data_only=True, keep_links=False)
+    hoja=None
+    for sn in wb.sheetnames:
+        nn=sn.strip().lower().replace(".","").replace(" ","")
+        if nn in ("vrmensual","ventareal","vr"):
+            hoja=wb[sn]; break
+    if hoja is None:
+        msg = ("""
+ERROR: el Forecast.xlsm no tiene la hoja 'V.R. mensual'.
+       Hojas encontradas: {hojas}
+       Sin esa hoja el Historico queda sin venta real, asi que no se genera
+       el dashboard. Revisa el nombre de la hoja en el Excel.""")
+        raise SystemExit(msg.format(hojas=', '.join(wb.sheetnames)))
+    rr=[list(x) for x in hoja.iter_rows(min_row=1,max_row=8000,max_col=40,values_only=True)]
+    return _parse_realusd_rows(rr, "hoja '%s' de %s"%(hoja.title, os.path.basename(forecast_path)))
 
 def build_historico(folder, real_map, real_labels, cache_path, realusd, imp_cods=None):
     imp_cods=imp_cods or set()
@@ -398,12 +408,11 @@ if __name__=="__main__":
     tpl = os.path.join(folder,"plantilla.html")
     print("Leyendo:",src)
     data=extract(src)
-    cp = sys.argv[3] if len(sys.argv)>3 else find_costos(folder)
-    data["costos"]=load_costos(cp) if cp else {}
-    print("Costos:",cp,"->",len(data["costos"]),"codigos")
+    cp = sys.argv[3] if len(sys.argv)>3 else os.path.join(folder, COSTOS_LOCAL)
+    data["costos"]=load_costos(cp)
     try:
         imp_cods={data["rows"][i][2] for i in range(len(data["rows"])) if data["UN"][data["rows"][i][0]]=="Importados"}
-        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"), read_realusd(os.path.dirname(os.path.abspath(src)), os.path.abspath(src)), imp_cods)
+        hist=build_historico(os.path.dirname(os.path.abspath(src)), data.get("real",{}), data.get("real_labels",[]), os.path.join(folder,"historico_vp.json"), read_realusd(os.path.abspath(src)), imp_cods)
         data["hist"]=hist
         print("Historico: meses",len(hist["months"]),"| codigos",len(hist["vp"]))
     except Exception as e:

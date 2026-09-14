@@ -13,3 +13,7 @@ Thumbs.db
 
 # Documentacion interna: queda solo en la PC, no se publica
 Historial/
+
+# Copia local del Gestor de precios: es el master de costos y margenes
+# de toda la empresa. El repo es publico, asi que NO se sube.
+scripts/costos_gestor.xlsx

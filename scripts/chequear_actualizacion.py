@@ -7,6 +7,7 @@ Lo que chequea:
   1. Que la fecha del stock (celdas BN2/BO2 del Forecast.xlsm) no vaya para atras.
      Paso el 14/09/2026: el Excel tenia stock del 04/09 y lo publicado era del 07/09.
   2. Que el dashboard tenga datos (codigos > 0).
+  3. Que la copia local del Gestor de precios (costos y CMM) no este vieja.
 
 Salida:
   0 = todo bien, se puede publicar
@@ -21,6 +22,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
          "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
@@ -69,6 +71,30 @@ def data_publicada(carpeta):
         return None
 
 
+DIAS_COSTOS = 30   # a partir de aca la copia del Gestor se considera vieja
+
+
+def revisar_costos(carpeta):
+    """Avisa si la copia local del Gestor de precios quedo vieja o no esta.
+
+    La baja Claude desde el chat (el Sheet es privado), asi que el .bat no puede
+    refrescarla solo: lo unico que puede hacer es avisar."""
+    ruta = os.path.join(carpeta, 'scripts', 'costos_gestor.xlsx')
+    print('')
+    if not os.path.exists(ruta):
+        print('  Costos: FALTA la copia del Gestor de precios.')
+        print('          El dashboard sale sin costos ni CMM.')
+        print('          Pedile a Claude que baje la planilla.')
+        return False
+    dias = int((time.time() - os.path.getmtime(ruta)) / 86400)
+    if dias > DIAS_COSTOS:
+        print('  Costos: la copia del Gestor es de hace %d dias.' % dias)
+        print('          Conviene que Claude la baje de nuevo antes de publicar.')
+        return False
+    print('  Costos: copia del Gestor de hace %d dia(s). Al dia.' % dias)
+    return True
+
+
 def main():
     carpeta = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ruta = sys.argv[1] if len(sys.argv) > 1 else os.path.join(carpeta, "Dashboard_Forecast.html")
@@ -79,6 +105,7 @@ def main():
         print("ERROR: no se pudo leer el dashboard nuevo (%s)" % e)
         return 1
 
+    costos_ok = revisar_costos(carpeta)
     viejo = data_publicada(carpeta)
 
     print("")
@@ -95,7 +122,7 @@ def main():
     if viejo is None:
         print("")
         print("  (No se pudo comparar con el dashboard publicado. Sigo igual.)")
-        return 0
+        return 0 if costos_ok else 2
 
     print("")
     print("  Lo que ya esta publicado:")
@@ -123,12 +150,17 @@ def main():
         if v_rows[i] != n_rows[i]:
             cambiadas += 1
 
+    v_cos, n_cos = viejo.get("costos") or {}, nuevo.get("costos") or {}
+    cambiados_cos = sum(1 for k in n_cos if v_cos.get(k) != n_cos[k])
+
     print("")
     if cambiadas:
-        print("  Cambiaron %s codigos respecto de lo publicado." % cambiadas)
-    else:
+        print("  Cambiaron %s codigos (stock, compras, proyeccion)." % cambiadas)
+    if cambiados_cos:
+        print("  Cambiaron %s costos o CMM." % cambiados_cos)
+    if not cambiadas and not cambiados_cos:
         print("  No cambio ningun dato: el dashboard publicado ya es el ultimo.")
-    return 0
+    return 0 if costos_ok else 2
 
 
 if __name__ == "__main__":

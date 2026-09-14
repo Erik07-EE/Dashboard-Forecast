@@ -22,6 +22,10 @@ Código, estructura y fórmulas del Dashboard Forecast.
 - Identidad: UN=A, GA=B, Código=C, Cat=F, Meses/Cat (Ideal)=H, **Caja x=L (Cant.)**, Stock=BN, Meses=BO, Tendencia=AN, Precio Mix=AS.
 - Venta real unidades: AB–AM (abs). Estac/Evento/TC del mes en fila 2 del bloque (offsets +9,+12,+4) — pero ver abajo.
 
+## Costos (`DATA.costos[codigo]`)
+`[costo, lista, cmm, moneda]` — antes eran 5 (dos no se usaban). En la plantilla: `c[0]` costo,
+`c[1]` lista, **`c[2]` CMM**, `c[3]` moneda. El costo sirve solo para CMV y costo del exceso.
+
 ## Fila de datos (índices en `rows[]`)
 `[ui,gi,cod,cti,sa,ma]`(0-5) + flat 12×6 (6-77: si,mesesIni,compra,VP,stockFin,mesesFin) + `ideal`(78) + vpx 12×2 (79-102: base,USD) + `an`(103) + `pp`/mix(104) + **`cajax`(105)**. Constantes JS: `IDEAL=78`, `CAJAX=105`.
 
@@ -36,7 +40,12 @@ Se arma desde `Libro1.xlsx` (SAP): Fecha=G, Código=O, Grupo=P, Cantidad=Q, Tota
 
 ## Fórmulas
 - Exceso (método B): ExcesoU = Stock − ΣVP(meses del Ideal); factor ×N; sólo >0.
-- CMM=(J×0.7×0.93−Costo)/(J×0.7). CMM Liq con J×(1−DtoLiq). Dto Máx = mayor dto con contribución ≥ mín; Dto Liq = Máx − gap.
+- **CMM: ya no se calcula.** Sale del Gestor de precios (col F) y llega como `costos[cod][2]`.
+  Los CMM con descuento se derivan de ese mismo número: **CMM(d) = 0,93 − (0,93 − CMM)/(1−d)**
+  (`cf(d)` en `computeLiq`), así cierran aunque la receta del costo esté incompleta. Si el
+  Gestor no trae CMM, `computeLiq` devuelve null: el código no entra en Liquidación y **no se
+  inventa con una fórmula propia** (daba absurdos en los genéricos con lista 0,01).
+  Dto Máx = mayor dto con contribución ≥ mín; Dto Liq = Máx − gap.
 - Costo total=Costo×ExcesoU; Mix total=Mix×ExcesoU; Mix total Liq=Mix×(1−DtoLiq)×ExcesoU.
 
 ## Simulador Proyección (renderVP)
