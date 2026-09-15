@@ -84,7 +84,9 @@ thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thea
 .idpanel{position:sticky;left:0;z-index:6;width:var(--idw,538px);max-width:var(--idw,538px);overflow:hidden;}
 #tw-fc{scroll-snap-type:x mandatory;scroll-padding-left:var(--idw,594px);}
 #tabla thead tr.r1 th.mcol{scroll-snap-align:start;}
-#tabla thead tr.r1 th.mcol .mhold{position:sticky;left:calc(var(--idw,538px) + 10px);display:inline-block;}
+/* .mhold agrupa el nombre del mes y su selector. Ya no va pegajoso: con el
+   enganche del scroll un mes nunca queda a medias, asi que el titulo va
+   centrado sobre su bloque, como corresponde. */
 .idc{position:sticky;}/* la ultima columna fija lleva un borde con sombra: al scrollear de costado, las
    columnas de mes pasan por debajo y sin este corte se leian como rotas */
 .idend{border-right:2px solid #c5cae9;box-shadow:7px 0 9px -5px rgba(26,35,126,.30);}

@@ -194,8 +194,9 @@ así que conviene leer por qué antes de tocarlo:
   último mes en vez de al siguiente enganche deja un vacío enorme en pantallas anchas.
 - Va en `setTimeout`, no en `requestAnimationFrame`: rAF no corre con la pestaña en
   segundo plano y la calibración quedaba sin hacer.
-- El nombre del mes y su selector van juntos dentro de `.mhold`, que es lo pegajoso. Si se
-  los pega por separado, se superponen.
+- El nombre del mes y su selector van juntos dentro de `.mhold`, **centrados** sobre el
+  bloque. Se probó hacerlos pegajosos para que no se escondieran al scrollear: no hace
+  falta (el enganche ya evita que un mes quede a medias) y además los desalinea.
 - La última columna fija lleva borde y sombra (`.idend`) — esa sombra **debe** incluir el
   `inset 0 -3px 0` amarillo o se pierde la línea del encabezado.
 
