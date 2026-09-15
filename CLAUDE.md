@@ -175,7 +175,16 @@ Erik la ajusto pantalla por pantalla. **No volver atras sin que el lo pida:**
 **El scroll lateral del Forecast** engancha al inicio de cada mes. Costó tres intentos,
 así que conviene leer por qué antes de tocarlo:
 
-- El enganche es `scroll-snap` con `scroll-padding-left` = ancho del bloque fijo (`--idw`).
+- **La causa de fondo, la que costó encontrar:** la tabla es `table-layout:auto` y
+  **estira columnas según el contenido**. GA se declara en 110px y termina midiendo 165,9
+  ("Motores de arranque" es largo). Los `left` de las columnas fijas salían de los anchos
+  **declarados**, así que quedaban clavadas 56px antes de donde el bloque termina de
+  verdad. De ahí venía todo: el panel «Stock al…» que parecía sobresalir, los meses
+  corridos y la franja de columna cortada. Ahora los `left` se escriben en una hoja
+  `#idcpos` (una regla `.idcpN` por columna) que el JS recalcula **midiendo el HTML**
+  después de dibujar. Por clase y no celda por celda: son 5.500 filas.
+- El enganche es `scroll-snap` con `scroll-padding-left` = ancho del bloque fijo (`--idw`),
+  sin redondear: redondearlo corre el enganche un píxel y asoma una hilacha.
 - **Todo se mide del HTML, nunca se calcula.** El bloque fijo no mide la suma de los
   anchos declarados (la tabla estira GA) y los meses no arrancan donde uno supone: en
   1280px arrancan en 593,9 y no en 538. Al medir hay que **sumarle el `scrollLeft`**, y no
