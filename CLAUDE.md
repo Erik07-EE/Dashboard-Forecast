@@ -150,8 +150,35 @@ También se limpió la interfaz a pedido suyo: sin textos de ayuda, sin el botó
 conteo de candidatos, sin la columna "Meses máx" en Acción comercial (preview **y** Excel,
 que pasó a 29 columnas), barra de filtros en un renglón y solapas fijas al scrollear.
 
-## Datos del Excel que conviene mirar
+## La interfaz, como quedo el 14/09
 
+Erik la ajusto pantalla por pantalla. **No volver atras sin que el lo pida:**
+
+- **Solapas:** Forecast · Estado Stock · Acción comercial · Proyección · Histórico.
+- **Forecast:** GA · Código · Cat · **Packaging** · **Stock hoy** · **Meses hoy**. UN y
+  "Meses máx" ya no se muestran (el dato se sigue usando para el mínimo y los estados).
+- **Estado Stock:** tabla de **15 filas**. El **Faltante va abierto por estado**:
+  Quiebre y Riesgo con costo a invertir **y** mix que se podría vender; "Hasta el
+  máximo" **solo el costo**, porque esos códigos ya tienen stock para vender.
+- **Acción comercial:** sin "Meses máx", sin "Costo total", sin botón PDF, sin conteo de
+  candidatos ni título de preview. El Excel quedo en **28 columnas**.
+- Sin textos de ayuda en ninguna solapa. Barra de filtros en un renglón, solapas fijas.
+
+⚠️ **Dos trampas del HTML, por si hay que tocarlo:**
+
+1. **La fila de TOTALES de Acción comercial tiene las celdas contadas a mano.** Si se
+   agrega o saca una columna, hay que ajustarla o los totales quedan corridos de lugar.
+2. **El Excel de Acción comercial va por índices fijos** (colores, anchos, formatos y
+   merges atados al número de columna). Sacar una del medio obliga a renumerar todo:
+   conviene reescribir `exportLiqXlsx` entera y verificar el resultado, no parchearla.
+
+**El scroll lateral del Forecast** engancha al inicio de cada mes (`scroll-snap` con
+`scroll-padding-left` = ancho del bloque fijo, que el JS publica en `--idw`). Sin eso
+quedaba una franja de la columna tapada mostrando números cortados, que se leía como
+datos corruptos. La última columna fija lleva borde y sombra (`.idend`) — esa sombra
+**debe** incluir el `inset 0 -3px 0` amarillo o se pierde la línea del encabezado.
+
+## Datos del Excel que conviene mirar
 - **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,
   IMI2509.10, IV2313.10, RV099.30, BB1010.30, BDE0906.30. Dan meses de cobertura absurdos
   (hasta −108). No rompen nada, pero el número que se ve no tiene sentido.
