@@ -172,11 +172,25 @@ Erik la ajusto pantalla por pantalla. **No volver atras sin que el lo pida:**
    merges atados al número de columna). Sacar una del medio obliga a renumerar todo:
    conviene reescribir `exportLiqXlsx` entera y verificar el resultado, no parchearla.
 
-**El scroll lateral del Forecast** engancha al inicio de cada mes (`scroll-snap` con
-`scroll-padding-left` = ancho del bloque fijo, que el JS publica en `--idw`). Sin eso
-quedaba una franja de la columna tapada mostrando números cortados, que se leía como
-datos corruptos. La última columna fija lleva borde y sombra (`.idend`) — esa sombra
-**debe** incluir el `inset 0 -3px 0` amarillo o se pierde la línea del encabezado.
+**El scroll lateral del Forecast** engancha al inicio de cada mes. Costó tres intentos,
+así que conviene leer por qué antes de tocarlo:
+
+- El enganche es `scroll-snap` con `scroll-padding-left` = ancho del bloque fijo (`--idw`).
+- **Todo se mide del HTML, nunca se calcula.** El bloque fijo no mide la suma de los
+  anchos declarados (la tabla estira GA) y los meses no arrancan donde uno supone: en
+  1280px arrancan en 593,9 y no en 538. Al medir hay que **sumarle el `scrollLeft`**, y no
+  forzar `scrollLeft=0` porque el propio enganche lo impide.
+- El tope del scroll no caía en ningún enganche, así que se le agrega **aire al final**
+  (margen derecho de la tabla) hasta el primer punto de enganche posterior. Apuntar al
+  último mes en vez de al siguiente enganche deja un vacío enorme en pantallas anchas.
+- Va en `setTimeout`, no en `requestAnimationFrame`: rAF no corre con la pestaña en
+  segundo plano y la calibración quedaba sin hacer.
+- El nombre del mes y su selector van juntos dentro de `.mhold`, que es lo pegajoso. Si se
+  los pega por separado, se superponen.
+- La última columna fija lleva borde y sombra (`.idend`) — esa sombra **debe** incluir el
+  `inset 0 -3px 0` amarillo o se pierde la línea del encabezado.
+
+Verificado en 1280 y 1680 px, en todas las posiciones de scroll: ninguna columna cortada.
 
 ## Datos del Excel que conviene mirar
 - **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,

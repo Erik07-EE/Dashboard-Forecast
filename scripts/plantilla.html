@@ -80,7 +80,7 @@ thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thea
 .idpanel{position:sticky;left:0;z-index:6;width:calc(398px + var(--cw,92px));}
 #tw-fc{scroll-snap-type:x mandatory;scroll-padding-left:var(--idw,594px);}
 #tabla thead tr.r1 th.mcol{scroll-snap-align:start;}
-#tabla thead tr.r1 th.mcol .mname,#tabla thead tr.r1 th.mcol .smsel{position:sticky;left:calc(var(--idw,538px) + 10px);display:inline-block;}
+#tabla thead tr.r1 th.mcol .mhold{position:sticky;left:calc(var(--idw,538px) + 10px);display:inline-block;}
 .idc{position:sticky;}/* la ultima columna fija lleva un borde con sombra: al scrollear de costado, las
    columnas de mes pasan por debajo y sin este corte se leian como rotas */
 .idend{border-right:2px solid #c5cae9;box-shadow:7px 0 9px -5px rgba(26,35,126,.30);}
@@ -385,7 +385,7 @@ function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);row
   let cwLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(cwLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');
   const IDCOLS=[{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'cajax',lbl:'Packaging',w:90,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock hoy',w:86,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses hoy',w:86,num:1,td:(r,id,gl)=>mcell(r[5],minMeses(r,id),!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
   const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach((c,ci)=>{c._left=_lx;_lx+=c.w;c._last=(ci===vis.length-1);});const idW=_lx;document.documentElement.style.setProperty('--idw',idW+'px');const nHid=st.hideCols.size;
-  let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{const _sb=(st.sort&&st.sort.m===m)?(st.sort.f===1?'ini':'fin'):'';r1+='<th colspan="6" class="mcol"><span class="mname">'+DATA.months[m]+'</span><div class="smsel">Stock mín: <select onchange="setSmSort('+m+',this.value)"><option value=""'+(_sb===''?' selected':'')+'>—</option><option value="ini"'+(_sb==='ini'?' selected':'')+'>Inicio</option><option value="fin"'+(_sb==='fin'?' selected':'')+'>Fin</option></select></div></th>';});r1+='</tr>';
+  let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{const _sb=(st.sort&&st.sort.m===m)?(st.sort.f===1?'ini':'fin'):'';r1+='<th colspan="6" class="mcol"><div class="mhold"><span class="mname">'+DATA.months[m]+'</span><div class="smsel">Stock mín: <select onchange="setSmSort('+m+',this.value)"><option value=""'+(_sb===''?' selected':'')+'>—</option><option value="ini"'+(_sb==='ini'?' selected':'')+'>Inicio</option><option value="fin"'+(_sb==='fin'?' selected':'')+'>Fin</option></select></div></div></th>';});r1+='</tr>';
   let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+(c.hid?' hcol':'')+(c._last?' idend':'')+'" style="position:sticky;white-space:nowrap;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+(c.hid?'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span>':'')+'</th>').join('');
   MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
   const cap=1200;const show=rows.slice(0,cap);let body='';
@@ -395,7 +395,33 @@ function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);row
   let foot='<tr><td class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">TOTAL \u00b7 '+rows.length.toLocaleString("es-AR")+' c\u00f3digos'+(rows.length>cap?' (muestra '+cap+')':'')+'</td>';
   MW.forEach((m,mi)=>{let sc=0,sv=0;rows.forEach(r=>{sc+=mval(r,m,2)||0;sv+=mval(r,m,3)||0;});foot+='<td class="num f0 mg-a"></td><td class="num f1"></td><td class="num f2 t-buy">'+fmtI(sc)+'</td><td class="num f3 t-grn">'+fmtI(sv)+'</td><td class="num f4"></td><td class="num f5"></td>';});foot+='</tr>';
   const fW=[66,62,58,64,66,62];let cg='<colgroup>'+vis.map(c=>'<col style="width:'+c.w+'px">').join('');MW.forEach(()=>{cg+=fW.map(w=>'<col style="width:'+w+'px">').join('');});cg+='</colgroup>';
-  t.innerHTML=cg+'<thead>'+r1+r2+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot>';}
+  t.innerHTML=cg+'<thead>'+r1+r2+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot>';
+  // Aire al final de la tabla para que el ULTIMO mes tambien pueda engancharse.
+  // Sin esto el tope del scroll no caia en un punto de enganche y quedaba una
+  // columna cortada a la derecha del bloque fijo.
+  // Calibrar el enganche del scroll lateral. Todo se mide del HTML: el bloque fijo
+  // no mide la suma de los anchos declarados (la tabla estira GA) y los meses no
+  // arrancan donde uno calcula. Con setTimeout y no requestAnimationFrame, porque
+  // rAF no corre si la pestana esta en segundo plano.
+  setTimeout(()=>{const _w=document.getElementById('tw-fc');if(!_w)return;
+    const _ms=t.querySelectorAll('thead tr.r1 th.mcol');
+    const _ult=t.querySelector('thead tr.r2 th.idend');
+    if(!_ms.length||!_ult)return;
+    t.style.marginRight='0px';
+    const _c=_w.getBoundingClientRect();
+    const _r1=_ms[0].getBoundingClientRect();
+    const _fijo=_ult.getBoundingClientRect().right-_c.left;   // ancho real del bloque fijo
+    const _ini=_r1.left-_c.left+_w.scrollLeft;   // posicion del primer mes DENTRO del contenido
+    const _mw=_r1.width;                                      // ancho real de un mes
+    document.documentElement.style.setProperty('--idw',Math.round(_fijo)+'px');
+    // Los puntos de enganche estan en _ini + k*_mw - _fijo. Se busca el primero que
+    // quede DESPUES del final del scroll y se agrega solo esa diferencia: asi el tope
+    // cae en un enganche sin dejar un vacio enorme en pantallas anchas.
+    const _max=_w.scrollWidth-_w.clientWidth;
+    const _b=_ini-_fijo;
+    const _k=Math.ceil((_max-_b)/_mw);
+    const _obj=_b+Math.max(0,Math.min(_k,_ms.length-1))*_mw;
+    t.style.marginRight=Math.max(0,Math.ceil(_obj-_max))+'px';},0);}
 
 function pageMonths(tab,dir){const total=(tab==='hist')?(((DATA.hist&&DATA.hist.months)||[]).length):12;const mx=Math.max(0,total-4);st.mstart[tab]=Math.max(0,Math.min(mx,(st.mstart[tab]||0)+dir));if(tab==='fc')renderForecast();else if(tab==='vp')renderVP();else renderHist();}
 function showTab(t){st.tab=t;['fc','st','liq','vp','hist'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
