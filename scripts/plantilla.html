@@ -78,10 +78,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 tbody .id0,tbody .id1,tbody .id2,tbody .id3,tbody .id4,tbody .id5,tbody .id6{background:var(--base);z-index:2;}
 thead tr.r2 th.id0,thead tr.r2 th.id1,thead tr.r2 th.id2,thead tr.r2 th.id3,thead tr.r2 th.id4,thead tr.r2 th.id5,thead tr.r2 th.id6{z-index:5;}
 .idpanel{position:sticky;left:0;z-index:6;width:calc(398px + var(--cw,92px));}
+#tw-fc{scroll-snap-type:x mandatory;scroll-padding-left:var(--idw,594px);}
+#tabla thead tr.r1 th.mcol{scroll-snap-align:start;}
 .idc{position:sticky;}/* la ultima columna fija lleva un borde con sombra: al scrollear de costado, las
    columnas de mes pasan por debajo y sin este corte se leian como rotas */
 .idend{border-right:2px solid #c5cae9;box-shadow:7px 0 9px -5px rgba(26,35,126,.30);}
-thead tr.r2 th.idend,.idpanel{box-shadow:7px 0 9px -5px rgba(26,35,126,.30);}tbody td.idc{background:var(--base);z-index:2;}thead tr.r2 th.idc{z-index:5;}
+thead tr.r2 th.idend{box-shadow:inset 0 -3px 0 var(--amarillo),7px 0 9px -5px rgba(26,35,126,.30);}
+.idpanel{box-shadow:7px 0 9px -5px rgba(26,35,126,.30);}tbody td.idc{background:var(--base);z-index:2;}thead tr.r2 th.idc{z-index:5;}
 .colx{position:absolute;right:4px;top:50%;transform:translateY(-50%);cursor:pointer;color:#ff8a80;font-weight:800;font-size:.74rem;line-height:1;}.colx:hover{color:#fff;}
 thead tr.r2 th.hcol{padding-right:15px;}
 .colshow{cursor:pointer;color:var(--amarillo);text-decoration:underline;font-weight:700;margin-left:6px;}
@@ -380,7 +383,7 @@ function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);row
   if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados con los filtros actuales.</td></tr></tbody>';return;}
   let cwLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(cwLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');
   const IDCOLS=[{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'cajax',lbl:'Packaging',w:90,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock hoy',w:86,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses hoy',w:86,num:1,td:(r,id,gl)=>mcell(r[5],minMeses(r,id),!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
-  const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach((c,ci)=>{c._left=_lx;_lx+=c.w;c._last=(ci===vis.length-1);});const idW=_lx;const nHid=st.hideCols.size;
+  const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach((c,ci)=>{c._left=_lx;_lx+=c.w;c._last=(ci===vis.length-1);});const idW=_lx;document.documentElement.style.setProperty('--idw',idW+'px');const nHid=st.hideCols.size;
   let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{const _sb=(st.sort&&st.sort.m===m)?(st.sort.f===1?'ini':'fin'):'';r1+='<th colspan="6" class="mcol">'+DATA.months[m]+'<div class="smsel">Stock mín: <select onchange="setSmSort('+m+',this.value)"><option value=""'+(_sb===''?' selected':'')+'>—</option><option value="ini"'+(_sb==='ini'?' selected':'')+'>Inicio</option><option value="fin"'+(_sb==='fin'?' selected':'')+'>Fin</option></select></div></th>';});r1+='</tr>';
   let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+(c.hid?' hcol':'')+(c._last?' idend':'')+'" style="position:sticky;white-space:nowrap;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+(c.hid?'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span>':'')+'</th>').join('');
   MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
@@ -737,7 +740,7 @@ function renderStock(){
       +box('Exceso de stock','Costo inmovilizado',plata('excC'),'Mix de venta que puede generar',plata('excM'),'#ffd600','#e30613')
     +'</div>'
     +'<div class="sec-h" style="margin-top:16px">📦 Detalle por SKU <span style="font-weight:600;color:#8a90b0;font-size:.72rem">('+fmtI(rows.length)+' SKU)</span></div>'
-    +'<div class="tablewrap" id="stTbl" style="max-height:560px">'
+    +'<div class="tablewrap" id="stTbl" style="max-height:427px">'
       +'<div style="padding:16px;color:#8a90b0;font-size:.74rem;">Armando el detalle de '+fmtI(rows.length)+' SKU…</div></div>';
   // La tabla son ~77.000 celdas: si se dibuja junto con el resto, el cambio de
   // solapa se siente trabado. Se pinta el encabezado primero y la tabla al toque
