@@ -98,6 +98,9 @@ la PC — y las descartó: prefiere el paso manual.
   IMPO, histórico de 7 meses (feb–ago 2026).
 - Se sumó el chequeo previo a publicar, después de que el 14/09 el stock saliera del 04/09
   cuando lo publicado ya era del 07/09.
+- **El Forecast.xlsm se actualiza dos veces por día** (Erik sigue el stock de cerca). Que
+  la fecha del stock cambie entre una regeneración y otra es lo normal, no un problema:
+  el chequeo solo tiene que frenar si va **para atrás**.
 
 - Carpeta limpiada: se borraron las copias en PDF de las skills y el prompt viejo de
   Cowork (`Instrucciones_Proyecto.docx`), todo reemplazado por este archivo y
@@ -157,12 +160,19 @@ Erik la ajusto pantalla por pantalla. **No volver atras sin que el lo pida:**
 - **Solapas:** Forecast · Estado Stock · Acción comercial · Proyección · Histórico.
 - **Forecast:** GA · Código · Cat · **Packaging** · **Stock hoy** · **Meses hoy**. UN y
   "Meses máx" ya no se muestran (el dato se sigue usando para el mínimo y los estados).
-- **Estado Stock:** tabla de **15 filas**. El **Faltante va abierto por estado**:
+- **Estado Stock:** sin torta (15/09): el reparto se lee en cada pastilla de estado,
+  junto al conteo de SKU. Las pastillas quedaron con estado, conteo y %: el stock y el
+  faltante/sobrante salieron de ahi, ya estan abiertos en las cajas de Faltante y Exceso.
+  Tabla de **15 filas**. El **Faltante va abierto por estado**:
   Quiebre y Riesgo con costo a invertir **y** mix que se podría vender; "Hasta el
   máximo" **solo el costo**, porque esos códigos ya tienen stock para vender.
-- **Acción comercial:** sin "Meses máx", sin "Costo total", sin botón PDF, sin conteo de
-  candidatos ni título de preview. El Excel quedo en **28 columnas**.
+- **Acción comercial:** sin "Meses máx", sin botón PDF, sin conteo de candidatos ni título
+  de preview. **"Costo total" volvió el 15/09** (Erik la pidió de vuelta): va en el grupo
+  "Exceso $-USD", antes de "Mix total". El Excel quedo en **29 columnas**.
 - Sin textos de ayuda en ninguna solapa. Barra de filtros en un renglón, solapas fijas.
+- **La Cat, una sola pastilla en todo el dashboard** (fondo celeste grisáceo, letra azul).
+  Antes cada letra tenía su color y en las tablas nuevas competía con el rojo del costo y
+  el verde de la venta. Se pierde el golpe de vista A-vs-D: Erik lo eligió igual el 15/09.
 
 ⚠️ **Dos trampas del HTML, por si hay que tocarlo:**
 
@@ -201,6 +211,70 @@ así que conviene leer por qué antes de tocarlo:
   `inset 0 -3px 0` amarillo o se pierde la línea del encabezado.
 
 Verificado en 1280 y 1680 px, en todas las posiciones de scroll: ninguna columna cortada.
+
+## Los 4 analisis de Estado Stock (15/09/2026)
+
+Los analisis **no son bloques sueltos**: son el detalle de las 5 tarjetas de arriba. Se
+toca una tarjeta, se filtra la tabla y debajo se abre su panel (max 1450px, sin textos de
+ayuda). Solo tres tienen panel: Quiebre, Exceso y Sin rotacion.
+
+**Las 5 tarjetas (15/09).** Erik llego a esto despues de ver los 4 bloques juntos:
+"Costo inmovilizado por GA" y "por SKU" son **la misma medida** de lejos y de cerca (van
+con una solapita adentro del panel de Exceso, no como dos bloques), y los otros dos eran
+la plata de dos estados que ya estaban arriba.
+
+| Tarjeta | Costo | Venta | Panel |
+|---|---|---|---|
+| Quiebre | Costo a invertir | Venta perdida (demanda - VP) | si |
+| Riesgo | Costo a invertir | Mix a vender | no |
+| Ideal | Costo al maximo | Stock a costo | no |
+| Exceso | Costo inmovilizado | Mix a generar | si |
+| Sin rotacion | Costo parado | Mix a generar | si |
+
+- **Sin rotacion no es un estado**: es un cruce, se superpone con Exceso. Por eso **no
+  lleva %** (los otros cuatro son excluyentes y suman 100) y va **en gris**: es plata
+  quieta, no una alarma.
+- Las cajas **"Faltante" y "Exceso de stock" se eliminaron**: todo lo que tenian esta en
+  su tarjeta. El "Hasta el maximo" paso a ser el **"Costo al maximo"** de Ideal.
+- ⚠️ **El exceso se calcula con `idealU`, igual que `stkOf`** (no restando `vaj*id` a
+  mano). Con la resta a mano los 6 codigos de venta ajustada negativa inflaban el total y
+  la tarjeta no cuadraba con su propio panel: $ 97.056.975 contra $ 97.066.446. Se dibujan
+**antes** que la tabla en el `setTimeout`: al reves empujarian la tabla a mitad de camino.
+
+| | |
+|---|---|
+| Costo inmovilizado (por GA, top 5) | los 5 GA que mas plata tienen parada en exceso, con el costo **y** la venta mix que ese exceso puede generar |
+| Costo inmovilizado (por SKU, top 20) | los 20 codigos que mas pesan, con su % del total |
+| Stock sin rotacion | tiene stock y **no vendio nada** en los 6 ultimos meses cerrados
+  (hoy 15/09: marzo a agosto 2026; septiembre no entra porque no cerro) |
+| Quiebres que duelen | sin stock, agrupado por GA (se abre por codigo). La unidad es la
+  venta **perdida**: demanda menos venta proyectada |
+
+Reglas de estos bloques, decididas por Erik:
+
+- **Siempre dos pastillas: IMPORTADOS (USD) y NACIONAL ($).** Nunca una sola sumando todo:
+  tienen rotacion e importancia distintas. El corte sale de la unidad de negocio.
+  Importados va en **verde** y Nacional en **azul**.
+- **La Cat va en todas las tablas de codigos.** "No es lo mismo quebrar un D que un A, ni
+  tener invertido de mas en un A que en un D."
+- ⚠️ **Los quiebres se miden con DEMANDA menos VENTA PROYECTADA**, decidido el 15/09.
+  Ninguna de las dos sola sirve, y las columnas del Excel no se llaman como uno espera:
+  - **demanda** = col CJ "V.Ajust. c/stock" (`r[79]`): lo que venderias al ritmo actual.
+  - **venta proyectada** = col CK "Venta proy. (unidades)" (`mval(r,0,3)`): lo que si vas
+    a vender, **contando las compras en camino**.
+  La proyectada sola da **cero** justo en los peores quiebres (ASX11: demanda 1.316,
+  proyectada 0) y la demanda sola cobra ventas que si vas a hacer cuando llegue el pedido
+  (MA-4147: demanda 96, proyectada 89, perdes 7). Totales al 15/09: USD 62.769 en 135 SKU
+  importados y $ 3.966.088 en 54 nacionales. **No volver a cambiarlo.**
+- ⚠️ **"Sin rotacion" se mide con la venta REAL, no con la proyectada.** El filtro era
+  "el forecast proyecta cero a 12 meses", que es una prevision y no un hecho: dejaba
+  entrar codigos que si habian vendido y contradecia el titulo. Ahora es
+  `stock > 0 && vrHist(cod) == 0`, con `VRM = 6` meses cerrados (`DATA.hist.months` viene
+  ordenado de mas viejo a mas nuevo, se toman los ultimos 6). El cambio mueve los numeros:
+  importados 11 -> 43 SKU, nacionales 946 -> 787.
+- Las tablitas llevan `colgroup` con anchos fijos y las cajas topean en 620px: sin eso la
+  columna Grupo se comia media tabla. Los anchos estan calibrados para que ningun titulo
+  quede cortado: **"% del total" necesita 15%**, con menos se corta.
 
 ## Datos del Excel que conviene mirar
 - **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,

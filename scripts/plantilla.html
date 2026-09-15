@@ -17,10 +17,10 @@ header{background:var(--azul);padding:0 22px;display:flex;align-items:center;gap
 .hdr-badge{background:var(--amarillo);color:var(--azul);font-size:.68rem;font-weight:800;padding:5px 11px;border-radius:20px;white-space:nowrap;}
 .btns{display:flex;gap:7px;} .btns button{font:inherit;font-size:.7rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:6px 10px;} .btns button:hover{background:rgba(255,255,255,.22);}
 .wrap{padding:12px 22px 46px;}
-.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12);padding:6px 14px;margin-bottom:8px;}
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12);padding:2px 14px;margin-bottom:8px;}
 .dd{position:relative;display:flex;align-items:center;gap:7px;}
 .dd .cap{display:inline-block;font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--azul3);margin-bottom:0;white-space:nowrap;}
-.dd-btn{display:flex;align-items:center;gap:7px;width:158px;height:30px;font:inherit;cursor:pointer;background:#f8f9ff;border:1px solid #c5cae9;border-radius:7px;padding:0 10px;color:var(--azul);text-align:left;}
+.dd-btn{display:flex;align-items:center;gap:7px;width:158px;height:24px;font:inherit;cursor:pointer;background:#f8f9ff;border:1px solid #c5cae9;border-radius:7px;padding:0 10px;color:var(--azul);text-align:left;}
 .dd-btn:hover,.dd-btn:focus{border-color:var(--azul3);outline:none;}
 .dd-btn .cnt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem;font-weight:700;}
 .dd-btn.empty .cnt{color:#9aa0c9;font-weight:600;}
@@ -115,7 +115,7 @@ td.code{font-weight:800;color:var(--azul);}
 .mtog{font:inherit;font-size:.62rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:2px 10px;cursor:pointer;}
 .d-red{background:var(--rojo);box-shadow:0 0 5px #ef444488;} .d-yel{background:var(--amber);box-shadow:0 0 5px #f59e0b88;} .d-grn{background:#10b981;box-shadow:0 0 5px #10b98188;}
 .cat{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.62rem;font-weight:800;}
-.cat-A{background:#10b98133;color:#047857;}.cat-B{background:#3b82f633;color:#1e40af;}.cat-C{background:#f59e0b33;color:#92400e;}.cat-D{background:#ef444433;color:#b91c1c;}.cat-P{background:#a855f733;color:#6b21a8;}.cat-N{background:#e5e7eb;color:#6b7280;}
+.cat-A,.cat-B,.cat-C,.cat-D,.cat-P,.cat-N{background:#dfe3f3;color:#303f9f;}
 tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:2px solid var(--amarillo);color:var(--azul);z-index:2;} tfoot td.idpanel{background:#fdeeb0;z-index:6;left:0;}
 .empty{padding:28px;text-align:center;color:#7986cb;font-weight:700;}
 .liqsum{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(26,35,126,.08);padding:12px 16px;margin-top:12px;}
@@ -329,6 +329,8 @@ function clearF(dim,e){e.stopPropagation();st[dim].clear();pruneCOD();renderAll(
 function clearAll(){['UN','GA','CAT','COD'].forEach(d=>st[d].clear());st.sort=null;renderAll();}
 document.addEventListener('click',e=>{if(!e.target.closest('.dd'))document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));});
 function toggleRes(){const r=document.getElementById('resumen');r.classList.toggle('collapsed');document.getElementById('resIco').textContent=r.classList.contains('collapsed')?'▸':'▾';}
+// La Cat siempre como pastilla, igual en las 5 solapas.
+function catPill(c){return c?'<span class="cat cat-'+c+'">'+c+'</span>':'';}
 function nameOf(dim,k){if(dim==='UN')return DATA.UN[k];if(dim==='GA')return DATA.GA[k];if(dim==='CAT')return DATA.CAT[k]||'(s/cat)';return k;}
 function updBtns(){DIMS.forEach(([d,cap,def])=>{const s=st[d];
   let txt="Todos";if(s.size){const ns=[...s].map(k=>nameOf(d,k));txt=ns.slice(0,2).join(', ')+(ns.length>2?' +'+(ns.length-2):'');}
@@ -548,49 +550,49 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   const cmO=st.liqCM;
   const cmG=cmO?'<th class="g-cm" colspan="6" onclick="toggleLiqCM()" style="cursor:pointer" title="Cerrar">▾ Contribución marginal por %</th>':'<th class="g-cm" colspan="1" onclick="toggleLiqCM()" style="cursor:pointer" title="Abrir">▸ CM</th>';
   const cmH=cmO?'<th class="ho">5%</th><th class="ho">10%</th><th class="ho">15%</th><th class="ho">20%</th><th class="ho">25%</th><th class="ho">30%</th>':'<th class="ho" onclick="toggleLiqCM()" style="cursor:pointer">▸</th>';
-  const sar=f=>'<span style="color:#ff5252">'+(st.liqSort===f?(st.liqSortDir>0?' ▲':' ▼'):' ⇅')+'</span>';let hd='<thead><tr class="g"><th class="g-prod" colspan="8">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="1">Exceso $-USD</th><th class="g-liq" colspan="5">'+(_isOf?'Oferta':'Liquidación')+'</th>'+cmG+'</tr><tr class="h"><th>Grupo</th><th onclick="setLiqSort(null)" style="cursor:pointer" title="Quitar orden">Código'+(st.liqSort?' ✕':'')+'</th><th>Cat.</th><th>VP</th><th>Costo</th><th>CMM</th><th>Lista Base</th><th>Lista Mix</th><th>Stock hoy</th><th>Exceso</th><th>Meses hoy</th><th onclick="setLiqSort(\'excmes\')" style="cursor:pointer" title="Ordenar mayor a menor">Exceso'+sar('excmes')+'</th><th onclick="setLiqSort(\'pondTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Mix total'+sar('pondTot')+'</th><th class="liq" onclick="setLiqSort(\'dmax\')" style="cursor:pointer" title="Ordenar mayor/menor">Dto. Máx.'+sar('dmax')+'</th><th class="liq">Lista Dto. Máx.</th><th class="liq">'+(_isOf?'Dto. Of':'Dto. Liq.')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'objOf':'objLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'Mix total Of':'Mix total Liq.')+sar(_isOf?'objOf':'objLiq')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'cmmOf':'cmmLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'CMM Of':'CMM Liq.')+sar(_isOf?'cmmOf':'cmmLiq')+'</th>'+cmH+'</tr></thead>';
+  const sar=f=>'<span style="color:#ff5252">'+(st.liqSort===f?(st.liqSortDir>0?' ▲':' ▼'):' ⇅')+'</span>';let hd='<thead><tr class="g"><th class="g-prod" colspan="8">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="2">Exceso $-USD</th><th class="g-liq" colspan="5">'+(_isOf?'Oferta':'Liquidación')+'</th>'+cmG+'</tr><tr class="h"><th>Grupo</th><th onclick="setLiqSort(null)" style="cursor:pointer" title="Quitar orden">Código'+(st.liqSort?' ✕':'')+'</th><th>Cat.</th><th>VP</th><th>Costo</th><th>CMM</th><th>Lista Base</th><th>Lista Mix</th><th>Stock hoy</th><th>Exceso</th><th>Meses hoy</th><th onclick="setLiqSort(\'excmes\')" style="cursor:pointer" title="Ordenar mayor a menor">Exceso'+sar('excmes')+'</th><th onclick="setLiqSort(\'costoTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Costo total'+sar('costoTot')+'</th><th onclick="setLiqSort(\'pondTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Mix total'+sar('pondTot')+'</th><th class="liq" onclick="setLiqSort(\'dmax\')" style="cursor:pointer" title="Ordenar mayor/menor">Dto. Máx.'+sar('dmax')+'</th><th class="liq">Lista Dto. Máx.</th><th class="liq">'+(_isOf?'Dto. Of':'Dto. Liq.')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'objOf':'objLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'Mix total Of':'Mix total Liq.')+sar(_isOf?'objOf':'objLiq')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'cmmOf':'cmmLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'CMM Of':'CMM Liq.')+sar(_isOf?'cmmOf':'cmmLiq')+'</th>'+cmH+'</tr></thead>';
   let b='';const _capP=(st.ofQty==='all'||st.ofQty==='full')?500:cand.length;cand.slice(0,_capP).forEach(o=>{const cmC=cmO?o.cs.map(x=>`<td class="num corange">${(x==null||x<=0)?'–':pcc(x)}</td>`).join(''):'<td class="num corange"></td>';
-    b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num ccmm">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num cdto">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(_isOf?st.dtoOf:o.dliq)}</td><td class="num cusd-g">${(_isOf?o.objOf:o.objLiq)==null?'–':o.cur+' '+pI(_isOf?o.objOf:o.objLiq)}</td><td class="num ccmm" style="${(_isOf?o.cmmOf:o.cmmLiq)!=null&&(_isOf?o.cmmOf:o.cmmLiq)<0?'background:#fdecea;color:#c0392b;font-weight:800':''}">${(_isOf?o.cmmOf:o.cmmLiq)==null?'–':pcc(_isOf?o.cmmOf:o.cmmLiq)}</td>`+cmC+'</tr>';});
+    b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${catPill(o.cat)}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num ccmm">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num cdto">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(_isOf?st.dtoOf:o.dliq)}</td><td class="num cusd-g">${(_isOf?o.objOf:o.objLiq)==null?'–':o.cur+' '+pI(_isOf?o.objOf:o.objLiq)}</td><td class="num ccmm" style="${(_isOf?o.cmmOf:o.cmmLiq)!=null&&(_isOf?o.cmmOf:o.cmmLiq)<0?'background:#fdecea;color:#c0392b;font-weight:800':''}">${(_isOf?o.cmmOf:o.cmmLiq)==null?'–':pcc(_isOf?o.cmmOf:o.cmmLiq)}</td>`+cmC+'</tr>';});
   let tVP=0,tST=0,tEX=0,tCT=0,tMT=0,tOL=0;const _cs=new Set();cand.forEach(o=>{tVP+=o.vp||0;tST+=o.stock||0;if(o.excu!=null)tEX+=o.excu;if(o.costoTot!=null)tCT+=o.costoTot;if(o.pondTot!=null)tMT+=o.pondTot;if(o.objLiq!=null)tOL+=o.objLiq;if(o.cur)_cs.add(o.cur);});
   const _cur=_cs.size===1?[..._cs][0]:'USD/$';const _bg='background:#eceef7;font-weight:800;color:#1c1c1a';const _e='<th style="'+_bg+'"></th>';
-  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
+  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th>'+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
   hd=hd.replace('</thead>',totRow+'</thead>');
-  const _codLen=cand.reduce((m,o)=>Math.max(m,String(o.cod||'').length),6);const _codW=Math.max(96,_codLen*8+18);const _cw=[150,_codW,45,72,104,68,106,106,80,80,80,80,140,86,140,72,140,86];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
+  const _codLen=cand.reduce((m,o)=>Math.max(m,String(o.cod||'').length),6);const _codW=Math.max(96,_codLen*8+18);const _cw=[150,_codW,45,72,104,68,106,106,80,80,80,80,140,140,86,140,72,140,86];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
 function exportLiqXlsx(){const _of=st.acMode==='of';const cand=window._liqExport||[];if(!cand.length){alert('No hay candidatos. Elegí una acción.');return;}
-  // Layout (14/09/2026, sin "Meses max" ni "Costo total"):
+  // Layout (15/09/2026, sin "Meses max"; vuelve "Costo total"):
   //   0 Grupo · 1 Codigo · 2 Cat · 3 VP · 4 Costo · 5 CMM · 6 Lista Base · 7 Lista Mix
   //   [8 sep] 9 Stock hoy · 10 Exceso · 11 Meses hoy · 12 Exceso (meses)
-  //   [13 sep] 14 Mix total
-  //   [15 sep] 16 Dto Max · 17 Lista Dto Max · 18 Dto · 19 Mix total · 20 CMM
-  //   [21 sep] 22-27 contribucion marginal por %
-  const nav='FF1A237E',nav2='FF002060',yel='FFFFFF00',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=28;
+  //   [13 sep] 14 Costo total · 15 Mix total
+  //   [16 sep] 17 Dto Max · 18 Lista Dto Max · 19 Dto · 20 Mix total · 21 CMM
+  //   [22 sep] 23-28 contribucion marginal por %
+  const nav='FF1A237E',nav2='FF002060',yel='FFFFFF00',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=29;
   const acc=(cur,d)=>d?('_-"'+cur+'"* #,##0.00_-;\\-"'+cur+'"* #,##0.00_-;_-"'+cur+'"* "-"??_-;_-@_-'):('_-"'+cur+'"* #,##0_-;\\-"'+cur+'"* #,##0_-;_-"'+cur+'"* "-"_-;_-@_-');
-  const H1=Array(NCX).fill('');H1[0]='Producto';H1[9]='Exceso stock';H1[14]='Exceso $-USD';H1[16]=_of?'Oferta':'Liquidación';H1[22]='Contribución marginal por %';
+  const H1=Array(NCX).fill('');H1[0]='Producto';H1[9]='Exceso stock';H1[14]='Exceso $-USD';H1[17]=_of?'Oferta':'Liquidación';H1[23]='Contribución marginal por %';
   const H2=Array(NCX).fill('');
-  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'VP'],[4,'Costo'],[5,'CMM'],[6,'Lista Base'],[7,'Lista Mix'],[9,'Stock hoy'],[10,'Exceso'],[11,'Meses hoy'],[12,'Exceso'],[14,'Mix total'],[16,'Dto. Máximo'],[17,'Lista Dto. Máx.'],[18,_of?'Dto. Of':'Dto. Liq.'],[19,_of?'Mix total Of':'Mix total Liq.'],[20,_of?'CMM Of':'CMM Liq.'],[22,'5%'],[23,'10%'],[24,'15%'],[25,'20%'],[26,'25%'],[27,'30%']].forEach(x=>H2[x[0]]=x[1]);
+  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'VP'],[4,'Costo'],[5,'CMM'],[6,'Lista Base'],[7,'Lista Mix'],[9,'Stock hoy'],[10,'Exceso'],[11,'Meses hoy'],[12,'Exceso'],[14,'Costo total'],[15,'Mix total'],[17,'Dto. Máximo'],[18,'Lista Dto. Máx.'],[19,_of?'Dto. Of':'Dto. Liq.'],[20,_of?'Mix total Of':'Mix total Liq.'],[21,_of?'CMM Of':'CMM Liq.'],[23,'5%'],[24,'10%'],[25,'15%'],[26,'20%'],[27,'25%'],[28,'30%']].forEach(x=>H2[x[0]]=x[1]);
   const aoa=[H1,H2];const cv=v=>(v==null||v<=0)?'-':v;
   cand.forEach(o=>{const r=Array(NCX).fill('');
     r[0]=o.ga;r[1]=o.cod;r[2]=o.cat;r[3]=o.vp;r[4]=o.costo;r[5]=o.cm;r[6]=o.lista;r[7]=o.pp;
-    r[9]=o.stock;r[10]=o.excu;r[11]=o.meses;r[12]=o.excmes;r[14]=o.pondTot;
-    r[16]=o.dmax;r[17]=o.pvmin;r[18]=_of?st.dtoOf:o.dliq;r[19]=_of?o.objOf:o.objLiq;r[20]=_of?o.cmmOf:o.cmmLiq;
-    [o.cs[0],o.cs[1],o.cs[2],o.cs[3],o.cs[4],o.cs[5]].forEach((v,i)=>r[22+i]=cv(v));
+    r[9]=o.stock;r[10]=o.excu;r[11]=o.meses;r[12]=o.excmes;r[14]=o.costoTot;r[15]=o.pondTot;
+    r[17]=o.dmax;r[18]=o.pvmin;r[19]=_of?st.dtoOf:o.dliq;r[20]=_of?o.objOf:o.objLiq;r[21]=_of?o.cmmOf:o.cmmLiq;
+    [o.cs[0],o.cs[1],o.cs[2],o.cs[3],o.cs[4],o.cs[5]].forEach((v,i)=>r[23+i]=cv(v));
     aoa.push(r);});
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:0,c:9},e:{r:0,c:12}},{s:{r:0,c:16},e:{r:0,c:20}},{s:{r:0,c:22},e:{r:0,c:27}}];
-  ws['!cols']=[16.6,21.6,6.8,10.8,14.9,8.8,15.1,15.8,1.8,10.8,13,13,13,1.8,13,1.8,9.6,15.1,9.6,13.8,10.8,1.8,11.6,13,13,13,13,13].map(w=>({wch:w}));
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:0,c:9},e:{r:0,c:12}},{s:{r:0,c:14},e:{r:0,c:15}},{s:{r:0,c:17},e:{r:0,c:21}},{s:{r:0,c:23},e:{r:0,c:28}}];
+  ws['!cols']=[16.6,21.6,6.8,10.8,14.9,8.8,15.1,15.8,1.8,10.8,13,13,13,1.8,13,13,1.8,9.6,15.1,9.6,13.8,10.8,1.8,11.6,13,13,13,13,13].map(w=>({wch:w}));
   ws['!rows']=[{hpt:25},{hpt:25}];
   const bd={style:'thin',color:{rgb:'FFBFC5E0'}};const border={top:bd,bottom:bd,left:bd,right:bd};
-  const grp0=c=>(c>=16&&c<=20)?[yel,nav]:((c<=7||(c>=9&&c<=12)||c===14||c>=22)?[nav,wht]:null);
-  const sub=c=>(c>=16&&c<=20)?[yel,nav]:(([8,13,15,21].indexOf(c)>=0)?[wht,nav]:[nav,wht]);
-  const dfill=c=>(c===4)?'FFFAECE7':((c===6||c===7||c===14||c===17||c===19)?'FFEAF3DE':(((c>=9&&c<=12)||c===20)?'FFEEF4FD':((c>=22)?'FFFDF1DE':null)));
-  const dcolor=c=>(c===3||c===6||c===7||c===14||c===17||c===19)?grn:((c===4||c===18)?red:nav);
-  const dbold=c=>([1,3,4,18].indexOf(c)>=0);
-  const curdec={4:2,6:2,7:2,17:2,14:0,19:0};
-  const dz=(c,cur)=>(c===3||c===9||c===10)?'#,##0':((c===11||c===12)?'0.0':((c===5||c===20||c>=22)?'0.0%':((c===16||c===18)?'0%':((c in curdec)?acc(cur,curdec[c]):'General'))));
+  const grp0=c=>(c>=17&&c<=21)?[yel,nav]:((c<=7||(c>=9&&c<=12)||c===14||c===15||c>=23)?[nav,wht]:null);
+  const sub=c=>(c>=17&&c<=21)?[yel,nav]:(([8,13,16,22].indexOf(c)>=0)?[wht,nav]:[nav,wht]);
+  const dfill=c=>(c===4||c===14)?'FFFAECE7':((c===6||c===7||c===15||c===18||c===20)?'FFEAF3DE':(((c>=9&&c<=12)||c===21)?'FFEEF4FD':((c>=23)?'FFFDF1DE':null)));
+  const dcolor=c=>(c===3||c===6||c===7||c===15||c===18||c===20)?grn:((c===4||c===14||c===19)?red:nav);
+  const dbold=c=>([1,3,4,19].indexOf(c)>=0);
+  const curdec={4:2,6:2,7:2,18:2,14:0,15:0,20:0};
+  const dz=(c,cur)=>(c===3||c===9||c===10)?'#,##0':((c===11||c===12)?'0.0':((c===5||c===21||c>=23)?'0.0%':((c===17||c===19)?'0%':((c in curdec)?acc(cur,curdec[c]):'General'))));
   const rng=XLSX.utils.decode_range(ws['!ref']);
   for(let c=0;c<NCX;c++){
     const a0=XLSX.utils.encode_cell({r:0,c});if(ws[a0]){const g=grp0(c);ws[a0].s=g?{fill:{fgColor:{rgb:g[0]}},font:{color:{rgb:g[1]},bold:true,sz:12},alignment:{horizontal:'center',vertical:'center'},border}:{fill:{fgColor:{rgb:wht}},border};}
-    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);const ub=(c>=16&&c<=20)?'FF1A237E':'FFFFD600';const b1={top:bd,left:bd,right:bd,bottom:{style:'medium',color:{rgb:ub}}};ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:b1};}
+    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);const ub=(c>=17&&c<=21)?'FF1A237E':'FFFFD600';const b1={top:bd,left:bd,right:bd,bottom:{style:'medium',color:{rgb:ub}}};ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:b1};}
     for(let r=2;r<=rng.e.r;r++){const ad=XLSX.utils.encode_cell({r,c});if(!ws[ad])continue;const cur=(cand[r-2]&&cand[r-2].cur)||'USD';const s={font:{color:{rgb:dcolor(c)},sz:10,bold:dbold(c)},alignment:{horizontal:(c<=1?'left':'center'),vertical:'center'},border};const fl=dfill(c);if(fl)s.fill={fgColor:{rgb:fl}};ws[ad].s=s;ws[ad].z=dz(c,cur);}
   }
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aux. Liq. IMPO');
@@ -686,6 +688,11 @@ function stkOf(r){
   return {k:k,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,cur:cur,
     excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null, falM:(mix!=null)?falta*mix:null,
+    // Sin rotacion no es un estado: es un cruce, se superpone con los otros cuatro.
+    sinrot:(stock>0 && !vrHist(r[2])),
+    perdM:(k==='cero'&&mix!=null)?perdU(r)*mix:null,
+    stkC:(costo!=null&&stock>0)?stock*costo:null,
+    stkM:(mix!=null&&stock>0)?stock*mix:null,
     meses:r[5], r:r};
 }
 function setStMult(el){st.stMult=parseFloat(el.value)||1;renderStock();}
@@ -704,62 +711,53 @@ function renderStock(){
   const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0};});
   const P={};
   const add=(b,cur,v)=>{if(v==null||!v)return;(P[b]||(P[b]={}))[cur]=(P[b][cur]||0)+v;};
+  const SR={n:0,u:0};
   dat.forEach(o=>{const g=G[o.k];g.n++;g.u+=o.stock;g.exc+=o.exc;g.falta+=o.falta;
     add('excC',o.cur,o.excC);add('excM',o.cur,o.excM);
+    add('perd_cero',o.cur,o.perdM);
+    if(o.k==='ideal')add('stkC_ideal',o.cur,o.stkC);
+    if(o.sinrot){SR.n++;SR.u+=o.stock;add('stkC_sinrot',o.cur,o.stkC);add('stkM_sinrot',o.cur,o.stkM);}
     // el faltante va por estado: destapar un quiebre no es lo mismo que
     // completar hasta el maximo algo que ya tiene stock
     add('falC_'+o.k,o.cur,o.falC);add('falM_'+o.k,o.cur,o.falM);});
-  const plata=b=>{const e=Object.entries(P[b]||{}).filter(x=>x[1]);return e.length?e.map(x=>M(x[0],x[1])).join('  +  '):'–';};
   const tot=dat.length||1;
   const F=st.stFil||'all';
-  // --- tarjetas: angostas y altas, para que entren en fila con la torta ---
-  const card=s=>{const k=s[0],bg=s[2],sub=s[4],g=G[k];
-    const extra=(k==='exceso')?('Sobran: <b>'+fmtI(g.exc)+' u</b>'):(k==='ideal'?'&nbsp;':('Faltan: <b>'+fmtI(g.falta)+' u</b>'));
-    const on=F===k;
-    return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;width:138px;flex:0 0 138px;background:#fff;border-radius:10px;border:2px solid '+(on?bg:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 10px;">'
-      +'<div style="margin-bottom:5px;">'+stBadge(k,false)+'</div>'
-      +'<div style="font-size:.58rem;color:#8a90b0;height:24px;line-height:1.1;">'+sub+'</div>'
-      +'<div style="font-size:1.35rem;font-weight:800;color:#1a237e;line-height:1.1;">'+fmtI(g.n)+'</div>'
-      +'<div style="font-size:.6rem;color:#5f6690;margin-bottom:4px;">SKU</div>'
-      +'<div style="font-size:.64rem;color:#1c1c1a;">Stock: <b>'+fmtI(g.u)+' u</b></div>'
-      +'<div style="font-size:.64rem;color:#5f6690;">'+extra+'</div></div>';};
-  // --- torta, al lado de las tarjetas ---
-  let ac=0;const stops=STK.map(s=>{const p=G[s[0]].n/tot*100,a=ac;ac+=p;return s[2]+' '+a.toFixed(2)+'% '+ac.toFixed(2)+'%';}).join(',');
-  const leyenda=STK.map(s=>{const pc=(G[s[0]].n/tot*100);
-    return '<tr><td style="padding:3px 10px 3px 0;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+s[2]+';vertical-align:middle;"></span></td>'
-      +'<td style="text-align:right;padding:3px 0;font-weight:800;font-size:.8rem;color:#1a237e;white-space:nowrap;">'+pc.toFixed(1)+'%</td></tr>';}).join('');
-  const torta='<div style="flex:0 1 250px;min-width:222px;background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 14px;">'
-    +'<div style="font-size:.72rem;font-weight:800;color:#1a237e;border-bottom:2px solid #ffd600;padding-bottom:3px;margin-bottom:8px;">Cómo se reparten los '+fmtI(tot)+' SKU</div>'
-    +'<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">'
-      +'<div style="width:104px;height:104px;border-radius:50%;background:conic-gradient('+stops+');box-shadow:0 2px 8px rgba(0,0,0,.12);flex:0 0 104px;"></div>'
-      +'<table style="border-collapse:collapse;"><tbody>'+leyenda+'</tbody></table>'
-    +'</div></div>';
-  // mismo orden y mismos colores que los grupos de la tabla de abajo:
-  // faltante = rojo | exceso = amarillo con letra roja
-  const box=(tit,c1,v1,c2,v2,bd,fg)=>'<div style="flex:1 1 236px;min-width:222px;max-width:460px;background:#fff;border-radius:10px;border-left:5px solid '+bd+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:10px 12px;">'
-    +'<div style="font-size:.72rem;font-weight:800;color:'+fg+';margin-bottom:7px;">'+tit+'</div>'
-    +'<div style="font-size:.62rem;color:#5f6690;">'+c1+'</div><div style="font-size:.82rem;font-weight:800;color:'+STROJO+';margin-bottom:5px;">'+v1+'</div>'
-    +'<div style="font-size:.62rem;color:#5f6690;">'+c2+'</div><div style="font-size:.82rem;font-weight:800;color:'+STVERDE+';">'+v2+'</div></div>';
-  // Faltante abierto por estado. El 'hasta el maximo' no lleva mix: esos codigos
-  // ya tienen stock para vender, lo unico que falta es completar el colchon.
-  const bloqueF=(lbl,col,bc,bm)=>'<div style="flex:0 1 auto;min-width:170px;">'
-    +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
-      +'<span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'+col+';"></span>'
-      +'<b style="font-size:.68rem;color:'+col+';">'+lbl+'</b></div>'
-    +'<div style="font-size:.6rem;color:#5f6690;">Costo a invertir</div>'
-    +'<div style="font-size:.8rem;font-weight:800;color:'+STROJO+';margin-bottom:'+(bm?'4px':'0')+';">'+plata(bc)+'</div>'
-    +(bm?('<div style="font-size:.6rem;color:#5f6690;">Mix que podrías vender</div>'
-         +'<div style="font-size:.8rem;font-weight:800;color:'+STVERDE+';">'+plata(bm)+'</div>'):'')
-    +'</div>';
-  const boxFalta=()=>'<div style="flex:0 1 auto;background:#fff;border-radius:10px;border-left:5px solid #c62828;box-shadow:0 2px 6px rgba(26,35,126,.08);padding:10px 12px;">'
-    +'<div style="font-size:.72rem;font-weight:800;color:#1c1c1a;margin-bottom:8px;">Faltante</div>'
-    +'<div style="display:flex;gap:26px;flex-wrap:wrap;">'
-      +bloqueF('Quiebre','#e53935','falC_cero','falM_cero')
-      +bloqueF('Riesgo','#1565c0','falC_riesgo','falM_riesgo')
-      +bloqueF('Hasta el máximo','#2e7d32','falC_ideal',null)
-    +'</div></div>';
+  // --- las 5 tarjetas ---
+  // Los 4 estados (excluyentes, suman 100%) mas Sin rotacion, que NO es un estado
+  // sino un cruce: se superpone con Exceso, por eso no lleva %.
+  // Cada una lleva DOS bloques de plata -- lo que cuesta y lo que puede vender -- y
+  // con eso se comio las cajas "Faltante" y "Exceso de stock", que repetian lo mismo.
+  // Tocar una filtra la tabla y, si tiene detalle, abre su panel debajo.
+  const CARDS=[['cero','Quiebre','#e53935','#fff','Sin stock o en negativo','Costo a invertir','falC_cero','Venta perdida','perd_cero'],
+    ['riesgo','Riesgo','#1565c0','#fff','Por debajo del mínimo','Costo a invertir','falC_riesgo','Mix a vender','falM_riesgo'],
+    ['ideal','Ideal','#2e7d32','#fff','Entre el mínimo y el máximo','Costo al máximo','falC_ideal','Stock a costo','stkC_ideal'],
+    ['exceso','Exceso','#ffd600','#e30613','Por encima del máximo','Costo inmovilizado','excC','Mix a generar','excM'],
+    ['sinrot','Sin rotación','#78839c','#fff','Con stock y sin ventas en 6 meses','Costo parado','stkC_sinrot','Mix a generar','stkM_sinrot']];
+  const badge=(lbl,bg,fg)=>'<span style="display:inline-block;min-width:112px;text-align:center;'
+    +'padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+bg+';color:'+fg+';">'+lbl+'</span>';
+  // el costo en rojo y la venta en verde, igual que en la tabla de abajo
+  const plataL=(b,col)=>{const e=Object.entries(P[b]||{}).filter(x=>x[1]);
+    return e.length?e.map(x=>'<div style="font-size:.72rem;font-weight:800;color:'+col+';line-height:1.4;">'+M(x[0],x[1])+'</div>').join('')
+      :'<div style="font-size:.72rem;color:#b0b5cf;">–</div>';};
+  const colP=(lbl,b,col)=>'<div style="flex:1 1 0;min-width:0;">'
+    +'<div style="font-size:.58rem;color:#8a90b0;line-height:1.2;height:22px;">'+lbl+'</div>'+plataL(b,col)+'</div>';
+  const par=(l1,b1,c1,l2,b2,c2)=>'<div style="border-top:1px solid #eceef7;margin:9px 0 7px;"></div>'
+    +'<div style="display:flex;gap:12px;">'+colP(l1,b1,c1)+colP(l2,b2,c2)+'</div>';
+  const card=c=>{const k=c[0],on=F===k,g=(k==='sinrot')?SR:G[k];
+    // Sin rotacion se dibuja apagado: es plata quieta, no una alarma.
+    const gris=(k==='sinrot'),cNum=gris?'#78839c':'#1a237e',c1=gris?'#78839c':STROJO,c2=gris?'#78839c':STVERDE;
+    return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;width:285px;flex:0 0 285px;background:#fff;border-radius:10px;border:2px solid '+(on?c[2]:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 12px;">'
+      +'<div style="margin-bottom:5px;">'+badge(c[1],c[2],c[3])+'</div>'
+      +'<div style="font-size:.58rem;color:#8a90b0;height:24px;line-height:1.1;">'+c[4]+'</div>'
+      // el conteo y el % en el mismo renglon: la tarjeta baja un escalon de alto
+      +'<div style="display:flex;align-items:baseline;gap:7px;">'
+        +'<span style="font-size:1.35rem;font-weight:800;color:'+cNum+';line-height:1.1;">'+fmtI(g.n)+'</span>'
+        +'<span style="font-size:.6rem;color:#5f6690;">SKU'+((k==='sinrot')?'':' · <b style="font-size:.74rem;color:#1a237e;">'+(g.n/tot*100).toFixed(1).replace('.',',')+'%</b>')+'</span>'
+      +'</div>'
+      +par(c[5],c[6],c1,c[7],c[8],c2)
+      +'</div>';};
   // --- tabla ---
-  let rows=(F==='all')?dat:dat.filter(o=>o.k===F);
+  let rows=(F==='all')?dat:(F==='sinrot'?dat.filter(o=>o.sinrot):dat.filter(o=>o.k===F));
   const SF=st.stSort||'cod',DIR=st.stDir||1;
   const key=o=>({ga:DATA.GA[o.r[1]],cod:o.r[2],minU:o.minU,maxU:o.maxU,stock:o.stock,meses:o.meses,
                  falta:o.falta,falC:o.falC,falM:o.falM,exc:o.exc,excC:o.excC,excM:o.excM}[SF]);
@@ -772,7 +770,7 @@ function renderStock(){
   const HP=t=>'<th style="'+TH+'">'+t+'</th>';
   const COLS=[126,102,30,62,62,74,58,104,64,96,98,64,96,98];
   const cg='<colgroup>'+COLS.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>';
-  const th='<thead><tr>'+GH('Producto',3,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#303f9f','#fff')
+  const th='<thead><tr>'+GH('Producto',3,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#1a237e','#fff')
       +GH('Faltante',3,'#c62828','#fff')+GH('Exceso',3,'#ffd600','#e30613')+'</tr>'
     +'<tr>'+H('ga','Grupo')+H('cod','Código')+HP('Cat')
       +H('minU','Mín u')+H('maxU','Máx u')+H('stock','Stock hoy')+H('meses','Meses hoy')+HP('Estado')
@@ -781,7 +779,7 @@ function renderStock(){
   const D='–';
   const mkTb=()=>'<tbody>'+rows.map(o=>'<tr><td class="st-ga">'+DATA.GA[o.r[1]]
     +'</td><td class="st-cod">'+o.r[2]
-    +'</td><td class="st-ct">'+(DATA.CAT[o.r[3]]||'')
+    +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
     +'</td><td class="num st-d">'+fmtI(o.minU)
     +'</td><td class="num st-d">'+fmtI(o.maxU)
     +'</td><td class="num st-b">'+fmtI(o.stock)
@@ -799,10 +797,9 @@ function renderStock(){
   el.innerHTML=
     '<div class="liqbar"><span class="liqlbl">Indicador</span>'
       +'<select onchange="setStMult(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select></div>'
-    +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+STK.map(card).join('')+torta
-      +boxFalta()
-      +box('Exceso de stock','Costo inmovilizado',plata('excC'),'Mix de venta que puede generar',plata('excM'),'#ffd600','#1c1c1a')
+    +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+CARDS.map(card).join('')
     +'</div>'
+    +'<div id="stAnal"></div>'
     +'<div class="sec-h" style="margin-top:16px">📦 Detalle por SKU <span style="font-weight:600;color:#8a90b0;font-size:.72rem">('+fmtI(rows.length)+' SKU)</span></div>'
     +'<div class="tablewrap" id="stTbl" style="max-height:427px">'
       +'<div style="padding:16px;color:#8a90b0;font-size:.74rem;">Armando el detalle de '+fmtI(rows.length)+' SKU…</div></div>';
@@ -811,7 +808,172 @@ function renderStock(){
   // siguiente, asi la pantalla aparece al instante.
   clearTimeout(window._stTmr);
   window._stTmr=setTimeout(()=>{const w=document.getElementById('stTbl');
+    const _an=document.getElementById('stAnal');
+    if(_an)_an.innerHTML=renderStockAnalisis();
     if(w)w.innerHTML='<table class="prevt">'+cg+th+mkTb()+'</table>';},0);
+}
+// ============ ANALISIS de Estado Stock ============
+// No son bloques sueltos: son el DETALLE de las tarjetas de estado. Se toca una
+// tarjeta, se filtra la tabla y abajo se abre su analisis. Solo tres tarjetas
+// tienen detalle: Quiebre (lo que perdes), Exceso (la plata parada) y Sin rotacion.
+// Riesgo e Ideal no tienen: no hay nada que abrir que no este ya en la tabla.
+//
+// Todo va SIEMPRE separado en Importados (USD) y Nacional ($): tienen rotacion e
+// importancia distintas y sumarlos no dice nada. El corte es por unidad de negocio,
+// que coincide con la moneda del Gestor.
+// La Cat va en todas las tablas: no es lo mismo quebrar un D que un A, ni tener
+// plata parada en un A que en un D.
+const SEG=[['imp','Importados','USD','#1e7e34'],['nac','Nacional','$','#1565c0']];
+function stSeg(r){return (DATA.UN[r[0]]==='Importados')?'imp':'nac';}
+const VRM=6;   // ventana fija: los ultimos 6 meses cerrados
+// La venta REAL del historico. DATA.hist.months viene de mas viejo a mas nuevo y el
+// mes en curso no esta (no cerro), asi que los ultimos 6 son los 6 meses cerrados.
+function vrHist(cod){const H=DATA.hist;if(!H||!H.real)return null;const a=H.real[cod];
+  if(!a)return null;let t=0;for(let i=Math.max(0,a.length-VRM);i<a.length;i++)t+=a[i]||0;return t;}
+// Lo que se pierde de verdad por un quiebre = DEMANDA menos VENTA PROYECTADA.
+//   demanda (col CJ, r[79]) = lo que venderias este mes al ritmo actual
+//   venta proy (col CK)     = lo que si vas a vender, contando las compras en camino
+// Ninguna de las dos sola sirve: la proyectada da CERO justo en los peores quiebres
+// (ASX11: demanda 1.316, proyectada 0) y la demanda cobra ventas que si vas a hacer
+// cuando llegue el pedido (MA-4147: demanda 96, proyectada 89, perdes 7).
+function perdU(r){return Math.max(0,(r[79]||0)-(mval(r,0,3)||0));}
+function stDatos(){
+  const Z={};SEG.forEach(s=>{Z[s[0]]={ga:{},tot:0,totMix:0,exc:[],muerto:[],mtot:0,mu:0,qb:{},qtot:0,qn:0};});
+  visibleRows().forEach(r=>{
+    const id=r[IDEAL],s0=r[4];
+    if(s0==null||id==null||id<=0)return;
+    const z=Z[stSeg(r)],ga=DATA.GA[r[1]],cat=DATA.CAT[r[3]]||'';
+    const cc=DATA.costos&&DATA.costos[r[2]];
+    const costo=(cc&&cc[0]!=null)?cc[0]:null,mix=r[104];
+    // El exceso se calcula IGUAL que en stkOf (idealU + el multiplicador del
+    // indicador). Restando vaj*id a mano, los 6 codigos con venta ajustada
+    // NEGATIVA daban un exceso inflado y la tarjeta no cuadraba con su panel.
+    const exc=Math.max(0,s0-idealU(r,id*(st.stMult||1)));
+    if(exc&&costo!=null){const val=exc*costo,mx=(mix!=null)?exc*mix:0;
+      const g=z.ga[ga]||(z.ga[ga]={costo:0,mix:0});g.costo+=val;g.mix+=mx;z.tot+=val;z.totMix+=mx;
+      z.exc.push({cod:r[2],ga:ga,cat:cat,u:exc,val:val,mix:mx});}
+    // Sin rotacion = NO VENDIO en los ultimos 6 meses. El filtro no puede ser "el
+    // forecast proyecta cero": eso es una prevision y dejaba entrar codigos que si
+    // habian vendido, contradiciendo el titulo del bloque.
+    if(s0>0&&!vrHist(r[2])){const val=(costo!=null)?s0*costo:0;
+      z.muerto.push({cod:r[2],ga:ga,cat:cat,u:s0,val:val,mix:(mix!=null)?s0*mix:0});
+      z.mtot+=val;z.mu+=s0;}
+    const pu=perdU(r);
+    if(s0<=0&&pu>0){const val=(mix!=null)?pu*mix:0;
+      const q=z.qb[ga]||(z.qb[ga]={n:0,u:0,val:0,sku:[]});
+      q.n++;q.u+=pu;q.val+=val;q.sku.push({cod:r[2],cat:cat,u:pu,val:val});
+      z.qtot+=val;z.qn++;}
+  });
+  return Z;
+}
+function stChip(lbl,cur,col){
+  return '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.66rem;'
+    +'font-weight:800;background:'+col+';color:#fff;">'+lbl.toUpperCase()+' · '+cur+'</span>';}
+function stCaja(col,lbl,cur,resumen,tabla){
+  return '<div style="flex:1 1 420px;min-width:330px;max-width:720px;background:#fff;border-radius:10px;'
+    +'border-left:5px solid '+col+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:10px 12px;">'
+    +'<div style="margin-bottom:6px;">'+stChip(lbl,cur,col)+'</div>'
+    +resumen+tabla+'</div>';}
+function stTablita(cab,filas,alto,anchos){
+  if(!filas)return '<div style="font-size:.7rem;color:#8a90b0;padding:6px 0;">Sin casos.</div>';
+  const cg=anchos?('<colgroup>'+anchos.map(w=>'<col style="width:'+w+'">').join('')+'</colgroup>'):'';
+  return '<div style="max-height:'+(alto||150)+'px;overflow:auto;margin-top:6px;">'
+    +'<table class="prevt" style="width:100%">'+cg+'<thead><tr>'+cab+'</tr></thead><tbody>'+filas
+    +'</tbody></table></div>';}
+// el panel que se abre debajo de las tarjetas
+function stPanel(tit,extra,cuerpo){
+  return '<div style="margin-top:14px;max-width:1450px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">'
+      +'<span style="font-size:.8rem;font-weight:800;color:#1a237e;">'+tit+'</span>'+(extra||'')
+    +'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'+cuerpo+'</div></div>';}
+function redibujarAnal(){const el=document.getElementById('stAnal');if(el)el.innerHTML=renderStockAnalisis();}
+// abrir/cerrar el GA en el panel de quiebres
+function setQbGa(seg,ga){
+  st.qbAbierto=st.qbAbierto||{};
+  st.qbAbierto[seg]=(st.qbAbierto[seg]===ga)?null:ga;redibujarAnal();}
+// el costo inmovilizado se mira por grupo o por codigo: es la misma plata, de lejos
+// y de cerca, asi que va con una solapita adentro y no como dos bloques distintos.
+function setExcVista(v){st.excVista=v;redibujarAnal();}
+function stSolapa(v,lbl){const on=(st.excVista||'ga')===v;
+  return '<button onclick="setExcVista(&quot;'+v+'&quot;)" style="font:inherit;font-size:.68rem;font-weight:800;'
+    +'cursor:pointer;border:1px solid '+(on?'#1a237e':'#c5cae9')+';background:'+(on?'#1a237e':'#fff')+';'
+    +'color:'+(on?'#fff':'#5f6690')+';border-radius:7px;padding:3px 11px;">'+lbl+'</button>';}
+function renderStockAnalisis(){
+  const F=st.stFil||'all';
+  if(F!=='cero'&&F!=='exceso'&&F!=='sinrot')return '';
+  const Z=stDatos(),M=(c,n)=>c+' '+Math.round(n||0).toLocaleString('es-AR');
+  const TH='color:#fff;background:#1a237e;font-weight:800;font-size:.56rem;text-transform:uppercase;'
+    +'text-align:center;padding:4px 5px;position:sticky;top:0;z-index:3;box-shadow:inset 0 -3px 0 #ffd600;';
+  const h=(t,al)=>'<th style="'+TH+(al?'text-align:'+al+';':'')+'">'+t+'</th>';
+  const cat=c=>'<td class="st-ct"><span class="cat cat-'+c+'">'+c+'</span></td>';
+  const grande=(txt,val,col)=>'<div style="font-size:.62rem;color:#5f6690;">'+txt+'</div>'
+    +'<div style="font-size:1rem;font-weight:800;color:'+col+';">'+val+'</div>';
+  const grande2=(t1,v1,c1,t2,v2,c2)=>'<div style="display:flex;gap:26px;flex-wrap:wrap;">'
+    +'<div>'+grande(t1,v1,c1)+'</div><div>'+grande(t2,v2,c2)+'</div></div>';
+  // ---- Exceso: donde esta parada la plata, por grupo o por codigo ----
+  if(F==='exceso'){
+    const vista=st.excVista||'ga';
+    const sol=stSolapa('ga','Por grupo')+stSolapa('sku','Por código');
+    const cuerpo=SEG.map(s=>{const z=Z[s[0]];
+      const res=grande2('Costo inmovilizado en exceso',M(s[2],z.tot),STROJO,
+                        'Venta mix que puede generar',M(s[2],z.totMix),STVERDE);
+      if(vista==='ga'){
+        const lista=Object.entries(z.ga).sort((a,b)=>b[1].costo-a[1].costo).slice(0,5);
+        const filas=lista.map(x=>'<tr><td class="st-ga">'+x[0]+'</td>'
+          +'<td class="num st-r">'+M(s[2],x[1].costo)+'</td>'
+          +'<td class="num st-v">'+M(s[2],x[1].mix)+'</td></tr>').join('');
+        return stCaja(s[3],s[1],s[2],res,
+          stTablita(h('Grupo','left')+h('Costo')+h('Venta mix'),filas,160,['46%','27%','27%']));}
+      const top=z.exc.slice().sort((a,b)=>b.val-a.val).slice(0,20);
+      const filas=top.map(x=>'<tr><td class="st-cod">'+x.cod+'</td>'
+        +'<td class="st-ga">'+x.ga+'</td>'+cat(x.cat)
+        +'<td class="num st-b">'+fmtI(x.u)+'</td>'
+        +'<td class="num st-r">'+M(s[2],x.val)+'</td>'
+        +'<td class="num st-d">'+(z.tot?(x.val/z.tot*100).toFixed(1):0)+'%</td>'
+        +'<td class="num st-v">'+M(s[2],x.mix)+'</td></tr>').join('');
+      return stCaja(s[3],s[1],s[2],res,
+        stTablita(h('Código','left')+h('Grupo','left')+h('Cat')+h('Exceso u')+h('Costo')+h('% del total')+h('Venta mix'),
+          filas,160,['17%','14%','7%','11%','17%','15%','19%']));}).join('');
+    return stPanel('💰 Costo inmovilizado',sol,cuerpo);
+  }
+  // ---- Sin rotacion ----
+  if(F==='sinrot'){
+    const cuerpo=SEG.map(s=>{const z=Z[s[0]];
+      const top=z.muerto.slice().sort((a,b)=>b.val-a.val).slice(0,30);
+      const filas=top.map(x=>'<tr><td class="st-cod">'+x.cod+'</td>'
+        +'<td class="st-ga">'+x.ga+'</td>'+cat(x.cat)
+        +'<td class="num st-b">'+fmtI(x.u)+'</td>'
+        +'<td class="num st-r">'+M(s[2],x.val)+'</td>'
+        +'<td class="num st-v">'+M(s[2],x.mix)+'</td></tr>').join('');
+      return stCaja(s[3],s[1],s[2],
+        grande(fmtI(z.muerto.length)+' SKU · '+fmtI(z.mu)+' u paradas',M(s[2],z.mtot),STROJO),
+        stTablita(h('Código','left')+h('Grupo','left')+h('Cat')+h('Stock u')+h('Costo')+h('Venta mix'),
+          filas,160,['20%','23%','8%','13%','17%','19%']));}).join('');
+    return stPanel('💤 Los 30 que más plata tienen parada','',cuerpo);
+  }
+  // ---- Quiebre: por GA, se abre para ver los SKU ----
+  st.qbAbierto=st.qbAbierto||{};
+  const cuerpo=SEG.map(s=>{const z=Z[s[0]],ab=st.qbAbierto[s[0]];
+    const lista=Object.entries(z.qb).sort((a,b)=>b[1].val-a[1].val);
+    let filas='';
+    lista.forEach(([ga,q])=>{const on=(ab===ga);
+      filas+='<tr onclick="setQbGa(&quot;'+s[0]+'&quot;,&quot;'+ga.replace(/"/g,'')+'&quot;)" '
+        +'style="cursor:pointer;background:'+(on?'#eef2ff':'')+';">'
+        +'<td class="st-ga" style="font-weight:700;color:#1a237e">'+(on?'▾ ':'▸ ')+ga+'</td>'
+        +'<td class="num st-d">'+q.n+'</td>'
+        +'<td class="num st-b">'+fmtI(q.u)+'</td>'
+        +'<td class="num st-v">'+M(s[2],q.val)+'</td></tr>';
+      if(on){q.sku.slice().sort((a,b)=>b.val-a.val).forEach(x=>{
+        filas+='<tr style="background:#f7f8ff;"><td class="st-cod" style="padding-left:18px">'
+          +x.cod+' <span class="cat cat-'+x.cat+'">'+x.cat+'</span></td>'
+          +'<td></td><td class="num st-b">'+fmtI(x.u)+'</td>'
+          +'<td class="num st-v">'+M(s[2],x.val)+'</td></tr>';});}
+    });
+    return stCaja(s[3],s[1],s[2],
+      grande(fmtI(z.qn)+' SKU · venta de este mes que no vas a poder cubrir',M(s[2],z.qtot),STVERDE),
+      stTablita(h('Grupo','left')+h('SKU')+h('Perdés u')+h('Venta mix'),filas,200,['46%','12%','18%','24%']));}).join('');
+  return stPanel('🔴 Quiebres que duelen · tocá un grupo para ver los códigos','',cuerpo);
 }
 function renderTab(t){const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='st')renderStock();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 function renderActive(){renderTab(st.tab);}
