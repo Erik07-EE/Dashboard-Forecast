@@ -230,7 +230,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 <div id="view-st" style="display:none"></div>
 <div id="view-liq" style="display:none">
 <div class="liqbar"><span class="liqlbl">Acción</span><span class="acmode"><button id="acL" class="acbtn on" onclick="setAcMode('liq')">Liquidación</button><button id="acO" class="acbtn" onclick="setAcMode('of')">Oferta</button></span><span class="liqcfg"><span class="liqlbl">Indicador</span> <select id="liqSel" onchange="setLiq()"><option value="all" selected>Todos</option><option value="q0">Quiebre</option><option value="qr">Riesgo</option><option value="1">Máximo</option><option value="2">Máximo × 2</option><option value="3">Máximo × 3</option><option value="4">Máximo × 4</option></select></span><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgLiq">Dto. Máx vs A.C. <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgOf" style="display:none">Dto. Of <select id="dtoOfSel" onchange="setDtoOf()"><option value="0.05">5%</option><option value="0.1" selected>10%</option><option value="0.15">15%</option><option value="0.2">20%</option><option value="0.25">25%</option><option value="0.3">30%</option></select></span><span style="flex:1"></span><select id="ofQtySel" onchange="setOfQty(this.value)" style="font-size:.72rem;padding:2px 4px"><option value="10">Top 10</option><option value="20">Top 20</option><option value="30">Top 30</option><option value="40">Top 40</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="200">Top 200</option><option value="full">Con exceso</option><option value="all" selected>Todos</option></select><button class="btnpri" id="btnExcelL" onclick="exportLiqXlsx()">⬇ Excel (Liq)</button><button class="btnpri" id="btnExcelO" onclick="exportLiqXlsx()" style="display:none">⬇ Excel (OF)</button></div>
-<div id="liqResumen" style="display:none"></div>
+
 <div id="liqTot"></div>
 
 <div class="tablewrap" style="max-height:460px"><table id="tablaLiqPrev" class="prevt"></table></div>
@@ -390,16 +390,6 @@ function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);row
   const fW=[66,62,58,64,66,62];let cg='<colgroup>'+vis.map(c=>'<col style="width:'+c.w+'px">').join('');MW.forEach(()=>{cg+=fW.map(w=>'<col style="width:'+w+'px">').join('');});cg+='</colgroup>';
   t.innerHTML=cg+'<thead>'+r1+r2+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot>';}
 
-function renderLiqSum(rows){const el=document.getElementById('liqResumen');if(!st.liq){el.innerHTML='<div class="liqsum"><div class="impo-hint">Elegí un factor de liquidación (arriba) para ver los candidatos y el resumen.</div></div>';return;}
-  const byGa={};rows.forEach(r=>{const g=DATA.GA[r[1]];(byGa[g]=byGa[g]||{tot:0,cat:{}});byGa[g].tot++;const c=DATA.CAT[r[3]];byGa[g].cat[c]=(byGa[g].cat[c]||0)+1;});
-  const gas=Object.keys(byGa).sort((a,b)=>prioName(a)-prioName(b));
-  const rowsH=gas.map(g=>{const o=byGa[g];const cats=Object.keys(o.cat).sort().map(c=>c+': '+o.cat[c]).join(' · ');return `<div class="liqga"><b>${g}</b><span class="tot">${o.tot}</span><span class="cats">${cats}</span></div>`;}).join("");
-  el.innerHTML=`<div class="liqsum"><div class="liqsum-h">Resumen liquidación (× ${st.liq}) — <span class="n">${rows.length}</span> artículos a liquidar</div><div>${rowsH}</div></div>`;}
-function exportLiq(){if(!st.liq)return;const rows=visibleRows().filter(r=>r[5]!=null&&r[IDEAL]!=null&&r[IDEAL]>0&&r[5]>r[IDEAL]*st.liq);
-  let head=["UN","GA","Codigo","Categoria","Meses/Cat","Stock actual","Meses actual","Exceso (act-cat)"];let lines=[head.join(";")];
-  rows.forEach(r=>{lines.push([DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5],(r[5]-r[IDEAL]).toFixed(1)].join(";"));});
-  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="liquidacion_x"+st.liq+".csv";a.click();}
-let vpRendered=false;
 function pageMonths(tab,dir){const total=(tab==='hist')?(((DATA.hist&&DATA.hist.months)||[]).length):12;const mx=Math.max(0,total-4);st.mstart[tab]=Math.max(0,Math.min(mx,(st.mstart[tab]||0)+dir));if(tab==='fc')renderForecast();else if(tab==='vp')renderVP();else renderHist();}
 function showTab(t){st.tab=t;['fc','st','liq','vp','hist'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
 function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');const _tvp=imp*tc+dist,_cmv=impc*tc+distc;const re=document.getElementById('vprat_'+m);if(re)re.textContent=_tvp>0?((_cmv/_tvp*100).toFixed(1)+'%'):'–';}
@@ -500,7 +490,6 @@ function setLiqCfg(){const m=parseFloat(document.getElementById('minCM').value);
 function setAcMode(m){st.acMode=m;const L=m==='liq';document.getElementById('acL').classList.toggle('on',L);document.getElementById('acO').classList.toggle('on',!L);document.getElementById('cfgLiq').style.display=L?'':'none';document.getElementById('cfgOf').style.display=L?'none':'';document.getElementById('btnExcelL').style.display=L?'':'none';document.getElementById('btnExcelO').style.display=L?'none':'';renderTab('liq');}
 function setDtoOf(){st.dtoOf=parseFloat(document.getElementById('dtoOfSel').value)||0.1;renderTab('liq');}
 function setOfQty(v){st.ofQty=v;renderTab('liq');}
-function toggleLiqRes(){const el=document.getElementById('liqResumen'),b=document.getElementById('liqResBtn');const hid=el.style.display==='none';el.style.display=hid?'':'none';b.textContent=hid?'▾ Resumen':'▸ Resumen';}
 function toggleLiqCM(){st.liqCM=!st.liqCM;renderTab('liq');}
 function setLiqSort(f){if(st.liqSort===f){st.liqSortDir=(st.liqSortDir||-1)*-1;}else{st.liqSort=f;st.liqSortDir=-1;}renderTab('liq');}
 function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev');const _isOf=st.acMode==='of';
@@ -615,7 +604,7 @@ function exportVPXlsx(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
   XLSX.writeFile(wb,'Proyeccion_VP.xlsx');
 }
-function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<minMeses(r,id));return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML='';renderLiqSum(rows);renderLiqPreview(rows);}
+function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<minMeses(r,id));return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML='';renderLiqPreview(rows);}
 // ====================== PESTANA STOCK ======================
 // Modelo min/max, el mismo que usa el Excel:
 //   Venta ajustada (col BV) = el ritmo mensual. Meses actual = Stock / Venta ajustada.
