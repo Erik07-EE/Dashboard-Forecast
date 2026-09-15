@@ -17,15 +17,15 @@ header{background:var(--azul);padding:0 22px;display:flex;align-items:center;gap
 .hdr-badge{background:var(--amarillo);color:var(--azul);font-size:.68rem;font-weight:800;padding:5px 11px;border-radius:20px;white-space:nowrap;}
 .btns{display:flex;gap:7px;} .btns button{font:inherit;font-size:.7rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:6px 10px;} .btns button:hover{background:rgba(255,255,255,.22);}
 .wrap{padding:12px 22px 46px;}
-.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12);padding:10px 15px;margin-bottom:10px;}
-.dd{position:relative;width:200px;}
-.dd .cap{display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--azul3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dd-btn{display:flex;align-items:center;gap:7px;width:100%;height:34px;font:inherit;cursor:pointer;background:#f8f9ff;border:1px solid #c5cae9;border-radius:7px;padding:0 10px;color:var(--azul);text-align:left;}
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12);padding:6px 14px;margin-bottom:8px;}
+.dd{position:relative;display:flex;align-items:center;gap:7px;}
+.dd .cap{display:inline-block;font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--azul3);margin-bottom:0;white-space:nowrap;}
+.dd-btn{display:flex;align-items:center;gap:7px;width:158px;height:30px;font:inherit;cursor:pointer;background:#f8f9ff;border:1px solid #c5cae9;border-radius:7px;padding:0 10px;color:var(--azul);text-align:left;}
 .dd-btn:hover,.dd-btn:focus{border-color:var(--azul3);outline:none;}
 .dd-btn .cnt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem;font-weight:700;}
 .dd-btn.empty .cnt{color:#9aa0c9;font-weight:600;}
 .dd-btn .arw{color:var(--azul3);font-size:.62rem;} .dd-btn .dd-cnt{font-size:.6rem;font-weight:800;color:#fff;background:var(--azul3);border-radius:20px;padding:1px 6px;} .dd-btn.empty .dd-cnt{display:none;}
-.dd-panel{display:none;position:absolute;top:100%;margin-top:4px;left:0;width:270px;max-width:88vw;background:#fff;border:1px solid #c5cae9;border-radius:10px;box-shadow:0 8px 24px rgba(26,35,126,.22);z-index:55;padding:8px;}
+.dd-panel{display:none;position:absolute;top:100%;margin-top:4px;right:0;width:270px;max-width:88vw;background:#fff;border:1px solid #c5cae9;border-radius:10px;box-shadow:0 8px 24px rgba(26,35,126,.22);z-index:55;padding:8px;}
 .dd.open .dd-panel{display:block;}
 .dd-panel .mini{width:100%;padding:6px 9px;border:1px solid #c5cae9;border-radius:7px;font:inherit;font-size:.75rem;margin-bottom:6px;color:var(--azul);}
 .dd-list{max-height:198px;overflow:auto;}
@@ -116,7 +116,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .tabs{display:flex;gap:6px;margin-bottom:12px;}
 .tab{font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;background:#fff;border:1px solid #c5cae9;border-radius:8px 8px 0 0;padding:8px 16px;color:var(--azul3);}
 .tab.on{background:var(--azul);color:#fff;border-color:var(--azul);border-bottom:3px solid var(--amarillo);}
-.tabs{border-bottom:2px solid #d6dae8;padding-bottom:0;}
+.tabs{border-bottom:2px solid #d6dae8;position:sticky;top:56px;z-index:30;background:#fff;padding:8px 22px 0;margin-left:-22px;margin-right:-22px;}
 .vpnote{font-size:.72rem;color:#7986cb;margin-bottom:8px;}
 .vptable{border-collapse:separate;border-spacing:0;font-size:.88rem;white-space:nowrap;}
 .vptable th,.vptable td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:6px 10px;}
@@ -177,19 +177,38 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .btnpri{font:inherit;font-size:.72rem;font-weight:700;background:var(--verde);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;}
 .prevt{border-collapse:separate;border-spacing:0;font-size:.72rem;white-space:nowrap;width:100%;table-layout:fixed;}
 .prevt th,.prevt td{padding:4px 8px;}
-.prevt td.ccmm{color:#7b1fa2;font-weight:700;}
+.prevt td.ccmm{color:#7b1fa2;}
 .prevt thead tr.g th{color:#fff;background:#1a237e;font-weight:800;font-size:.64rem;text-transform:uppercase;text-align:center;padding:6px 4px;height:34px;position:sticky;top:0;z-index:4;}
 .prevt thead tr.g th.g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm,.prevt .g-tot{background:#1a237e;}
 .prevt thead tr.h th{font-size:.58rem;text-transform:uppercase;white-space:nowrap;height:22px;position:sticky;top:34px;color:#fff;background:#1a237e;z-index:4;padding:3px 8px;box-shadow:inset 0 -3px 0 #ffd600;}
 .prevt thead tr.tot th{position:sticky;top:56px;z-index:4;font-size:.72rem;}
 .prevt thead tr.g th.g-prod{background:#1a237e;color:#fff;}.prevt thead tr.g th.g-liq{background:#ffd600;color:#1a237e;}.prevt thead tr.h th.liq{background:#ffd600;color:#1a237e;}
-.prevt td.cusd-c{background:transparent;color:#c0392b;font-weight:700;}.prevt td.cusd-g,.prevt td.vpg{background:transparent;color:#1e7e34;font-weight:700;}.prevt td.cblue,.prevt td.corange{background:transparent;color:#1c1c1a;font-weight:400;}.prevt td.dred,.prevt td.cdto{background:transparent;color:#1d5fbf;font-weight:700;}
+.prevt td.cusd-c{background:transparent;color:#c0392b;}.prevt td.cusd-g,.prevt td.vpg{background:transparent;color:#1e7e34;}.prevt td.cblue,.prevt td.corange{background:transparent;color:#1c1c1a;font-weight:400;}.prevt td.dred,.prevt td.cdto{background:transparent;color:#1d5fbf;font-weight:700;}
 .prevt tbody tr:nth-child(odd){background:#f4f5fa;}
 .prevt td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .prevt td.code{font-weight:800;color:#1a237e;}
 .prevt tbody tr:hover td{background:#fff6c9;}
 .liqcfg{font-size:.68rem;color:#5f6690;}.liqcfg input{width:80px;font:inherit;font-size:.78rem;text-align:center;border:1px solid #c5cae9;border-radius:7px;padding:5px 9px;color:var(--azul);font-weight:700;background:#f8f9ff;}
 @media print{.filterbar,.btns,.res-toggle{display:none;}.tablewrap,#resumen{max-height:none;overflow:visible;}body{background:#fff;}}
+
+/* pestana Stock: clases, para no repetir estilos en 5.500 filas */
+.st-ga{text-align:left;color:#5f6690;overflow:hidden;text-overflow:ellipsis;}
+.st-cod{text-align:left;font-weight:700;}
+.st-ct{text-align:center;}
+.st-d{color:#5f6690;}
+.st-b{font-weight:700;}
+.st-r{color:#c0392b;}
+.st-v{color:#1e7e34;}
+.st-p{display:inline-block;min-width:92px;text-align:center;padding:1px 7px;border-radius:9px;font-size:.6rem;font-weight:800;}
+.st-p-cero{background:#e53935;color:#fff;}
+.st-p-riesgo{background:#1565c0;color:#fff;}
+.st-p-ideal{background:#2e7d32;color:#fff;}
+.st-p-exceso{background:#ffd600;color:#e30613;}
+
+/* el boton activo de Accion toma el color de lo que hace:
+   liquidacion = amarillo con letra roja | oferta = verde con letra blanca */
+#acL.on{background:#ffd600;color:#e30613;}
+#acO.on{background:#1e7e34;color:#fff;}
 </style>
 </head>
 <body>
@@ -201,18 +220,19 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 </header>
 <div class="wrap">
 <div class="filterbar" id="filterbar"></div>
-<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Acción comercial</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
+<div class="tabs"><button class="tab on" id="tab-fc" onclick="showTab('fc')">📊 Forecast</button><button class="tab" id="tab-st" onclick="showTab('st')">📦 Stock</button><button class="tab" id="tab-liq" onclick="showTab('liq')">🏷️ Acción comercial</button><button class="tab" id="tab-vp" onclick="showTab('vp')">💲 Proyección</button><button class="tab" id="tab-hist" onclick="showTab('hist')">📈 Histórico</button></div>
 <div id="view-fc">
 <div class="mes-sel" id="mesSel"></div>
 <div class="res-toggle" onclick="toggleRes()"><span id="resIco">▸</span> Pedidos Forecast <span class="ln"></span></div>
 <div id="resumen" class="collapsed"><div id="resumenInner"></div></div>
-<div class="mpager"><button onclick="pageMonths('fc',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths('fc',1)">▶</button></div><div class="dotbar"><span class="dotcfg"><span class="dot d-red" style="position:static;margin:0 4px 0 0;vertical-align:middle"></span>Alerta! : Meses mínimo = Meses máximo − <input id="dotGapInp" class="dotinp" value="1" onchange="setDotGap(this)"> mes</span></div><div class="tablewrap pg" id="tw-fc"><table id="tabla"></table></div>
+<div class="mpager"><button onclick="pageMonths('fc',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths('fc',1)">▶</button></div><div class="tablewrap pg" id="tw-fc"><table id="tabla"></table></div>
 </div>
+<div id="view-st" style="display:none"></div>
 <div id="view-liq" style="display:none">
-<div class="liqbar"><span class="liqlbl">Acción comercial</span><span class="acmode"><button id="acL" class="acbtn on" onclick="setAcMode('liq')">Liquidación</button><button id="acO" class="acbtn" onclick="setAcMode('of')">Oferta</button></span><span class="liqcfg">Filtro: <select id="liqSel" onchange="setLiq()"><option value="all" selected>Todos</option><option value="q0">Stock 0</option><option value="qr">Stock bajo</option><option value="1">× 1 (ideal)</option><option value="2">× 2 (ideal)</option><option value="3">× 3 (ideal)</option><option value="4">× 4 (ideal)</option></select></span><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgLiq">Dto. Máx vs A.C. <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgOf" style="display:none">Dto. Of <select id="dtoOfSel" onchange="setDtoOf()"><option value="0.05">5%</option><option value="0.1" selected>10%</option><option value="0.15">15%</option><option value="0.2">20%</option><option value="0.25">25%</option><option value="0.3">30%</option></select></span><span style="flex:1"></span><select id="ofQtySel" onchange="setOfQty(this.value)" style="font-size:.72rem;padding:2px 4px"><option value="10">Top 10</option><option value="20" selected>Top 20</option><option value="30">Top 30</option><option value="40">Top 40</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="200">Top 200</option><option value="full">Con exceso</option><option value="all">Todos</option></select><button class="linkbtn" id="btnPdf" onclick="toggleLiqRes()">📄 PDF (Resumen)</button><button class="btnpri" id="btnExcelL" onclick="exportLiqXlsx()">⬇ Excel (Liq)</button><button class="btnpri" id="btnExcelO" onclick="exportLiqXlsx()" style="display:none">⬇ Excel (OF)</button></div>
+<div class="liqbar"><span class="liqlbl">Acción</span><span class="acmode"><button id="acL" class="acbtn on" onclick="setAcMode('liq')">Liquidación</button><button id="acO" class="acbtn" onclick="setAcMode('of')">Oferta</button></span><span class="liqcfg"><span class="liqlbl">Indicador</span> <select id="liqSel" onchange="setLiq()"><option value="all" selected>Todos</option><option value="q0">Quiebre</option><option value="qr">Riesgo</option><option value="1">Máximo</option><option value="2">Máximo × 2</option><option value="3">Máximo × 3</option><option value="4">Máximo × 4</option></select></span><span class="liqcfg">Contrib. mín: <input id="minCM" type="number" value="10" min="0" max="100" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgLiq">Dto. Máx vs A.C. <input id="dtoGap" type="number" value="5" min="0" max="50" step="1" onchange="setLiqCfg()">%</span><span class="liqcfg" id="cfgOf" style="display:none">Dto. Of <select id="dtoOfSel" onchange="setDtoOf()"><option value="0.05">5%</option><option value="0.1" selected>10%</option><option value="0.15">15%</option><option value="0.2">20%</option><option value="0.25">25%</option><option value="0.3">30%</option></select></span><span style="flex:1"></span><select id="ofQtySel" onchange="setOfQty(this.value)" style="font-size:.72rem;padding:2px 4px"><option value="10">Top 10</option><option value="20">Top 20</option><option value="30">Top 30</option><option value="40">Top 40</option><option value="50">Top 50</option><option value="100">Top 100</option><option value="200">Top 200</option><option value="full">Con exceso</option><option value="all" selected>Todos</option></select><button class="btnpri" id="btnExcelL" onclick="exportLiqXlsx()">⬇ Excel (Liq)</button><button class="btnpri" id="btnExcelO" onclick="exportLiqXlsx()" style="display:none">⬇ Excel (OF)</button></div>
 <div id="liqResumen" style="display:none"></div>
 <div id="liqTot"></div>
-<div class="sec-h" style="margin-top:14px">📄 Preview Excel de liquidación</div>
+
 <div class="tablewrap" style="max-height:460px"><table id="tablaLiqPrev" class="prevt"></table></div>
 </div>
 <div id="view-vp" style="display:none"></div>
@@ -228,7 +248,7 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'20',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:1,stMult:1,stFil:'all',stSort:'cod',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -238,7 +258,14 @@ const fmtCat=n=>n==null?"–":(Number.isInteger(n)?n:Number(n).toFixed(1));
 const fmtU=n=>n==null?"–":"U$D "+Number(n).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const mval=(r,m,f)=>r[6+m*6+f];
 const sane=s=>String(s).replace(/[^a-zA-Z0-9]/g,"_");
-function mcell(v,ideal,green,noDot){let c="";if(green)c="d-grn";else if(!noDot&&v!=null&&ideal!=null&&ideal>0&&v<ideal-st.dotGap)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}" data-v="${v==null?'':v}" data-id="${ideal==null?'':ideal}" data-g="${green?1:0}" data-nd="${noDot?1:0}"></span><span class="mn">${fmtM(v)}</span></span>`;}
+// El minimo depende de como se repone cada cosa:
+//   Importados: maximo - 1 mes (un pedido tarda meses, hay que avisar antes).
+//   El resto: la mitad del maximo (se repone en semanas; restarle 1 mes entero
+//   dejaba el minimo en cero en el 65% del catalogo y la alerta nunca saltaba).
+const UN_IMPO='Importados';
+function minMeses(r,mx){if(mx==null||mx<=0)return 0;
+  return (DATA.UN[r[0]]===UN_IMPO)?Math.max(0,mx-1):mx*0.5;}
+function mcell(v,mn,green,noDot){let c="";if(green)c="d-grn";else if(!noDot&&v!=null&&mn!=null&&mn>0&&v<mn)c="d-red";return `<span class="mwrap"><span class="dot ${c||"dnone"}" data-v="${v==null?'':v}" data-id="${mn==null?'':mn}" data-g="${green?1:0}" data-nd="${noDot?1:0}"></span><span class="mn">${fmtM(v)}</span></span>`;}
 function mUN(r){return st.UN.size===0||st.UN.has(r[0]);}
 function mGA(r){return st.GA.size===0||st.GA.has(r[1]);}
 function mCAT(r){return st.CAT.size===0||st.CAT.has(r[3]);}
@@ -253,9 +280,9 @@ function buildBar(){let h=DIMS.map(([d,cap,def,ph])=>`<div class="dd" data-dim="
   document.getElementById('filterbar').innerHTML=h;}
 function renderMesSel(){document.getElementById('mesSel').innerHTML='<span class="lbl">Mes (panel):</span>'+DATA.months.map((m,i)=>`<span class="chip ${st.RMES.has(i)?'on':''}" onclick="tglRMes(${i})">${m}</span>`).join("");}
 function tglRMes(i){st.RMES.has(i)?st.RMES.delete(i):st.RMES.add(i);renderAll();}
-function setDotGap(el){let v=parseFloat(el.value);st.dotGap=isNaN(v)?1:v;updateDots();}
+
 function setSmSort(m,v){if(!v){st.sort=null;}else{st.sort={m:m,f:v==='ini'?1:5};}st.dir=1;renderForecast();}
-function updateDots(){document.querySelectorAll('#tabla .dot').forEach(d=>{if(d.dataset.g==='1'||d.dataset.nd==='1')return;const v=parseFloat(d.dataset.v),id=parseFloat(d.dataset.id);const red=(!isNaN(v)&&!isNaN(id)&&id>0&&v<id-st.dotGap);d.className='dot '+(red?'d-red':'dnone');});}
+function updateDots(){document.querySelectorAll('#tabla .dot').forEach(d=>{if(d.dataset.g==='1'||d.dataset.nd==='1')return;const v=parseFloat(d.dataset.v),id=parseFloat(d.dataset.id);const red=(!isNaN(v)&&!isNaN(id)&&id>0&&v<id);d.className='dot '+(red?'d-red':'dnone');});}
 function optionsFor(dim){
   if(dim==='UN'){const c=countBy(DATA.rows,0);return DATA.UN.map((v,i)=>({key:i,label:v,n:c.get(i)||0}));}
   if(dim==='GA'){const b=DATA.rows.filter(mUN);const c=countBy(b,1);return DATA.GA.map((v,i)=>({key:i,label:v,n:c.get(i)||0})).filter(o=>o.n>0).sort((a,b)=>prioName(a.label)-prioName(b.label));}
@@ -339,7 +366,7 @@ function renderResumen(){const rms=resMonths();const inner=document.getElementBy
     if(cv)donutCharts[j.id]=new Chart(cv,{type:'doughnut',data:{labels:['Venta proy.','Remanente'],datasets:[{data:[cov.vp,Math.max(cov.stk-cov.vp,0)],backgroundColor:['#3949ab','#e8eaf6'],borderWidth:0}]},options:{cutout:'62%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});});}
 
 function sortRows(rows){if(!st.sort){return rows.slice().sort((a,b)=>{const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}
-  const s=st.sort,d=st.dir;if(typeof s==='object'&&s&&(s.f===1||s.f===5)){const isRed=r=>{const id=r[IDEAL];const v=mval(r,s.m,s.f);return (id!=null&&id>0&&v!=null&&v<id-st.dotGap)?0:1;};return rows.slice().sort((a,b)=>{const ra=isRed(a),rb=isRed(b);if(ra!==rb)return ra-rb;const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;return mval(r,s.m,s.f)??-1;};
+  const s=st.sort,d=st.dir;if(typeof s==='object'&&s&&(s.f===1||s.f===5)){const isRed=r=>{const id=r[IDEAL];const v=mval(r,s.m,s.f);return (id!=null&&id>0&&v!=null&&v<minMeses(r,id))?0:1;};return rows.slice().sort((a,b)=>{const ra=isRed(a),rb=isRed(b);if(ra!==rb)return ra-rb;const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;return mval(r,s.m,s.f)??-1;};
   return rows.slice().sort((a,b)=>{const x=val(a),y=val(b);if(typeof x==='string')return d*x.localeCompare(y);return d*(x-y);});}
 function setSort(k){const same=JSON.stringify(st.sort)===JSON.stringify(k);st.dir=same?-st.dir:1;st.sort=k;renderForecast();}
 function sortRed(k){const same=JSON.stringify(st.sort)===JSON.stringify(k);st.sort=same?null:k;st.dir=1;renderForecast();}
@@ -349,14 +376,14 @@ function showAllCols(){st.hideCols.clear();renderForecast();}
 function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);rows=sortRows(rows);let _ms=st.mstart.fc||0;_ms=Math.max(0,Math.min(_ms,ALLM.length-4));if(ALLM.length<=4)_ms=0;const MW=ALLM.slice(_ms,_ms+4);
   if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados con los filtros actuales.</td></tr></tbody>';return;}
   let cwLen=rows.reduce((m,r)=>Math.max(m,(r[2]||'').length),4);const cw=Math.min(210,Math.max(92,Math.round(cwLen*7.5+20)));document.documentElement.style.setProperty('--cw',cw+'px');
-  const IDCOLS=[{k:'un',lbl:'UN',w:66,hid:1,td:r=>DATA.UN[r[0]]},{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'ideal',lbl:'Meses máx',w:88,num:1,hid:1,td:r=>fmtCat(r[IDEAL])},{k:'cajax',lbl:'Caja x',w:70,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock',w:70,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses',w:70,num:1,td:(r,id,gl)=>mcell(r[5],id,!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
+  const IDCOLS=[{k:'un',lbl:'UN',w:66,hid:1,td:r=>DATA.UN[r[0]]},{k:'ga',lbl:'GA',w:110,td:r=>DATA.GA[r[1]]},{k:'cod',lbl:'C\u00f3digo',w:cw,cls:'code',td:r=>r[2]},{k:'cat',lbl:'Cat',w:48,td:r=>'<span class="cat cat-'+DATA.CAT[r[3]]+'">'+DATA.CAT[r[3]]+'</span>'},{k:'ideal',lbl:'Meses máx',w:88,num:1,hid:1,td:r=>fmtCat(r[IDEAL])},{k:'cajax',lbl:'Caja x',w:70,num:1,td:r=>fmtI(r[CAJAX])},{k:'stock',lbl:'Stock',w:70,num:1,td:r=>fmtI(r[4])},{k:'meses',lbl:'Meses',w:70,num:1,td:(r,id,gl)=>mcell(r[5],minMeses(r,id),!!(gl&&st.liq&&id>0&&r[5]>id*st.liq))}];
   const vis=IDCOLS.filter(c=>!st.hideCols.has(c.k));let _lx=0;vis.forEach(c=>{c._left=_lx;_lx+=c.w;});const idW=_lx;const nHid=st.hideCols.size;
   let r1='<tr class="r1"><th class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">Stock al '+DATA.stock_ts+(nHid?' \u00b7 <span class="colshow" onclick="showAllCols()">mostrar '+nHid+' col. oculta'+(nHid>1?'s':'')+'</span>':'')+'</th>';MW.forEach(m=>{const _sb=(st.sort&&st.sort.m===m)?(st.sort.f===1?'ini':'fin'):'';r1+='<th colspan="6" class="mcol">'+DATA.months[m]+'<div class="smsel">Stock mín: <select onchange="setSmSort('+m+',this.value)"><option value=""'+(_sb===''?' selected':'')+'>—</option><option value="ini"'+(_sb==='ini'?' selected':'')+'>Inicio</option><option value="fin"'+(_sb==='fin'?' selected':'')+'>Fin</option></select></div></th>';});r1+='</tr>';
   let r2='<tr class="r2">'+vis.map(c=>'<th class="idc'+(c.num?' num':'')+(c.hid?' hcol':'')+'" style="position:sticky;white-space:nowrap;left:'+c._left+'px;width:'+c.w+'px;min-width:'+c.w+'px;max-width:'+c.w+'px">'+c.lbl+(c.hid?'<span class="colx" onclick="hideCol(\''+c.k+'\',event)" title="Ocultar columna">\u00d7</span>':'')+'</th>').join('');
   MW.forEach((m,mi)=>{MSHORT.forEach((f,fi)=>{const mc=(mi%2)?' mo':'';r2+='<th class="num f'+fi+(fi===0?' mg-a':'')+mc+'">'+f+'</th>';});});r2+='</tr>';
   const cap=1200;const show=rows.slice(0,cap);let body='';
   show.forEach(r=>{const id=r[IDEAL];body+='<tr>'+vis.map(c=>'<td class="idc'+(c.num?' num':'')+(c.cls?' '+c.cls:'')+'" style="left:'+c._left+'px">'+c.td(r,id,greenLiq)+'</td>').join('');
-    MW.forEach((m,mi)=>{const mc=(mi%2)?' mo':'';for(let f=0;f<6;f++){const v=mval(r,m,f);const isM=(f===1||f===5);let cl="num f"+f+(f===0?" mg-a":"")+mc;if(f===2)cl+=(v>0?" t-buy":" t-zero");else if(f===3)cl+=" t-grn";body+='<td class="'+cl+'">'+(isM?mcell(v,id,false):fmtI(v))+'</td>';}});
+    MW.forEach((m,mi)=>{const mc=(mi%2)?' mo':'';for(let f=0;f<6;f++){const v=mval(r,m,f);const isM=(f===1||f===5);let cl="num f"+f+(f===0?" mg-a":"")+mc;if(f===2)cl+=(v>0?" t-buy":" t-zero");else if(f===3)cl+=" t-grn";body+='<td class="'+cl+'">'+(isM?mcell(v,minMeses(r,id),false):fmtI(v))+'</td>';}});
     body+='</tr>';});
   let foot='<tr><td class="idpanel" colspan="'+vis.length+'" style="width:'+idW+'px">TOTAL \u00b7 '+rows.length.toLocaleString("es-AR")+' c\u00f3digos'+(rows.length>cap?' (muestra '+cap+')':'')+'</td>';
   MW.forEach((m,mi)=>{let sc=0,sv=0;rows.forEach(r=>{sc+=mval(r,m,2)||0;sv+=mval(r,m,3)||0;});foot+='<td class="num f0 mg-a"></td><td class="num f1"></td><td class="num f2 t-buy">'+fmtI(sc)+'</td><td class="num f3 t-grn">'+fmtI(sv)+'</td><td class="num f4"></td><td class="num f5"></td>';});foot+='</tr>';
@@ -374,7 +401,7 @@ function exportLiq(){if(!st.liq)return;const rows=visibleRows().filter(r=>r[5]!=
   const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="liquidacion_x"+st.liq+".csv";a.click();}
 let vpRendered=false;
 function pageMonths(tab,dir){const total=(tab==='hist')?(((DATA.hist&&DATA.hist.months)||[]).length):12;const mx=Math.max(0,total-4);st.mstart[tab]=Math.max(0,Math.min(mx,(st.mstart[tab]||0)+dir));if(tab==='fc')renderForecast();else if(tab==='vp')renderVP();else renderHist();}
-function showTab(t){st.tab=t;['fc','liq','vp','hist'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
+function showTab(t){st.tab=t;['fc','st','liq','vp','hist'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
 function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');const _tvp=imp*tc+dist,_cmv=impc*tc+distc;const re=document.getElementById('vprat_'+m);if(re)re.textContent=_tvp>0?((_cmv/_tvp*100).toFixed(1)+'%'):'–';}
 function setSeasonSim(i,which,el){let v=parseFloat(el.value);if(isNaN(v)){if(which===0)delete st.simEstac[i];else delete st.simEvento[i];}else{const f=v/100;if(which===0)st.simEstac[i]=f;else st.simEvento[i]=f;}renderVP();}
 function resetSeasonSim(){st.simEstac={};st.simEvento={};renderVP();}
@@ -415,7 +442,7 @@ function renderVP(){const el=document.getElementById('view-vp');const M=DATA.mon
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button><span class="liqinfo">Editá Est./Ev. en cada mes para simular escenarios (la proyección se escala al instante). El ↺ de cada mes vuelve a los valores del Excel.</span></div><div class="vpnote">Calculado desde Forecast (respeta filtros). '+(mode==='cod'?'Mostrando por código.':(mode==='cat'?'Agrupado por categoría.':'Agregado por GA.'))+' VA c/stk = venta ajustada con stock (del Forecast). CMV = costo × V.P. u. CMV/Vta = costo/venta. Tendencia mensual = AN; anual = (1+mensual)^12−1.</div><div class="mpager"><button onclick="pageMonths(\'vp\',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths(\'vp\',1)">▶</button></div><div class="tablewrap pg" id="tw-vp"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="liqbar"><span class="liqlbl">Proyección</span><button class="btnpri" onclick="exportVPXlsx()">⬇ Generar Excel</button></div><div class="mpager"><button onclick="pageMonths(\'vp\',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths(\'vp\',1)">▶</button></div><div class="tablewrap pg" id="tw-vp"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
   IW.forEach(i=>recalcVP(i));}
 function recalcHist(i){const S=window._histSeg;const el=document.getElementById('htc_'+i);if(!el)return;if(el.value==='')delete st.histTC[i];else st.histTC[i]=el.value;const on=el.value!=='';el.style.background=on?'#fff5cc':'#fff';el.style.borderColor=on?'#e6a700':'#ffd600';el.style.color=on?'#8a5a00':'#1a237e';const vpE=document.getElementById('hvp_'+i),vrE=document.getElementById('hvr_'+i),rE=document.getElementById('hrat_'+i);const tc=parseFloat(el.value);if(!S||isNaN(tc)||tc<=0){if(vpE)vpE.textContent='–';if(vrE)vrE.textContent='–';if(rE){rE.textContent='–';rE.style.color='#0d1b5e';}return;}const f=n=>'$ '+Math.round(n).toLocaleString('es-AR');const vp=(S.impVP[i]||0)*tc+(S.distVP[i]||0),vr=(S.impVR[i]||0)*tc+(S.distVR[i]||0);if(vpE)vpE.textContent=f(vp);if(vrE)vrE.textContent=f(vr);const pct=vp?((vr-vp)/vp*100):null;if(rE){rE.textContent=pct==null?'–':((pct>=0?'+':'')+pct.toFixed(1)+'%');rE.style.color=pct==null?'#0d1b5e':(pct<0?'#b3261e':'#0b7a3b');}}
 function renderHist(){const el=document.getElementById('view-hist');const H=DATA.hist||{months:[],vp:{},real:{},mix:{}};const M=H.months||[];
@@ -449,11 +476,12 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  el.innerHTML='<div class="liqbar"><span class="liqlbl">Histórico</span><span class="liqinfo">V.P. proyectada vs venta real por mes (respeta filtros). V.P. $-USD = Mix × V.P.u. V.R. $-USD = venta real facturada (archivo Venta_real).</span></div><div class="mpager"><button onclick="pageMonths(\'hist\',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths(\'hist\',1)">▶</button></div><div class="tablewrap pg" id="tw-hist" style="max-height:520px"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';IW.forEach(i=>recalcHist(i));}
+  el.innerHTML='<div class="liqbar"><span class="liqlbl">Histórico</span></div><div class="mpager"><button onclick="pageMonths(\'hist\',-1)">◀</button><span>◀ ▶ meses</span><button onclick="pageMonths(\'hist\',1)">▶</button></div><div class="tablewrap pg" id="tw-hist" style="max-height:520px"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';IW.forEach(i=>recalcHist(i));}
 function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);requestAnimationFrame(()=>window.scrollTo(0,_sy));}
-function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const _lt=document.getElementById('liqTot');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';if(_lt)_lt.innerHTML='';return;}if(_lt)_lt.innerHTML='<div style="font-size:.72rem;color:#7986cb;font-weight:700;margin:2px 0 6px">'+rows.length.toLocaleString('es-AR')+' candidatos</div>';let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const _exm=(r[5]!=null&&id!=null)?(r[5]-id):null;const exc=(_exm!=null&&_exm>0)?_exm:0;const vp=mval(r,0,3);const _eu=excU(r,st.liq||1);const excu=(_eu!=null&&_eu>0)?_eu:0;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtI(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="color:${exc>0?'var(--verde)':'var(--rojo)'};font-weight:700">${exc>0?'+'+exc.toFixed(1):'0.0'}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Meses máx</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
+function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const _lt=document.getElementById('liqTot');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';if(_lt)_lt.innerHTML='';return;}if(_lt)_lt.innerHTML='';let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const _exm=(r[5]!=null&&id!=null)?(r[5]-id):null;const exc=(_exm!=null&&_exm>0)?_exm:0;const vp=mval(r,0,3);const _eu=excU(r,st.liq||1);const excu=(_eu!=null&&_eu>0)?_eu:0;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtI(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="color:${exc>0?'var(--verde)':'var(--rojo)'};font-weight:700">${exc>0?'+'+exc.toFixed(1):'0.0'}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Meses máx</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
-function idealU(r,h){let need=h;if(need==null||need<=0)return 0;let acc=0;for(let m=0;m<12&&need>0;m++){const vp=mval(r,m,3)||0;const take=Math.min(1,need);acc+=vp*take;need-=take;}return acc;}
+const VAJ=106;  // venta ajustada mensual (col BV del Forecast)
+function idealU(r,h){const v=r[VAJ];if(h==null||h<=0||v==null||v<=0)return 0;return h*v;}
 function excU(r,f){const id=r[IDEAL];if(id==null||id<=0||r[4]==null)return null;return r[4]-idealU(r,id*f);}
 function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1]||c[2]==null)return null;const costo=c[0]||0,lista=c[1],cur=c[3]||'USD';
   const vp=mval(r,0,3),ideal=r[IDEAL],stock=r[4],meses=r[5];
@@ -469,7 +497,7 @@ function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1]||c[2]
   const pp=(r[104]!=null)?r[104]:null;const costoTot=costo*excu;const pondTot=(pp!=null)?pp*excu:null;const objLiq=(pp!=null)?pp*(1-dliq)*excu:null;const cmmLiq=cf(dliq);const dOf=st.dtoOf||0.1;const objOf=(pp!=null&&vp!=null)?pp*(1-dOf)*vp:null;const cmmOf=cf(dOf);
   return {ga:DATA.GA[r[1]],cod:r[2],cat:DATA.CAT[r[3]],vp,ideal,dmax,dliq,stock,excu,meses,excmes,costo,lista,cm,pvmin,cs,cur,pp,costoTot,pondTot,objLiq,cmmLiq,objOf,cmmOf};}
 function setLiqCfg(){const m=parseFloat(document.getElementById('minCM').value);const g=parseFloat(document.getElementById('dtoGap').value);st.minCM=(isNaN(m)?10:m)/100;st.dtoGap=(isNaN(g)?5:g)/100;renderTab('liq');}
-function setAcMode(m){st.acMode=m;const L=m==='liq';document.getElementById('acL').classList.toggle('on',L);document.getElementById('acO').classList.toggle('on',!L);document.getElementById('cfgLiq').style.display=L?'':'none';document.getElementById('cfgOf').style.display=L?'none':'';document.getElementById('btnPdf').style.display=L?'':'none';document.getElementById('btnExcelL').style.display=L?'':'none';document.getElementById('btnExcelO').style.display=L?'none':'';renderTab('liq');}
+function setAcMode(m){st.acMode=m;const L=m==='liq';document.getElementById('acL').classList.toggle('on',L);document.getElementById('acO').classList.toggle('on',!L);document.getElementById('cfgLiq').style.display=L?'':'none';document.getElementById('cfgOf').style.display=L?'none':'';document.getElementById('btnExcelL').style.display=L?'':'none';document.getElementById('btnExcelO').style.display=L?'none':'';renderTab('liq');}
 function setDtoOf(){st.dtoOf=parseFloat(document.getElementById('dtoOfSel').value)||0.1;renderTab('liq');}
 function setOfQty(v){st.ofQty=v;renderTab('liq');}
 function toggleLiqRes(){const el=document.getElementById('liqResumen'),b=document.getElementById('liqResBtn');const hid=el.style.display==='none';el.style.display=hid?'':'none';b.textContent=hid?'▾ Resumen':'▸ Resumen';}
@@ -482,43 +510,49 @@ function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev')
   const cmO=st.liqCM;
   const cmG=cmO?'<th class="g-cm" colspan="6" onclick="toggleLiqCM()" style="cursor:pointer" title="Cerrar">▾ Contribución marginal por %</th>':'<th class="g-cm" colspan="1" onclick="toggleLiqCM()" style="cursor:pointer" title="Abrir">▸ CM</th>';
   const cmH=cmO?'<th class="ho">5%</th><th class="ho">10%</th><th class="ho">15%</th><th class="ho">20%</th><th class="ho">25%</th><th class="ho">30%</th>':'<th class="ho" onclick="toggleLiqCM()" style="cursor:pointer">▸</th>';
-  const sar=f=>'<span style="color:#ff5252">'+(st.liqSort===f?(st.liqSortDir>0?' ▲':' ▼'):' ⇅')+'</span>';let hd='<thead><tr class="g"><th class="g-prod" colspan="9">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="2">Exceso $-USD</th><th class="g-liq" colspan="5">'+(_isOf?'Oferta':'Liquidación')+'</th>'+cmG+'</tr><tr class="h"><th>Grupo</th><th onclick="setLiqSort(null)" style="cursor:pointer" title="Quitar orden">Código'+(st.liqSort?' ✕':'')+'</th><th>Cat.</th><th>Meses máx</th><th>VP</th><th>Costo</th><th>CMM</th><th>Lista Base</th><th>Lista Mix</th><th>Stock U.</th><th>Exceso U.</th><th>Meses stk</th><th onclick="setLiqSort(\'excmes\')" style="cursor:pointer" title="Ordenar mayor a menor">Exceso mes'+sar('excmes')+'</th><th onclick="setLiqSort(\'costoTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Costo total'+sar('costoTot')+'</th><th onclick="setLiqSort(\'pondTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Mix total'+sar('pondTot')+'</th><th class="liq" onclick="setLiqSort(\'dmax\')" style="cursor:pointer" title="Ordenar mayor/menor">Dto. Máx.'+sar('dmax')+'</th><th class="liq">Lista Dto. Máx.</th><th class="liq">'+(_isOf?'Dto. Of':'Dto. Liq.')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'objOf':'objLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'Mix total Of':'Mix total Liq.')+sar(_isOf?'objOf':'objLiq')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'cmmOf':'cmmLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'CMM Of':'CMM Liq.')+sar(_isOf?'cmmOf':'cmmLiq')+'</th>'+cmH+'</tr></thead>';
+  const sar=f=>'<span style="color:#ff5252">'+(st.liqSort===f?(st.liqSortDir>0?' ▲':' ▼'):' ⇅')+'</span>';let hd='<thead><tr class="g"><th class="g-prod" colspan="8">Producto</th><th class="g-act" colspan="4">Exceso stock</th><th class="g-usd" colspan="2">Exceso $-USD</th><th class="g-liq" colspan="5">'+(_isOf?'Oferta':'Liquidación')+'</th>'+cmG+'</tr><tr class="h"><th>Grupo</th><th onclick="setLiqSort(null)" style="cursor:pointer" title="Quitar orden">Código'+(st.liqSort?' ✕':'')+'</th><th>Cat.</th><th>VP</th><th>Costo</th><th>CMM</th><th>Lista Base</th><th>Lista Mix</th><th>Stock U.</th><th>Exceso U.</th><th>Meses stk</th><th onclick="setLiqSort(\'excmes\')" style="cursor:pointer" title="Ordenar mayor a menor">Exceso mes'+sar('excmes')+'</th><th onclick="setLiqSort(\'costoTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Costo total'+sar('costoTot')+'</th><th onclick="setLiqSort(\'pondTot\')" style="cursor:pointer" title="Ordenar mayor a menor">Mix total'+sar('pondTot')+'</th><th class="liq" onclick="setLiqSort(\'dmax\')" style="cursor:pointer" title="Ordenar mayor/menor">Dto. Máx.'+sar('dmax')+'</th><th class="liq">Lista Dto. Máx.</th><th class="liq">'+(_isOf?'Dto. Of':'Dto. Liq.')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'objOf':'objLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'Mix total Of':'Mix total Liq.')+sar(_isOf?'objOf':'objLiq')+'</th><th class="liq" onclick="setLiqSort(\''+(_isOf?'cmmOf':'cmmLiq')+'\')" style="cursor:pointer" title="Ordenar mayor/menor">'+(_isOf?'CMM Of':'CMM Liq.')+sar(_isOf?'cmmOf':'cmmLiq')+'</th>'+cmH+'</tr></thead>';
   let b='';const _capP=(st.ofQty==='all'||st.ofQty==='full')?500:cand.length;cand.slice(0,_capP).forEach(o=>{const cmC=cmO?o.cs.map(x=>`<td class="num corange">${(x==null||x<=0)?'–':pcc(x)}</td>`).join(''):'<td class="num corange"></td>';
-    b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num">${pI(o.ideal)}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num ccmm">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num cdto">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(_isOf?st.dtoOf:o.dliq)}</td><td class="num cusd-g">${(_isOf?o.objOf:o.objLiq)==null?'–':o.cur+' '+pI(_isOf?o.objOf:o.objLiq)}</td><td class="num ccmm" style="${(_isOf?o.cmmOf:o.cmmLiq)!=null&&(_isOf?o.cmmOf:o.cmmLiq)<0?'background:#fdecea;color:#c0392b;font-weight:800':''}">${(_isOf?o.cmmOf:o.cmmLiq)==null?'–':pcc(_isOf?o.cmmOf:o.cmmLiq)}</td>`+cmC+'</tr>';});
+    b+=`<tr><td>${o.ga}</td><td class="code">${o.cod}</td><td>${o.cat}</td><td class="num vpg">${pI(o.vp)}</td><td class="num cusd-c">${o.cur} ${p2(o.costo)}</td><td class="num ccmm">${pcc(o.cm)}</td><td class="num cusd-g">${o.cur} ${p2(o.lista)}</td><td class="num cusd-g">${o.pp==null?'–':o.cur+' '+p2(o.pp)}</td><td class="num cblue">${pI(o.stock)}</td><td class="num cblue">${pI(o.excu)}</td><td class="num cblue">${p1(o.meses)}</td><td class="num cblue">${p1(o.excmes)}</td><td class="num cusd-c">${o.costoTot==null?'–':o.cur+' '+pI(o.costoTot)}</td><td class="num cusd-g">${o.pondTot==null?'–':o.cur+' '+pI(o.pondTot)}</td><td class="num cdto">${pc(o.dmax)}</td><td class="num cusd-g">${o.cur} ${p2(o.pvmin)}</td><td class="num dred">${pc(_isOf?st.dtoOf:o.dliq)}</td><td class="num cusd-g">${(_isOf?o.objOf:o.objLiq)==null?'–':o.cur+' '+pI(_isOf?o.objOf:o.objLiq)}</td><td class="num ccmm" style="${(_isOf?o.cmmOf:o.cmmLiq)!=null&&(_isOf?o.cmmOf:o.cmmLiq)<0?'background:#fdecea;color:#c0392b;font-weight:800':''}">${(_isOf?o.cmmOf:o.cmmLiq)==null?'–':pcc(_isOf?o.cmmOf:o.cmmLiq)}</td>`+cmC+'</tr>';});
   let tVP=0,tST=0,tEX=0,tCT=0,tMT=0,tOL=0;const _cs=new Set();cand.forEach(o=>{tVP+=o.vp||0;tST+=o.stock||0;if(o.excu!=null)tEX+=o.excu;if(o.costoTot!=null)tCT+=o.costoTot;if(o.pondTot!=null)tMT+=o.pondTot;if(o.objLiq!=null)tOL+=o.objLiq;if(o.cur)_cs.add(o.cur);});
   const _cur=_cs.size===1?[..._cs][0]:'USD/$';const _bg='background:#eceef7;font-weight:800;color:#1c1c1a';const _e='<th style="'+_bg+'"></th>';
-  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
+  const totRow='<tr class="tot"><th style="'+_bg+';text-align:left">TOTALES</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+pI(tVP)+'</th>'+_e+_e+_e+_e+'<th class="num" style="'+_bg+'">'+pI(tST)+'</th><th class="num" style="'+_bg+'">'+pI(tEX)+'</th>'+_e+_e+'<th class="num" style="'+_bg+';color:#c0392b">'+_cur+' '+pI(tCT)+'</th><th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tMT)+'</th>'+_e+_e+_e+'<th class="num" style="'+_bg+';color:#1e7e34">'+_cur+' '+pI(tOL)+'</th>'+_e+'<th style="'+_bg+'" colspan="'+(cmO?6:1)+'"></th></tr>';
   hd=hd.replace('</thead>',totRow+'</thead>');
-  const _codLen=cand.reduce((m,o)=>Math.max(m,String(o.cod||'').length),6);const _codW=Math.max(96,_codLen*8+18);const _cw=[150,_codW,45,76,72,140,68,140,140,80,80,80,80,140,140,68,140,68,140,68];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
+  const _codLen=cand.reduce((m,o)=>Math.max(m,String(o.cod||'').length),6);const _codW=Math.max(96,_codLen*8+18);const _cw=[150,_codW,45,72,140,68,140,140,80,80,80,80,140,140,68,140,68,140,68];const cg='<colgroup>'+_cw.map(w=>'<col style="width:'+w+'px">').join('')+Array(cmO?6:1).fill('<col style="width:55px">').join('')+'</colgroup>';el.innerHTML=cg+hd+'<tbody>'+b+(cand.length>_capP?'<tr><td class="empty" colspan="30">Mostrando '+_capP+' de '+cand.length.toLocaleString('es-AR')+' (los totales suman todos). Filtr\u00e1 para ver el detalle.</td></tr>':'')+'</tbody>';}
 function exportLiqXlsx(){const _of=st.acMode==='of';const cand=window._liqExport||[];if(!cand.length){alert('No hay candidatos. Elegí una acción.');return;}
-  const nav='FF1A237E',nav2='FF002060',yel='FFFFFF00',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=30;
+  // Sin la columna "Meses max": se saco el 14/09/2026 y todos los indices bajaron 1.
+  // Layout: 0 Grupo · 1 Codigo · 2 Cat · 3 VP · 4 Costo · 5 CMM · 6 Lista Base · 7 Lista Mix
+  //         [8 sep] 9 Stock U · 10 Exceso U · 11 Meses stk · 12 Exceso meses
+  //         [13 sep] 14 Costo total · 15 Mix total
+  //         [16 sep] 17 Dto Max · 18 Lista Dto Max · 19 Dto · 20 Mix total · 21 CMM
+  //         [22 sep] 23-28 contribucion marginal por %
+  const nav='FF1A237E',nav2='FF002060',yel='FFFFFF00',wht='FFFFFFFF',red='FFFF0000',grn='FF00B050';const NCX=29;
   const acc=(cur,d)=>d?('_-"'+cur+'"* #,##0.00_-;\\-"'+cur+'"* #,##0.00_-;_-"'+cur+'"* "-"??_-;_-@_-'):('_-"'+cur+'"* #,##0_-;\\-"'+cur+'"* #,##0_-;_-"'+cur+'"* "-"_-;_-@_-');
-  const H1=Array(NCX).fill('');H1[0]='Producto';H1[10]='Exceso stock';H1[15]='Exceso $-USD';H1[18]=_of?'Oferta':'Liquidación';H1[24]='Contribución marginal por %';
+  const H1=Array(NCX).fill('');H1[0]='Producto';H1[9]='Exceso stock';H1[14]='Exceso $-USD';H1[17]=_of?'Oferta':'Liquidación';H1[23]='Contribución marginal por %';
   const H2=Array(NCX).fill('');
-  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'Ideal'],[4,'VP'],[5,'Costo'],[6,'CMM'],[7,'Lista Base'],[8,'Lista Mix'],[10,'Stock U.'],[11,'Exceso U.'],[12,'Meses de stock'],[13,'Exceso meses'],[15,'Costo total'],[16,'Mix total'],[18,'Dto. Máximo'],[19,'Lista Dto. Máx.'],[20,_of?'Dto. Of':'Dto. Liq.'],[21,_of?'Mix total Of':'Mix total Liq.'],[22,_of?'CMM Of':'CMM Liq.'],[24,'5%'],[25,'10%'],[26,'15%'],[27,'20%'],[28,'25%'],[29,'30%']].forEach(x=>H2[x[0]]=x[1]);
+  [[0,'Grupo de artículo'],[1,'Código'],[2,'Cat.'],[3,'VP'],[4,'Costo'],[5,'CMM'],[6,'Lista Base'],[7,'Lista Mix'],[9,'Stock U.'],[10,'Exceso U.'],[11,'Meses de stock'],[12,'Exceso meses'],[14,'Costo total'],[15,'Mix total'],[17,'Dto. Máximo'],[18,'Lista Dto. Máx.'],[19,_of?'Dto. Of':'Dto. Liq.'],[20,_of?'Mix total Of':'Mix total Liq.'],[21,_of?'CMM Of':'CMM Liq.'],[23,'5%'],[24,'10%'],[25,'15%'],[26,'20%'],[27,'25%'],[28,'30%']].forEach(x=>H2[x[0]]=x[1]);
   const aoa=[H1,H2];const cv=v=>(v==null||v<=0)?'-':v;
   cand.forEach(o=>{const r=Array(NCX).fill('');
-    r[0]=o.ga;r[1]=o.cod;r[2]=o.cat;r[3]=o.ideal;r[4]=o.vp;r[5]=o.costo;r[6]=o.cm;r[7]=o.lista;r[8]=o.pp;
-    r[10]=o.stock;r[11]=o.excu;r[12]=o.meses;r[13]=o.excmes;r[15]=o.costoTot;r[16]=o.pondTot;
-    r[18]=o.dmax;r[19]=o.pvmin;r[20]=_of?st.dtoOf:o.dliq;r[21]=_of?o.objOf:o.objLiq;r[22]=_of?o.cmmOf:o.cmmLiq;
-    [o.cs[0],o.cs[1],o.cs[2],o.cs[3],o.cs[4],o.cs[5]].forEach((v,i)=>r[24+i]=cv(v));
+    r[0]=o.ga;r[1]=o.cod;r[2]=o.cat;r[3]=o.vp;r[4]=o.costo;r[5]=o.cm;r[6]=o.lista;r[7]=o.pp;
+    r[9]=o.stock;r[10]=o.excu;r[11]=o.meses;r[12]=o.excmes;r[14]=o.costoTot;r[15]=o.pondTot;
+    r[17]=o.dmax;r[18]=o.pvmin;r[19]=_of?st.dtoOf:o.dliq;r[20]=_of?o.objOf:o.objLiq;r[21]=_of?o.cmmOf:o.cmmLiq;
+    [o.cs[0],o.cs[1],o.cs[2],o.cs[3],o.cs[4],o.cs[5]].forEach((v,i)=>r[23+i]=cv(v));
     aoa.push(r);});
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:0,c:10},e:{r:0,c:13}},{s:{r:0,c:15},e:{r:0,c:16}},{s:{r:0,c:18},e:{r:0,c:22}},{s:{r:0,c:24},e:{r:0,c:29}}];
-  ws['!cols']=[16.6,21.6,6.8,6.8,10.8,14.9,8.8,15.1,15.8,1.8,10.8,13,13,13,1.8,15.8,13,1.8,9.6,15.1,9.6,13.8,10.8,1.8,11.6,13,13,13,13,13].map(w=>({wch:w}));
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:0,c:9},e:{r:0,c:12}},{s:{r:0,c:14},e:{r:0,c:15}},{s:{r:0,c:17},e:{r:0,c:21}},{s:{r:0,c:23},e:{r:0,c:28}}];
+  ws['!cols']=[16.6,21.6,6.8,10.8,14.9,8.8,15.1,15.8,1.8,10.8,13,13,13,1.8,15.8,13,1.8,9.6,15.1,9.6,13.8,10.8,1.8,11.6,13,13,13,13,13].map(w=>({wch:w}));
   ws['!rows']=[{hpt:25},{hpt:25}];
   const bd={style:'thin',color:{rgb:'FFBFC5E0'}};const border={top:bd,bottom:bd,left:bd,right:bd};
-  const grp0=c=>(c>=18&&c<=22)?[yel,nav]:((c<=8||(c>=10&&c<=13)||c===15||c===16||c>=24)?[nav,wht]:null);
-  const sub=c=>(c>=18&&c<=22)?[yel,nav]:(([9,14,17,23].indexOf(c)>=0)?[wht,nav]:[nav,wht]);
-  const dfill=c=>(c===5||c===15)?'FFFAECE7':((c===7||c===8||c===16||c===19||c===21)?'FFEAF3DE':(((c>=10&&c<=13)||c===22)?'FFEEF4FD':((c>=24)?'FFFDF1DE':null)));
-  const dcolor=c=>(c===4||c===7||c===8||c===16||c===19||c===21)?grn:((c===5||c===15||c===20)?red:nav);
-  const dbold=c=>([1,4,5,15,20].indexOf(c)>=0);
-  const curdec={5:2,7:2,8:2,19:2,15:0,16:0,21:0};
-  const dz=(c,cur)=>(c===3)?'0':((c===4||c===10||c===11)?'#,##0':((c===12||c===13)?'0.0':((c===6||c===22||c>=24)?'0.0%':((c===18||c===20)?'0%':((c in curdec)?acc(cur,curdec[c]):'General')))));
+  const grp0=c=>(c>=17&&c<=21)?[yel,nav]:((c<=7||(c>=9&&c<=12)||c===14||c===15||c>=23)?[nav,wht]:null);
+  const sub=c=>(c>=17&&c<=21)?[yel,nav]:(([8,13,16,22].indexOf(c)>=0)?[wht,nav]:[nav,wht]);
+  const dfill=c=>(c===4||c===14)?'FFFAECE7':((c===6||c===7||c===15||c===18||c===20)?'FFEAF3DE':(((c>=9&&c<=12)||c===21)?'FFEEF4FD':((c>=23)?'FFFDF1DE':null)));
+  const dcolor=c=>(c===3||c===6||c===7||c===15||c===18||c===20)?grn:((c===4||c===14||c===19)?red:nav);
+  const dbold=c=>([1,3,4,14,19].indexOf(c)>=0);
+  const curdec={4:2,6:2,7:2,18:2,14:0,15:0,20:0};
+  const dz=(c,cur)=>(c===3||c===9||c===10)?'#,##0':((c===11||c===12)?'0.0':((c===5||c===21||c>=23)?'0.0%':((c===17||c===19)?'0%':((c in curdec)?acc(cur,curdec[c]):'General'))));
   const rng=XLSX.utils.decode_range(ws['!ref']);
   for(let c=0;c<NCX;c++){
     const a0=XLSX.utils.encode_cell({r:0,c});if(ws[a0]){const g=grp0(c);ws[a0].s=g?{fill:{fgColor:{rgb:g[0]}},font:{color:{rgb:g[1]},bold:true,sz:12},alignment:{horizontal:'center',vertical:'center'},border}:{fill:{fgColor:{rgb:wht}},border};}
-    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);const ub=(c>=18&&c<=22)?'FF1A237E':'FFFFD600';const b1={top:bd,left:bd,right:bd,bottom:{style:'medium',color:{rgb:ub}}};ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:b1};}
+    const a1=XLSX.utils.encode_cell({r:1,c});if(ws[a1]){const s=sub(c);const ub=(c>=17&&c<=21)?'FF1A237E':'FFFFD600';const b1={top:bd,left:bd,right:bd,bottom:{style:'medium',color:{rgb:ub}}};ws[a1].s={fill:{fgColor:{rgb:s[0]}},font:{color:{rgb:s[1]},bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:b1};}
     for(let r=2;r<=rng.e.r;r++){const ad=XLSX.utils.encode_cell({r,c});if(!ws[ad])continue;const cur=(cand[r-2]&&cand[r-2].cur)||'USD';const s={font:{color:{rgb:dcolor(c)},sz:10,bold:dbold(c)},alignment:{horizontal:(c<=1?'left':'center'),vertical:'center'},border};const fl=dfill(c);if(fl)s.fill={fgColor:{rgb:fl}};ws[ad].s=s;ws[ad].z=dz(c,cur);}
   }
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aux. Liq. IMPO');
@@ -581,11 +615,149 @@ function exportVPXlsx(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Proyeccion VP');
   XLSX.writeFile(wb,'Proyeccion_VP.xlsx');
 }
-function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<id-st.dotGap);return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML=rows.length?'<div style="font-size:.72rem;color:#7986cb;font-weight:700;margin:2px 0 6px">'+rows.length.toLocaleString('es-AR')+' candidatos</div>':'';renderLiqSum(rows);renderLiqPreview(rows);}
-function renderTab(t){const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
+function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}else if(m==='qr'){rows=rows.filter(r=>{const id=r[IDEAL];const red=(id!=null&&id>0&&r[5]!=null&&r[5]<minMeses(r,id));return red||r[4]===0;});}else if(m==='q0'){rows=rows.filter(r=>r[4]===0);}else if(m==='all'){}else{const _f=st.liq||1;rows=rows.filter(r=>{const e=excU(r,_f);return e!=null&&e>0;});}document.getElementById('liqTot').innerHTML='';renderLiqSum(rows);renderLiqPreview(rows);}
+// ====================== PESTANA STOCK ======================
+// Modelo min/max, el mismo que usa el Excel:
+//   Venta ajustada (col BV) = el ritmo mensual. Meses actual = Stock / Venta ajustada.
+//   MAXIMO = 'Meses por Cat.' (col H) x el nivel elegido, pasado a unidades con ese ritmo.
+//   MINIMO = minMeses(): importados el maximo menos 1 mes; el resto la mitad del
+//            maximo (ver el comentario de minMeses, arriba de mcell).
+// Estados: Quiebre (<=0) / Riesgo (bajo el minimo) / Ideal (en rango) / Exceso (sobre el maximo).
+// Comparar por unidades y por meses da lo mismo, porque los dos usan el mismo ritmo:
+// por eso el punto rojo del tab Forecast y esta pestana ya no se contradicen.
+// STK = [clave, etiqueta, fondo de pastilla, color de letra, subtitulo]
+const STK=[['cero','Quiebre','#e53935','#fff','Sin stock o en negativo'],
+           ['riesgo','Riesgo','#1565c0','#fff','Por debajo del mínimo'],
+           ['ideal','Ideal','#2e7d32','#fff','Entre el mínimo y el máximo'],
+           ['exceso','Exceso','#ffd600','#e30613','Por encima del máximo']];
+const STROJO='#c0392b', STVERDE='#1e7e34';
+function stkOf(r){
+  const id=r[IDEAL],stock=r[4];
+  if(stock==null||id==null||id<=0)return null;
+  const mx=id*(st.stMult||1), mn=minMeses(r,mx);
+  const maxU=idealU(r,mx), minU=idealU(r,mn);
+  if(maxU==null)return null;
+  const exc=Math.max(0,stock-maxU),falta=Math.max(0,maxU-stock);
+  let k;
+  if(stock<=0)k='cero';
+  else if(stock<minU)k='riesgo';
+  else if(stock>maxU)k='exceso';
+  else k='ideal';
+  const cc=DATA.costos&&DATA.costos[r[2]];
+  const costo=(cc&&cc[0]!=null)?cc[0]:null,cur=(cc&&cc[3])?cc[3]:'$',mix=r[104];
+  return {k:k,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,cur:cur,
+    excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
+    falC:(costo!=null)?falta*costo:null, falM:(mix!=null)?falta*mix:null,
+    meses:r[5], r:r};
+}
+function setStMult(el){st.stMult=parseFloat(el.value)||1;renderStock();}
+function setStFil(k){st.stFil=k;renderStock();}
+function setStSort(f){if(st.stSort===f){st.stDir=(st.stDir||-1)*-1;}else{st.stSort=f;st.stDir=-1;}renderStock();}
+const STLBL={};STK.forEach(s=>{STLBL[s[0]]=s[1];});
+// La pastilla de la tabla usa clases (.st-p) y no estilos en linea: se repite una vez
+// por fila y con 5.500 filas el HTML se iba a 4,6 MB, que era lo que hacia lenta la pestana.
+function stBadge(k,chico){const s=STK.find(x=>x[0]===k);
+  if(chico)return '<span class="st-p st-p-'+k+'">'+s[1]+'</span>';
+  return '<span style="display:inline-block;min-width:112px;text-align:center;padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+s[2]+';color:'+s[3]+';">'+s[1]+'</span>';}
+function renderStock(){
+  const el=document.getElementById('view-st');
+  const dat=visibleRows().map(stkOf).filter(Boolean);
+  const M=(c,n)=>c+' '+Math.round(n||0).toLocaleString('es-AR');
+  const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0};});
+  const P={excC:{},excM:{},falC:{},falM:{}};
+  const add=(b,cur,v)=>{if(v==null||!v)return;P[b][cur]=(P[b][cur]||0)+v;};
+  dat.forEach(o=>{const g=G[o.k];g.n++;g.u+=o.stock;g.exc+=o.exc;g.falta+=o.falta;
+    add('excC',o.cur,o.excC);add('excM',o.cur,o.excM);add('falC',o.cur,o.falC);add('falM',o.cur,o.falM);});
+  const plata=b=>{const e=Object.entries(P[b]).filter(x=>x[1]);return e.length?e.map(x=>M(x[0],x[1])).join('  +  '):'–';};
+  const tot=dat.length||1;
+  const F=st.stFil||'all';
+  // --- tarjetas: angostas y altas, para que entren en fila con la torta ---
+  const card=s=>{const k=s[0],bg=s[2],sub=s[4],g=G[k];
+    const extra=(k==='exceso')?('Sobran: <b>'+fmtI(g.exc)+' u</b>'):(k==='ideal'?'&nbsp;':('Faltan: <b>'+fmtI(g.falta)+' u</b>'));
+    const on=F===k;
+    return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;width:138px;flex:0 0 138px;background:#fff;border-radius:10px;border:2px solid '+(on?bg:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 10px;">'
+      +'<div style="margin-bottom:5px;">'+stBadge(k,false)+'</div>'
+      +'<div style="font-size:.58rem;color:#8a90b0;height:24px;line-height:1.1;">'+sub+'</div>'
+      +'<div style="font-size:1.35rem;font-weight:800;color:#1a237e;line-height:1.1;">'+fmtI(g.n)+'</div>'
+      +'<div style="font-size:.6rem;color:#5f6690;margin-bottom:4px;">SKU</div>'
+      +'<div style="font-size:.64rem;color:#1c1c1a;">Stock: <b>'+fmtI(g.u)+' u</b></div>'
+      +'<div style="font-size:.64rem;color:#5f6690;">'+extra+'</div></div>';};
+  // --- torta, al lado de las tarjetas ---
+  let ac=0;const stops=STK.map(s=>{const p=G[s[0]].n/tot*100,a=ac;ac+=p;return s[2]+' '+a.toFixed(2)+'% '+ac.toFixed(2)+'%';}).join(',');
+  const leyenda=STK.map(s=>{const pc=(G[s[0]].n/tot*100);
+    return '<tr><td style="padding:3px 10px 3px 0;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+s[2]+';vertical-align:middle;"></span></td>'
+      +'<td style="text-align:right;padding:3px 0;font-weight:800;font-size:.8rem;color:#1a237e;white-space:nowrap;">'+pc.toFixed(1)+'%</td></tr>';}).join('');
+  const torta='<div style="flex:0 1 250px;min-width:222px;background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 14px;">'
+    +'<div style="font-size:.72rem;font-weight:800;color:#1a237e;border-bottom:2px solid #ffd600;padding-bottom:3px;margin-bottom:8px;">Cómo se reparten los '+fmtI(tot)+' SKU</div>'
+    +'<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">'
+      +'<div style="width:104px;height:104px;border-radius:50%;background:conic-gradient('+stops+');box-shadow:0 2px 8px rgba(0,0,0,.12);flex:0 0 104px;"></div>'
+      +'<table style="border-collapse:collapse;"><tbody>'+leyenda+'</tbody></table>'
+    +'</div></div>';
+  // mismo orden y mismos colores que los grupos de la tabla de abajo:
+  // faltante = rojo | exceso = amarillo con letra roja
+  const box=(tit,c1,v1,c2,v2,bd,fg)=>'<div style="flex:1 1 236px;min-width:222px;background:#fff;border-radius:10px;border-left:5px solid '+bd+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:10px 12px;">'
+    +'<div style="font-size:.72rem;font-weight:800;color:'+fg+';margin-bottom:7px;">'+tit+'</div>'
+    +'<div style="font-size:.62rem;color:#5f6690;">'+c1+'</div><div style="font-size:.82rem;font-weight:800;color:'+STROJO+';margin-bottom:5px;">'+v1+'</div>'
+    +'<div style="font-size:.62rem;color:#5f6690;">'+c2+'</div><div style="font-size:.82rem;font-weight:800;color:'+STVERDE+';">'+v2+'</div></div>';
+  // --- tabla ---
+  let rows=(F==='all')?dat:dat.filter(o=>o.k===F);
+  const SF=st.stSort||'cod',DIR=st.stDir||1;
+  const key=o=>({ga:DATA.GA[o.r[1]],cod:o.r[2],minU:o.minU,maxU:o.maxU,stock:o.stock,meses:o.meses,
+                 falta:o.falta,falC:o.falC,falM:o.falM,exc:o.exc,excC:o.excC,excM:o.excM}[SF]);
+  rows=rows.slice().sort((a,b)=>{const x=key(a),y=key(b);
+    if(typeof x==='string')return DIR*String(x).localeCompare(String(y),'es',{numeric:true});
+    return DIR*((x==null?-Infinity:x)-(y==null?-Infinity:y));});
+  const GH=(t,n,bg,fg)=>'<th colspan="'+n+'" style="color:'+fg+';background:'+bg+';font-weight:800;font-size:.62rem;text-transform:uppercase;text-align:center;padding:5px 4px;height:28px;position:sticky;top:0;z-index:5;">'+t+'</th>';
+  const TH='color:#fff;background:#1a237e;font-weight:800;font-size:.58rem;text-transform:uppercase;text-align:center;padding:4px 4px;height:24px;position:sticky;top:28px;z-index:5;box-shadow:inset 0 -3px 0 #ffd600;';
+  const H=(f,t)=>'<th onclick="setStSort(&quot;'+f+'&quot;)" style="'+TH+'cursor:pointer;">'+t+(SF===f?(DIR<0?' ▾':' ▴'):'')+'</th>';
+  const HP=t=>'<th style="'+TH+'">'+t+'</th>';
+  const COLS=[126,102,30,62,62,74,58,104,64,96,98,64,96,98];
+  const cg='<colgroup>'+COLS.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>';
+  const th='<thead><tr>'+GH('Producto',3,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#303f9f','#fff')
+      +GH('Faltante',3,'#c62828','#fff')+GH('Exceso',3,'#ffd600','#e30613')+'</tr>'
+    +'<tr>'+H('ga','Grupo')+H('cod','Código')+HP('Cat')
+      +H('minU','Mín u')+H('maxU','Máx u')+H('stock','Stock hoy')+H('meses','Meses hoy')+HP('Estado')
+      +H('falta','Unidades')+H('falC','Costo')+H('falM','Venta mix')
+      +H('exc','Unidades')+H('excC','Costo')+H('excM','Venta mix')+'</tr></thead>';
+  const D='–';
+  const mkTb=()=>'<tbody>'+rows.map(o=>'<tr><td class="st-ga">'+DATA.GA[o.r[1]]
+    +'</td><td class="st-cod">'+o.r[2]
+    +'</td><td class="st-ct">'+(DATA.CAT[o.r[3]]||'')
+    +'</td><td class="num st-d">'+fmtI(o.minU)
+    +'</td><td class="num st-d">'+fmtI(o.maxU)
+    +'</td><td class="num st-b">'+fmtI(o.stock)
+    +'</td><td class="num">'+fmtM(o.meses)
+    +'</td><td class="st-ct"><span class="st-p st-p-'+o.k+'">'+STLBL[o.k]
+    +'</span></td><td class="num st-b">'+(o.falta?fmtI(o.falta):D)
+    +'</td><td class="num st-r">'+(o.falC?M(o.cur,o.falC):D)
+    +'</td><td class="num st-v">'+(o.falM?M(o.cur,o.falM):D)
+    +'</td><td class="num st-b">'+(o.exc?fmtI(o.exc):D)
+    +'</td><td class="num st-r">'+(o.excC?M(o.cur,o.excC):D)
+    +'</td><td class="num st-v">'+(o.excM?M(o.cur,o.excM):D)
+    +'</td></tr>').join('')+'</tbody>';
+  const mopt=[[1,'Máximo'],[2,'Máximo × 2'],[3,'Máximo × 3'],[4,'Máximo × 4']]
+    .map(o=>'<option value="'+o[0]+'"'+(((st.stMult||1)===o[0])?' selected':'')+'>'+o[1]+'</option>').join('');
+  el.innerHTML=
+    '<div class="liqbar"><span class="liqlbl">Indicador</span>'
+      +'<select onchange="setStMult(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select></div>'
+    +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+STK.map(card).join('')+torta
+      +box('Faltante hasta el máximo','Costo a invertir',plata('falC'),'Mix de venta que no podés hacer',plata('falM'),'#c62828','#c62828')
+      +box('Exceso de stock','Costo inmovilizado',plata('excC'),'Mix de venta que puede generar',plata('excM'),'#ffd600','#e30613')
+    +'</div>'
+    +'<div class="sec-h" style="margin-top:16px">📦 Detalle por SKU <span style="font-weight:600;color:#8a90b0;font-size:.72rem">('+fmtI(rows.length)+' SKU)</span></div>'
+    +'<div class="tablewrap" id="stTbl" style="max-height:560px">'
+      +'<div style="padding:16px;color:#8a90b0;font-size:.74rem;">Armando el detalle de '+fmtI(rows.length)+' SKU…</div></div>';
+  // La tabla son ~77.000 celdas: si se dibuja junto con el resto, el cambio de
+  // solapa se siente trabado. Se pinta el encabezado primero y la tabla al toque
+  // siguiente, asi la pantalla aparece al instante.
+  clearTimeout(window._stTmr);
+  window._stTmr=setTimeout(()=>{const w=document.getElementById('stTbl');
+    if(w)w.innerHTML='<table class="prevt">'+cg+th+mkTb()+'</table>';},0);
+}
+function renderTab(t){const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='st')renderStock();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 function renderActive(){renderTab(st.tab);}
 let _rt=null;
-function renderAll(){updBtns();st.dirty.fc=st.dirty.liq=st.dirty.vp=st.dirty.hist=true;clearTimeout(_rt);_rt=setTimeout(()=>renderTab(st.tab),80);}
+function renderAll(){updBtns();st.dirty.fc=st.dirty.st=st.dirty.liq=st.dirty.vp=st.dirty.hist=true;clearTimeout(_rt);_rt=setTimeout(()=>renderTab(st.tab),80);}
 function exportCSV(){const rows=sortRows(visibleRows());let head=["UN","GA","Codigo","Categoria","Meses/Cat","Stock actual","Meses actual"];ALLM.forEach(m=>MFIELDS.forEach(f=>head.push(DATA.months[m]+" - "+f)));
   let lines=[head.join(";")];rows.forEach(r=>{let l=[DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5]];ALLM.forEach(m=>{for(let f=0;f<6;f++)l.push(mval(r,m,f));});lines.push(l.join(";"));});
   const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="forecast_dashboard.csv";a.click();}

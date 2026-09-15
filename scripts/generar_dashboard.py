@@ -72,6 +72,10 @@ def extract(path):
             flat += [si, prev, comp, ven, sf, mf]; prev=mf
         ideal=F1(row[ci("H")-1])
         cajax=N(row[ci("L")-1])
+        # BV = "Venta ajustada": el ritmo mensual con el que el Excel calcula
+        # "Meses actual" (BO = BN/BV). El dashboard lo necesita para que los meses
+        # y las unidades hablen el mismo idioma en todas las solapas.
+        vaj=N(row[ci("BV")-1])
         vpx=[]
         for k in range(12):
             b=BS+STRIDE*k
@@ -85,7 +89,7 @@ def extract(path):
             try: _rr.append(abs(float(row[cc])))
             except: _rr.append(None)
         realmap[str(cod).strip()]=_rr
-        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax])
+        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax]+[vaj])
     # IMPO por GA
     def estado_of(H1,b):
         for off in (8,9):
@@ -405,7 +409,8 @@ if __name__=="__main__":
     folder=os.path.dirname(os.path.abspath(__file__))
     src = sys.argv[1] if len(sys.argv)>1 else find_latest(folder)
     out = sys.argv[2] if len(sys.argv)>2 else os.path.join(folder,"index.html")
-    tpl = os.path.join(folder,"plantilla.html")
+    # 5to argumento opcional: otra plantilla, para generar previews sin tocar la real
+    tpl = sys.argv[4] if len(sys.argv)>4 else os.path.join(folder,"plantilla.html")
     print("Leyendo:",src)
     data=extract(src)
     cp = sys.argv[3] if len(sys.argv)>3 else os.path.join(folder, COSTOS_LOCAL)

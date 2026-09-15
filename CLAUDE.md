@@ -125,6 +125,39 @@ Pendientes que vienen del Excel (ver `Historial/Historial_Proyecto.md`):
 
 Ya no quedan pendientes del Excel.
 
+## Pestaña Stock y modelo mín/máx (14/09/2026)
+
+Se sumó la solapa **Stock** y, con ella, se unificó el criterio de todo el dashboard.
+El detalle técnico está en las dos skills; acá queda lo que hay que **no** deshacer:
+
+- **Un solo ritmo.** Meses y unidades se convierten con la *Venta ajustada* (col BV,
+  índice 106 de `rows[]`), la misma base del `Meses actual` del Excel. Antes Stock y
+  Acción comercial sumaban la venta proyectada de N meses y se contradecían con el punto
+  rojo del Forecast en el **42%** de los códigos; ahora el desacuerdo es de 12 casos, todos
+  pegados al límite por redondeo.
+- **El mínimo es una regla, no un número a mano.** Importados: máximo − 1 mes. El resto:
+  la mitad del máximo. Se sacó el control "Alerta! Meses mínimo = ..." del tab Forecast.
+  **Por qué:** con −1 mes fijo, 3.593 SKU (el 65%) quedaban con mínimo cero y **nunca**
+  podían disparar la alerta — 2.241 de ellos ya estaban quebrados sin aviso. Los Importados
+  no tenían ese problema (sus máximos son de 2 a 4 meses), por eso conservan el −1 mes.
+- **Vocabulario cerrado:** Quiebre · Riesgo · Ideal · Exceso. Y lo que se llamaba "Ideal"
+  (col H) ahora es **Máximo** en toda la interfaz.
+- Stock y Acción comercial **comparten 5 columnas a propósito** (stock, exceso, meses y su
+  valorización): Stock responde "cómo estoy", Acción "a qué descuento lo saco". Erik lo
+  evaluó y decidió dejarlo así.
+
+También se limpió la interfaz a pedido suyo: sin textos de ayuda, sin el botón PDF, sin el
+conteo de candidatos, sin la columna "Meses máx" en Acción comercial (preview **y** Excel,
+que pasó a 29 columnas), barra de filtros en un renglón y solapas fijas al scrollear.
+
+## Datos del Excel que conviene mirar
+
+- **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,
+  IMI2509.10, IV2313.10, RV099.30, BB1010.30, BDE0906.30. Dan meses de cobertura absurdos
+  (hasta −108). No rompen nada, pero el número que se ve no tiene sentido.
+- **1.687 códigos con la receta de costo incompleta** en el Gestor: el costo sale más bajo
+  de lo real y con él el CMV y la liquidación. Erik los va completando.
+
 ## Mejoras: todas anuladas el 14/09
 
 Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló las 6**.

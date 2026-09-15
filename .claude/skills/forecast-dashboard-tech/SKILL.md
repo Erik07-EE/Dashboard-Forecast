@@ -22,6 +22,24 @@ Código, estructura y fórmulas del Dashboard Forecast.
 - Identidad: UN=A, GA=B, Código=C, Cat=F, Meses/Cat (Ideal)=H, **Caja x=L (Cant.)**, Stock=BN, Meses=BO, Tendencia=AN, Precio Mix=AS.
 - Venta real unidades: AB–AM (abs). Estac/Evento/TC del mes en fila 2 del bloque (offsets +9,+12,+4) — pero ver abajo.
 
+## Mínimo, máximo y el ritmo (`minMeses` / `idealU`)
+`idealU(r,h)` = `h × r[VAJ]`, con **`VAJ=106`** = venta ajustada mensual (col BV), que es
+la misma base del `Meses actual` del Excel. **No** sumar la venta proyectada de N meses:
+eso daba otro número y rompía la coherencia entre solapas.
+
+`minMeses(r,mx)` = `Importados ? max(0, mx-1) : mx*0.5`. La usan `mcell` (punto rojo del
+Forecast), el orden por riesgo, el filtro "Riesgo" de Acción comercial y `stkOf` (Stock).
+Se sacó el control manual `st.dotGap` del tab Forecast: la regla ya no se toca a mano.
+
+## Pestaña Stock (`stkOf` / `renderStock`)
+`stkOf(r)` devuelve `{k, minU, maxU, stock, exc, falta, excC/excM/falC/falM, cur, meses}`.
+`k` es `cero | riesgo | ideal | exceso`; `STK` tiene etiqueta y colores de cada pastilla.
+La plata se acumula **por moneda** (nunca sumar USD con $).
+**Rendimiento:** la tabla son ~77.000 celdas. Se pinta el encabezado primero y la tabla en
+un `setTimeout(...,0)` (`window._stTmr`), así el cambio de solapa tarda **71 ms** en vez de
+910. Las celdas usan clases (`.st-*`), no estilos en línea: con 5.500 filas eso bajó el
+HTML de 4,6 MB a 2,4 MB.
+
 ## Costos (`DATA.costos[codigo]`)
 `[costo, lista, cmm, moneda]` — antes eran 5 (dos no se usaban). En la plantilla: `c[0]` costo,
 `c[1]` lista, **`c[2]` CMM**, `c[3]` moneda. El costo sirve solo para CMV y costo del exceso.
