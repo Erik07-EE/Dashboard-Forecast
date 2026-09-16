@@ -143,8 +143,17 @@ El detalle técnico está en las dos skills; acá queda lo que hay que **no** de
   **Por qué:** con −1 mes fijo, 3.593 SKU (el 65%) quedaban con mínimo cero y **nunca**
   podían disparar la alerta — 2.241 de ellos ya estaban quebrados sin aviso. Los Importados
   no tenían ese problema (sus máximos son de 2 a 4 meses), por eso conservan el −1 mes.
-- **Vocabulario cerrado:** Quiebre · Riesgo · Ideal · Exceso. Y lo que se llamaba "Ideal"
-  (col H) ahora es **Máximo** en toda la interfaz.
+- **Vocabulario cerrado:** Quiebre · Sin rotación · Riesgo · Ideal · Exceso. Y lo que se
+  llamaba "Ideal" (col H) ahora es **Máximo** en toda la interfaz.
+- ⚠️ **"Sin rotación" es un ESTADO, no un cruce** (16/09). Se evalúa **antes** que
+  Riesgo/Ideal/Exceso, justo después de Quiebre. **Por qué:** un código que no vende tiene
+  ritmo cero, así que su máximo da cero y **cae en Exceso por definición**. Erik lo vio al
+  filtrar: tocaba "Sin rotación" y la tabla mostraba pastillas "Exceso". Eran **796 de los
+  799**, con **$ 35 millones** que parecían compra de más y eran stock muerto. Exceso pasó
+  de 2.491 SKU / $ 96,4M a **1.695 / $ 61,5M**. Los cinco ahora son excluyentes y suman 100%.
+- ⚠️ **La plata de cada tarjeta va al bucket de SU estado** (`if(o.k==='exceso')add('excC'...)`).
+  Sin esa condición el Exceso se come la de los sin rotación, que tienen exceso solo
+  porque su máximo es 0.
 - Stock y Acción comercial **comparten 5 columnas a propósito** (stock, exceso, meses y su
   valorización): Stock responde "cómo estoy", Acción "a qué descuento lo saco". Erik lo
   evaluó y decidió dejarlo así.
@@ -169,7 +178,12 @@ Erik la ajusto pantalla por pantalla. **No volver atras sin que el lo pida:**
 - **Acción comercial:** sin "Meses máx", sin botón PDF, sin conteo de candidatos ni título
   de preview. **"Costo total" volvió el 15/09** (Erik la pidió de vuelta): va en el grupo
   "Exceso $-USD", antes de "Mix total". El Excel quedo en **29 columnas**.
-- Sin textos de ayuda en ninguna solapa. Barra de filtros en un renglón, solapas fijas.
+- Sin textos de ayuda en ninguna solapa. Barra de filtros en un renglón (más baja desde el
+  15/09: desplegables de 24px), solapas fijas.
+- ⚠️ **Los anchos de la tabla de Estado Stock (`COLS`) están calibrados**: Cat necesita
+  46px (la pastilla mide 38 y con 30 salía con "…"), Estado 120 (la pastilla "Sin
+  rotación" mide 92 + padding) y Meses hoy 72. Hay un `overflow:hidden;text-overflow:
+  ellipsis` global en `th,td`, así que una columna corta recorta sin avisar.
 - **La Cat, una sola pastilla en todo el dashboard** (fondo celeste grisáceo, letra azul).
   Antes cada letra tenía su color y en las tablas nuevas competía con el rojo del costo y
   el verde de la venta. Se pierde el golpe de vista A-vs-D: Erik lo eligió igual el 15/09.
@@ -212,69 +226,78 @@ así que conviene leer por qué antes de tocarlo:
 
 Verificado en 1280 y 1680 px, en todas las posiciones de scroll: ninguna columna cortada.
 
-## Los 4 analisis de Estado Stock (15/09/2026)
+## Estado Stock: 5 tarjetas y una sola tabla (16/09/2026)
 
-Los analisis **no son bloques sueltos**: son el detalle de las 5 tarjetas de arriba. Se
-toca una tarjeta, se filtra la tabla y debajo se abre su panel (max 1450px, sin textos de
-ayuda). Solo tres tienen panel: Quiebre, Exceso y Sin rotacion.
+Los analisis empezaron como cuatro bloques desplegables aparte. Erik los fue llevando
+**todos a la tabla** y al final no quedo ninguno: "no dupliquemos info". El recorrido
+importa porque explica por que la tabla quedo como quedo.
 
-**Las 5 tarjetas (15/09).** Erik llego a esto despues de ver los 4 bloques juntos:
-"Costo inmovilizado por GA" y "por SKU" son **la misma medida** de lejos y de cerca (van
-con una solapita adentro del panel de Exceso, no como dos bloques), y los otros dos eran
-la plata de dos estados que ya estaban arriba.
+### Las 5 tarjetas
 
-| Tarjeta | Costo | Venta | Panel |
-|---|---|---|---|
-| Quiebre | Costo a invertir | Venta perdida (demanda - VP) | si |
-| Riesgo | Costo a invertir | Mix a vender | no |
-| Ideal | Costo al maximo | Stock a costo | no |
-| Exceso | Costo inmovilizado | Mix a generar | si |
-| Sin rotacion | Costo parado | Mix a generar | si |
+Son **excluyentes y suman 100%**. Tocar una filtra la tabla. Cada una lleva dos bloques
+de plata -- lo que cuesta y lo que se vende -- salvo Ideal, que solo lleva el costo.
 
-- **Sin rotacion no es un estado**: es un cruce, se superpone con Exceso. Por eso **no
-  lleva %** (los otros cuatro son excluyentes y suman 100) y va **en gris**: es plata
-  quieta, no una alarma.
-- Las cajas **"Faltante" y "Exceso de stock" se eliminaron**: todo lo que tenian esta en
-  su tarjeta. El "Hasta el maximo" paso a ser el **"Costo al maximo"** de Ideal.
-- ⚠️ **El exceso se calcula con `idealU`, igual que `stkOf`** (no restando `vaj*id` a
-  mano). Con la resta a mano los 6 codigos de venta ajustada negativa inflaban el total y
-  la tarjeta no cuadraba con su propio panel: $ 97.056.975 contra $ 97.066.446. Se dibujan
-**antes** que la tabla en el `setTimeout`: al reves empujarian la tabla a mitad de camino.
+| Tarjeta | Costo | Venta |
+|---|---|---|
+| Quiebre | Costo a invertir (maximo) | Venta mix perdida |
+| Riesgo | Costo a invertir (maximo) | Venta mix perdida |
+| Ideal | Costo a invertir (maximo) | -- |
+| Exceso | Costo inmovilizado | Venta mix inmovilizado |
+| Sin rotacion | Costo parado | Venta mix parado |
 
-| | |
-|---|---|
-| Costo inmovilizado (por GA, top 5) | los 5 GA que mas plata tienen parada en exceso, con el costo **y** la venta mix que ese exceso puede generar |
-| Costo inmovilizado (por SKU, top 20) | los 20 codigos que mas pesan, con su % del total |
-| Stock sin rotacion | tiene stock y **no vendio nada** en los 6 ultimos meses cerrados
-  (hoy 15/09: marzo a agosto 2026; septiembre no entra porque no cerro) |
-| Quiebres que duelen | sin stock, agrupado por GA (se abre por codigo). La unidad es la
-  venta **perdida**: demanda menos venta proyectada |
+- ⚠️ **"Sin rotacion" es un ESTADO**, se evalua **antes** que Riesgo/Ideal/Exceso, justo
+  despues de Quiebre. **Por que:** un codigo que no vende tiene ritmo cero, asi que su
+  maximo da cero y **cae en Exceso por definicion**. Eran **796 de 799**, con **$ 35
+  millones** que parecian compra de mas y eran stock muerto. Exceso paso de 2.491 SKU /
+  $ 96,4M a 1.695 / $ 61,5M. Va **en gris**: es plata quieta, no una alarma.
+- ⚠️ **La plata de cada tarjeta va al bucket de SU estado** (`if(o.k==='exceso')add('excC'...)`).
+  Sin esa condicion el Exceso se come la de los sin rotacion.
+- Las cajas "Faltante" y "Exceso de stock" se eliminaron: todo esta en su tarjeta.
 
-Reglas de estos bloques, decididas por Erik:
+### La tabla
 
-- **Siempre dos pastillas: IMPORTADOS (USD) y NACIONAL ($).** Nunca una sola sumando todo:
-  tienen rotacion e importancia distintas. El corte sale de la unidad de negocio.
-  Importados va en **verde** y Nacional en **azul**.
-- **La Cat va en todas las tablas de codigos.** "No es lo mismo quebrar un D que un A, ni
-  tener invertido de mas en un A que en un D."
-- ⚠️ **Los quiebres se miden con DEMANDA menos VENTA PROYECTADA**, decidido el 15/09.
-  Ninguna de las dos sola sirve, y las columnas del Excel no se llaman como uno espera:
+Un solo lugar para todo. **Dos vistas** (boton "Ver"): por codigo, o **por grupo** --
+cada fila un GA con sus totales, que se abre para ver sus codigos. Eso reemplazo a los
+paneles de Exceso y de Quiebres.
+
+Columnas: Producto (Grupo, Codigo, Cat, **V.P. mes**) · Stock (Min, Max, Stock hoy,
+Meses hoy, Estado) · **V.P. mensual perdida** (Unidades, Venta mix) · Faltante
+(Unidades, Costo) · Exceso (Unidades, Costo, Venta mix).
+
+- **V.P. mes** es la referencia que faltaba: min, max y meses salen todos de ese ritmo.
+  En verde, porque es venta.
+- ⚠️ **La venta perdida existe SOLO en Quiebre y Riesgo.** Lo pidio Erik y tiene razon:
+  un codigo entre el minimo y el maximo esta cubierto, no puede "perder venta" y estar
+  en Ideal al mismo tiempo. Ademas fuera de esos dos estados el numero era **ruido**:
+  la venta proyectada del Excel arranca del **stock al 1ro** y el estado se juzga con el
+  **stock de hoy**, asi que a mitad de mes marcaba perdidas donde hoy sobra stock
+  (II2909.25: el 1ro tenia 2, hoy tiene 15, demanda 8 -- perdia 6 segun el Excel, y en
+  realidad le sobra). En Quiebre y Riesgo el stock de hoy esta bajo el minimo, asi que
+  ahi la perdida es real en los 245 casos.
+- ⚠️ **Se mide con DEMANDA menos VENTA PROYECTADA.** Las columnas del Excel no se llaman
+  como uno espera:
   - **demanda** = col CJ "V.Ajust. c/stock" (`r[79]`): lo que venderias al ritmo actual.
   - **venta proyectada** = col CK "Venta proy. (unidades)" (`mval(r,0,3)`): lo que si vas
     a vender, **contando las compras en camino**.
   La proyectada sola da **cero** justo en los peores quiebres (ASX11: demanda 1.316,
   proyectada 0) y la demanda sola cobra ventas que si vas a hacer cuando llegue el pedido
-  (MA-4147: demanda 96, proyectada 89, perdes 7). Totales al 15/09: USD 62.769 en 135 SKU
-  importados y $ 3.966.088 en 54 nacionales. **No volver a cambiarlo.**
-- ⚠️ **"Sin rotacion" se mide con la venta REAL, no con la proyectada.** El filtro era
-  "el forecast proyecta cero a 12 meses", que es una prevision y no un hecho: dejaba
-  entrar codigos que si habian vendido y contradecia el titulo. Ahora es
-  `stock > 0 && vrHist(cod) == 0`, con `VRM = 6` meses cerrados (`DATA.hist.months` viene
-  ordenado de mas viejo a mas nuevo, se toman los ultimos 6). El cambio mueve los numeros:
-  importados 11 -> 43 SKU, nacionales 946 -> 787.
-- Las tablitas llevan `colgroup` con anchos fijos y las cajas topean en 620px: sin eso la
-  columna Grupo se comia media tabla. Los anchos estan calibrados para que ningun titulo
-  quede cortado: **"% del total" necesita 15%**, con menos se corta.
+  (MA-4147: demanda 96, proyectada 89, perdes 7). **No volver a cambiarlo.**
+- Faltante perdio "Venta mix": ese mix era el de vender hasta el maximo, o sea 3 o 4
+  meses de venta en uno. Para cubrir el mes sirve el de la venta perdida.
+- Se probo un "% del total" en Exceso: con 1.700 filas daba 0,02% en casi todas. Fuera.
+- **Los GA se ordenan con la prioridad de los filtros** (`prioName`), no alfabeticamente,
+  en las dos vistas. A igualdad, por codigo.
+- ⚠️ **Los anchos (`COLS`) van por familia y estan verificados midiendo**: unidades 88,
+  plata 124, Grupo 214, Codigo 120, Cat 46, Estado 120. Hay un `overflow:hidden;
+  text-overflow:ellipsis` global en `th,td`, asi que una columna corta **recorta sin
+  avisar**. Casos que costaron: la pastilla de Cat necesita 46 (con 30 salia "..."),
+  la de "Sin rotacion" 120, y "Portaescobillas de alternador" en negrita 214.
+
+### Pendiente que Erik trajo y no se aplico
+
+Descontar del calculo **lo que ya se vendio del mes** (stock del 1ro menos stock de hoy).
+Bajaria Quiebre de $ 3.833.387 a $ 2.942.726. Es correcto y es idea suya, pero quedo para
+otra tanda.
 
 ## Datos del Excel que conviene mirar
 - **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,
