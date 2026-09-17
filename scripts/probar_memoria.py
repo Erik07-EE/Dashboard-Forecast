@@ -14,6 +14,7 @@ Y una cuarta con una foto MAS VIEJA, que no debe tocar nada. Mas el cambio de me
 Se corre con:  python scripts/probar_memoria.py
 """
 import copy
+import datetime
 import io
 import json
 import os
@@ -47,6 +48,17 @@ def escribir(data, path, base_html):
         + base_html[j:])
 
 
+def correr(iso, dias):
+    """Una fecha de stock movida `dias` respecto de `iso`, en el mismo formato.
+
+    ⚠️ Las fechas NO pueden ir escritas a mano: el dashboard se regenera todo el tiempo
+    y una fecha fija que hoy es "mañana" en dos dias queda en el pasado, la memoria la
+    toma como foto vieja y la prueba falla sin que nada este roto. Paso el 17/09.
+    """
+    d = datetime.datetime.strptime(iso[:10], "%Y-%m-%d") + datetime.timedelta(days=dias)
+    return d.strftime("%Y-%m-%d") + " 09:00"
+
+
 def fila(data, cod):
     for r in data["rows"]:
         if r[2] == cod:
@@ -66,7 +78,7 @@ for x in d2["rows"]:
     del x[G.VACU]
 escribir(base, TMP, html)
 G.aplicar_memoria(d2, TMP)
-assert fila(d2, "REDB-111")[G.VACU] == 0, fila(d2, "REDB-111")[G.VACU]
+assert fila(d2, "REDB-111")[G.VACU] == (base["rows"] and [r for r in base["rows"] if r[2]=="REDB-111"][0][G.VACU]), "arrastro mal"
 print("   OK: repetir el mismo Excel no inventa ventas\n")
 
 # --- corrida 3: foto mas nueva, REDB-111 vendio su unica unidad
@@ -74,7 +86,7 @@ escribir(d2, TMP, html)
 d3 = copy.deepcopy(d2)
 for x in d3["rows"]:
     del x[G.VACU]
-d3["stock_iso"] = "2026-09-16 09:00"
+d3["stock_iso"] = correr(base["stock_iso"], 1)
 fila(d3, "REDB-111")[4] = 0                      # 1 -> 0
 fila(d3, "VRI-1515")[4] = fila(d3, "VRI-1515")[4] - 14   # 114 -> 100
 fila(d3, "PB225")[4] = fila(d3, "PB225")[4] + 5          # sube: no debe restar
@@ -85,10 +97,17 @@ print("   REDB-111  stock hoy=%s  acumulado=%s   -> venta en curso = %s"
 print("   perdida = demanda %s - max(vp %s, encurso+stock %s) = %s"
       % (a[79], a[6 + 3], a[G.VACU] + a[4],
          max(0, a[79] - max(a[6 + 3] or 0, a[G.VACU] + a[4]))))
-assert a[G.VACU] == 1, a[G.VACU]
+# ⚠️ Se comparan DIFERENCIAS contra lo que ya traia el dashboard, no valores absolutos:
+# desde que la memoria viene funcionando, el acumulado de arranque ya no es cero.
+def acum(data, cod):
+    r = fila(data, cod)
+    return r[G.VACU] if len(r) > G.VACU else 0
+
+
+assert a[G.VACU] - acum(base, "REDB-111") == 1, a[G.VACU]
 assert max(0, a[79] - max(a[6 + 3] or 0, a[G.VACU] + a[4])) == 30
-assert fila(d3, "VRI-1515")[G.VACU] == 14, fila(d3, "VRI-1515")[G.VACU]
-assert fila(d3, "PB225")[G.VACU] == 0, "un alza de stock no puede contar como venta"
+assert acum(d3, "VRI-1515") - acum(base, "VRI-1515") == 14, acum(d3, "VRI-1515")
+assert acum(d3, "PB225") - acum(base, "PB225") == 0, "un alza de stock no puede contar como venta"
 print("   OK: la unidad que entro y salio quedo contada; la perdida da 30\n")
 
 # --- corrida 4: alguien regenera con un Excel MAS VIEJO
@@ -96,10 +115,10 @@ escribir(d3, TMP, html)
 d4 = copy.deepcopy(d3)
 for x in d4["rows"]:
     del x[G.VACU]
-d4["stock_iso"] = "2026-09-15 12:38"
+d4["stock_iso"] = correr(base["stock_iso"], -1)
 fila(d4, "REDB-111")[4] = 1
 G.aplicar_memoria(d4, TMP)
-assert fila(d4, "REDB-111")[G.VACU] == 1, fila(d4, "REDB-111")[G.VACU]
+assert fila(d4, "REDB-111")[G.VACU] == fila(d3, "REDB-111")[G.VACU], "conto de nuevo con un Excel viejo"
 print("   OK: con un Excel mas viejo se arrastra lo acumulado, no se cuenta de nuevo\n")
 
 # --- corrida 5: cambio de mes
@@ -107,7 +126,7 @@ escribir(d3, TMP, html)
 d5 = copy.deepcopy(d3)
 for x in d5["rows"]:
     del x[G.VACU]
-d5["stock_iso"] = "2026-10-01 07:00"
+d5["stock_iso"] = correr(base["stock_iso"], 40)
 G.aplicar_memoria(d5, TMP)
 assert fila(d5, "REDB-111")[G.VACU] == 0
 print("   OK: al cambiar de mes arranca de cero\n")

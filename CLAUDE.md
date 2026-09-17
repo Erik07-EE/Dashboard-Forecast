@@ -458,6 +458,113 @@ Erik revisó la lista de `Historial/Mejoras_Dashboard_Forecast.pdf` y **anuló l
 **No queda ninguna mejora abierta.** El proyecto está cerrado en su alcance actual: se
 usa para actualizar y publicar el dashboard, nada más.
 
+## Interfaz homogénea en las cinco solapas (17/09, tarde)
+
+Erik: *"tratemos de que en todas las solapas, filtros, opciones, detalles, estética,
+títulos, todo eso vaya siendo homogéneo, sino cada hoja es un mundo distinto de uso"*.
+Se auditaron las cinco midiendo en el navegador y se unificaron. **No volver a que cada
+solapa tenga lo suyo.**
+
+### Un solo tamaño
+
+Antes convivían tres: Proyección e Histórico eran **22% más grandes** que el resto.
+Ahora las cinco van a **letra 12px en el cuerpo, 10px en el encabezado y 28px de fila**.
+
+- ⚠️ El alto lo manda **la pastilla de Cat/Estado (17px)**, no el texto. Con 6px de
+  padding la fila daba 30; con 5px y `line-height:15px` cierra en 28.
+- ⚠️ Los tamaños están en **varios lugares que se pisan**: `table`, `.prevt`, `.vptable`,
+  `.r1 th`, `.r2 th`, `.vptable thead th`, `.vpid`, y **dos estilos en línea** (la
+  constante `TH` y el generador `GH` de Estado Stock), que le ganan al CSS. Cambiar uno
+  solo no alcanza.
+
+### Sin scroll lateral en notebook
+
+Erik: *"necesito ver todas las columnas juntas, no me gusta el scroll lateral"*. La
+tabla de Estado Stock pasó de 1.439 a **1.248px declarados**, contra los **1.292
+disponibles** a 1.366 de pantalla.
+
+- ⚠️ **Cuando aparece la barra vertical el espacio baja de 1.322 a 1.292.** Hay que
+  apuntar al número chico o vuelve el scroll.
+- Lo que se recortó: los **paréntesis de los títulos de grupo** ("FALTANTE (para llegar
+  al stock máximo)" obligaba a 202px entre dos columnas cuando los datos pedían 152),
+  los títulos largos (**Stock h.**, **Meses h.**, **Unid.**) y el **espacio interno de
+  las celdas de 8 a 6px**, que son 4px × 18 columnas = 72px y no se nota.
+- Todo lo que se acortó **lleva el nombre completo en el globo**.
+
+### Encabezados más bajos
+
+Cada barra sobre las tablas gastaba un renglón. Se metieron adentro del encabezado:
+
+- **Forecast**: el mes y su selector "Stock mín" pasaron a un solo renglón (48 → 30px), y
+  las flechas de mes están dentro del panel "Stock al …".
+- **Proyección e Histórico**: las flechas y el botón **Generar Excel** están dentro de la
+  celda "Grupo de artículo". El bloque alto bajó de 126 a **104px** (su contenido usa 98).
+- ⚠️ **Los `top` pegajosos van atados a esos altos** (`.r2 th{top:}` y
+  `.vptable thead tr.r2b th{top:}`). Si se cambia un alto sin mover su `top`, las dos
+  filas de encabezado **se superponen**.
+
+### Ordenar: una sola regla
+
+**Un clic ordena de mayor a menor. El segundo vuelve al orden por código.** Sin flechas
+ni símbolos: el globo dice "clic para ordenar". Rige en Forecast, Estado Stock y Acción
+comercial.
+
+- ⚠️ **Forecast tenía `setSort` y `sortRows` escritos pero ningún `onclick` los llamaba**:
+  era código muerto. Se conectaron el 17/09.
+- **Grupo no ordena** (Erik: de las de texto, solo Código). Clickearlo nunca ordenó
+  alfabéticamente, usaba la prioridad de los filtros.
+- **Proyección e Histórico no ordenan**, a propósito: sus filas son totales por grupo
+  partidos en dos segmentos con su propia fila de TOTAL. Un orden global los mezclaría.
+  Se puede hacer por segmento, pero hay que decidir antes por qué columna.
+
+### Un solo pie
+
+Las tres tablas que cortan dicen **"Mostrando 500 de N · ver 500 más"**. Acción comercial
+agrega *(los totales suman todos)*, que es cierto y no se puede perder.
+
+- ⚠️ **El tope crece de a 500, nunca de golpe.** Un "ver todo" volvía a pagar el segundo
+  y medio entero. Medido: 203 filas 53ms, 1.796 filas 173ms, **5.527 filas 1.467ms** — no
+  escala, porque el navegador calcula la posición de ~100.000 celdas.
+- El tope **se reinicia al cambiar un filtro**, para no quedar en modo lento sin darse
+  cuenta. Y **el orden se aplica antes del corte**, así que arriba queda lo que se busca.
+
+### Vocabulario de las ventas
+
+**VD** venta demanda (col CJ) · **VP** venta proyectada (col CK) · **VR** venta real ·
+**VC** venta en curso. Erik lo encontró en MA-0040, que mostraba "VP 29" en Forecast y
+"V.P. mes 33" en Estado Stock: eran dos columnas distintas del Excel llamadas igual.
+
+- El bloque verde de Estado Stock se llama **"Venta perdida"** (era "V.P. mensual
+  perdida", que además estaba mal: lo que se pierde es demanda).
+- ⚠️ El Excel de Proyección arma sus encabezados **aparte** (`rSub`): hay que cambiarlo
+  ahí también o el archivo exportado queda con el vocabulario viejo.
+
+### Los globos
+
+El `title` nativo lo dibuja el sistema operativo y **no se puede pintar**. Hay un tooltip
+propio (`#tip`), uno solo colgado del `body`: `data-tip` es el nombre (blanco) y
+`data-tip2` la ayuda de uso (amarillo). Va en el body y no dentro del `th` porque las
+tablas tienen `overflow:hidden` y se lo comerían.
+
+### Los nombres de grupo, abreviados
+
+`Portaescobillas de alternador` → **PE alternador**, `Portaescobillas de arranque` →
+**PE arranque** (`GAABR`/`gaLbl`). ⚠️ Es **solo para mostrar**: `DATA.GA` conserva el
+nombre completo, así que el orden, los filtros, las claves de agrupación y lo que sale en
+el Excel y el CSV no cambian. Eso solo sacó las dos líneas de la columna Grupo.
+
+### Trampas del código que costaron encontrarse
+
+- ⚠️ **`tablaLiqPrev` es la tabla VIVA de Acción comercial.** La muerta es
+  `renderLiqTable` / `tablaLiq`, que apunta a un elemento que no existe. Es fácil
+  confundirlas y borrar la que anda.
+- ⚠️ Acción comercial **ya cortaba en 500** por su cuenta (`_capP`). El `const cap=3000`
+  que se ve cerca está en el código muerto.
+- ⚠️ La vista por grupo de Estado Stock se llama **`'ga'`, no `'grp'`**. Medirla mal
+  devuelve los mismos números que la de código y no se nota.
+- ⚠️ En la plantilla **los acentos conviven en dos formas**: como carácter (`á`) y como
+  escape literal (`á`). Un anclaje que no use la forma correcta no engancha.
+
 ## Confidencialidad (decidido el 14/09)
 
 El dashboard está público en GitHub Pages **con códigos, costos y márgenes adentro**.
