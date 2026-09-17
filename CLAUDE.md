@@ -428,18 +428,40 @@ mes cerrado anterior; las columnas VR del mes base estan vacias en las 5.582 fil
   3 meses** y que en Distribucion haya valores cargados codigo por codigo (A con 1 y 2 m,
   B con 1 / 1,5 / 2 m).
 
-### Pendiente que Erik trajo y no se aplico
+### Los 100 codigos con "ingresos sin registrar": CERRADO (17/09)
 
-Descontar del calculo **lo que ya se vendio del mes** de una forma mas agresiva que la
-actual, que bajaria Quiebre de $ 3.833.387 a $ 2.942.726. ⚠️ **No es lo mismo que la
-venta perdida de arriba**: esa ya descuenta lo vendido, pero por el `max` con la venta
-proyectada del Excel no mueve el Quiebre (ahi `proyectada >= vendido + stock` casi
-siempre). Sigue abierto.
+Se detectaron 100 codigos cuyo stock subio desde el 1ro sin una compra que lo explicara
+(910 unidades). **Erik: era un recuento de inventario.** El stock actualizado es el
+bueno y no hay nada que corregir en el Excel. No volver a levantarlo como problema.
+
+⚠️ Lo que si conviene tener presente: la memoria del mes **cuenta las bajas de stock como
+venta**. Un ajuste de inventario que suba el stock no molesta -- solo se cuentan las
+bajas -- pero uno que lo **baje** se va a contar como venta, y desde el stock solo no hay
+forma de distinguirlos.
+
+### Pendiente: descontar lo vendido de forma mas agresiva
+
+⚠️ **Erik pidio el 17/09 que se lo traiga de nuevo para charlarlo bien.** Es el unico
+punto abierto del modelo. **Proponerlo al empezar la proxima sesion**, sin esperar a que
+el lo mencione.
+
+De que se trata: descontar del calculo **lo que ya se vendio del mes** de una forma mas
+agresiva que la actual. Bajaria Quiebre de $ 3.833.387 a $ 2.942.726.
+
+⚠️ **No es lo mismo que la venta perdida que ya se aplico**: esa tambien descuenta lo
+vendido, pero por el `max` con la venta proyectada del Excel **no mueve el Quiebre**
+(ahi `proyectada >= vendido + stock` casi siempre). La diferencia esta justamente en
+que habria que sacar ese tope, y eso hay que discutirlo: el tope es lo que hace que la
+cuenta contemple **las compras que todavia no llegaron**.
+
+Para la charla conviene tener a mano: cuantos codigos de Quiebre cambian, cuanto baja en
+plata, y que pasa con los que tienen compra en camino.
 
 ## Datos del Excel que conviene mirar
-- **6 códigos con venta ajustada negativa** (más devoluciones que ventas): IB2810.40,
-  IMI2509.10, IV2313.10, RV099.30, BB1010.30, BDE0906.30. Dan meses de cobertura absurdos
-  (hasta −108). No rompen nada, pero el número que se ve no tiene sentido.
+- [x] **Venta ajustada negativa: CORREGIDO por Erik el 17/09.** Eran 6 códigos con más
+  devoluciones que ventas (IB2810.40, IMI2509.10, IV2313.10, RV099.30, BB1010.30,
+  BDE0906.30) que daban meses de cobertura absurdos, hasta −108. Hoy los seis quedaron
+  en 0 y **no hay ninguno negativo en los 5.526**.
 - **1.687 códigos con la receta de costo incompleta** en el Gestor: el costo sale más bajo
   de lo real y con él el CMV y la liquidación. Erik los va completando.
 
@@ -513,9 +535,11 @@ comercial.
   era código muerto. Se conectaron el 17/09.
 - **Grupo no ordena** (Erik: de las de texto, solo Código). Clickearlo nunca ordenó
   alfabéticamente, usaba la prioridad de los filtros.
-- **Proyección e Histórico no ordenan**, a propósito: sus filas son totales por grupo
-  partidos en dos segmentos con su propia fila de TOTAL. Un orden global los mezclaría.
-  Se puede hacer por segmento, pero hay que decidir antes por qué columna.
+- ⚠️ **Proyección e Histórico NO ordenan, y queda así. Erik lo cerró el 17/09: "dejalo
+  como está ahora". No reproponerlo.** Sus filas son totales por grupo partidos en dos
+  segmentos (IMPORTADOS y DISTRIB./RECONSTR.) con su propia fila de TOTAL: un orden
+  global los mezclaría, y hacerlo por segmento obligaba a elegir cuál de las seis
+  columnas de cada mes manda. No le hace falta.
 
 ### Un solo pie
 
@@ -552,6 +576,28 @@ tablas tienen `overflow:hidden` y se lo comerían.
 **PE arranque** (`GAABR`/`gaLbl`). ⚠️ Es **solo para mostrar**: `DATA.GA` conserva el
 nombre completo, así que el orden, los filtros, las claves de agrupación y lo que sale en
 el Excel y el CSV no cambian. Eso solo sacó las dos líneas de la columna Grupo.
+
+### Lo que se borró por obsoleto (17/09)
+
+Erik: *"todo lo que esté obsoleto borralo"*. Se sacó solo lo que **no llamaba nadie**,
+verificado contando usos en toda la plantilla (definición + llamadas = 1 significa que
+la única aparición es la propia definición):
+
+- `renderLiqTable` — la versión vieja de la tabla de Acción comercial, apuntaba a un
+  `tablaLiq` que no existe en el HTML.
+- `sortRed` — ordenaba "primero los que están en rojo". Nunca se conectó.
+- `ar(k)` — dibujaba la flecha ▲▼ del orden. Con el orden siempre de mayor a menor no
+  hay dirección que mostrar.
+- `exportPNG` **y la librería html2canvas**. El botón se sacó el 14/09 y quedaron los
+  dos. Las dependencias externas pasaron de 3 a 2.
+- Los estilos `.mpager` y `.ar`, de cosas que ya no existen.
+- **El punto verde** al lado del código: decía lo mismo que la columna VC. El dato
+  `movio` sigue, porque es lo que decide si un código puede llamarse "sin rotación".
+
+⚠️ **Chart.js y XLSX SÍ se usan** — los Excel y las tortas del resumen — y no se tocan.
+Dicho eso, no se logró que las tortas se dibujaran ni en el productivo ni en el preview
+(cero `<canvas>` en los dos): puede ser otro resto muerto, pero **no se borró sin poder
+confirmarlo**.
 
 ### Trampas del código que costaron encontrarse
 

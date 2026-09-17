@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Forecast · Electroestrada</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 :root{--azul:#1a237e;--azul2:#283593;--azul3:#3949ab;--amarillo:#ffd600;--bg:#eef0f8;--verde:#0f9d58;--amber:#f59e0b;--rojo:#ef4444;--tint:#dcecfb;--base:#e7e8f0;}
@@ -70,7 +70,7 @@ th,td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:5px
 thead th{position:sticky;font-weight:800;z-index:3;}
 thead tr.r1 th{top:0;height:30px;background:var(--azul);color:#fff;font-size:10px;text-align:center;vertical-align:middle;}
 thead tr.r2 th{top:30px;height:28px;background:var(--azul2);color:#c5cae9;font-size:10px;text-transform:uppercase;letter-spacing:.03em;box-shadow:inset 0 -3px 0 var(--amarillo);}
-.ar{font-size:.56rem;margin-left:2px;}
+
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
 .f0{width:74px;min-width:74px;max-width:74px;}.f1{width:74px;min-width:74px;max-width:74px;}.f2{width:78px;min-width:78px;max-width:78px;}.f3{width:68px;min-width:68px;max-width:68px;}.f4{width:74px;min-width:74px;max-width:74px;}.f5{width:74px;min-width:74px;max-width:74px;}
 .id0,.id1,.id2,.id3,.id4,.id5,.id6{position:sticky;}
@@ -169,10 +169,10 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable.histt thead tr.r1 th{height:112px;vertical-align:top;padding-top:6px;}
 .vptable.histt thead tr.r2b th{top:112px;}
 .tablewrap.pg{overflow-x:auto;}
-.mpager{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin:4px 0;}
-.mpager button{font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;background:var(--azul);color:#fff;border:none;border-radius:6px;padding:2px 12px;line-height:1.4;}
-.mpager button:hover{background:var(--azul3);}
-.mpager span{font-size:.6rem;color:#7986cb;text-transform:uppercase;font-weight:700;letter-spacing:.04em;}
+
+
+
+
 .vptable thead tr.r1 th.vpid{vertical-align:middle;text-align:center;font-size:12px;}
 .vptable thead th.vpid{font-size:10px;}
 .vptable tbody tr.vphdr td{background:#eceef7;font-weight:800;color:#1c1c1a;}
@@ -213,7 +213,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .mnav button{font:inherit;font-size:11px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.18);
 color:#fff;border:none;border-radius:4px;padding:1px 7px;line-height:1.3;}
 .mnav button:hover{background:rgba(255,255,255,.34);}
-.vpcorner{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.vpcorner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:8px 12px;}
 .btnxs{font-size:10px;padding:3px 9px;}
 #tip{position:fixed;z-index:9999;display:none;pointer-events:none;background:#1a237e;
 color:#fff;font-size:.68rem;font-weight:600;line-height:1.35;padding:5px 9px;border-radius:6px;
@@ -233,8 +233,7 @@ box-shadow:0 5px 16px rgba(0,0,0,.3);max-width:280px;white-space:normal;}
 .st-p-exceso{background:#ffd600;color:#e30613;}
 .st-p-sinrot{background:#78839c;color:#fff;}
 .st-p-lanz{background:#1565c0;color:#fff;}
-/* el codigo se movio en lo que va del mes, aunque la ventana de 6 meses diga que no */
-.mov{display:inline-block;width:7px;height:7px;border-radius:50%;background:#1e7e34;margin-left:7px;vertical-align:middle;}
+
 
 /* el boton activo de Accion toma el color de lo que hace:
    liquidacion = amarillo con letra roja | oferta = verde con letra blanca */
@@ -471,8 +470,6 @@ function setSort(k){
   if(JSON.stringify(st.sort)===JSON.stringify(k)&&k!=='cod'){st.sort='cod';st.dir=1;}
   else{st.sort=k;st.dir=(k==='cod')?1:-1;}
   renderForecast();}
-function sortRed(k){const same=JSON.stringify(st.sort)===JSON.stringify(k);st.sort=same?null:k;st.dir=1;renderForecast();}
-function ar(k){return JSON.stringify(st.sort)===JSON.stringify(k)?`<span class="ar">${st.dir>0?'▲':'▼'}</span>`:"";}
 function hideCol(k,e){if(e)e.stopPropagation();st.hideCols.add(k);renderForecast();}
 function showAllCols(){st.hideCols.clear();renderForecast();}
 function renderTable(rows,tId,greenLiq){const t=document.getElementById(tId);rows=sortRows(rows);let _ms=st.mstart.fc||0;_ms=Math.max(0,Math.min(_ms,ALLM.length-4));if(ALLM.length<=4)_ms=0;const MW=ALLM.slice(_ms,_ms+4);
@@ -606,7 +603,6 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
   el.innerHTML='<div class="tablewrap pg" id="tw-hist" style="max-height:520px"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';IW.forEach(i=>recalcHist(i));}
 function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);requestAnimationFrame(()=>window.scrollTo(0,_sy));}
-function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const _lt=document.getElementById('liqTot');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';if(_lt)_lt.innerHTML='';return;}if(_lt)_lt.innerHTML='';let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const _exm=(r[5]!=null&&id!=null)?(r[5]-id):null;const exc=(_exm!=null&&_exm>0)?_exm:0;const vp=mval(r,0,3);const _eu=excU(r,st.liq||1);const excu=(_eu!=null&&_eu>0)?_eu:0;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtI(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="color:${exc>0?'var(--verde)':'var(--rojo)'};font-weight:700">${exc>0?'+'+exc.toFixed(1):'0.0'}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Meses máx</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 const VAJ=106;  // venta ajustada mensual (col BV del Forecast)
 const ING=107;  // primer ingreso (col G), como AAAAMMDD para que ordene solo
@@ -954,7 +950,7 @@ function renderStock(){
   // La misma fila sirve suelta o colgando de un grupo (con sangria).
   const fila=(o,dentro)=>'<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
     +'<td class="st-ga"'+(dentro?' style="padding-left:22px"':'')+(dentro?'':' data-tip="'+DATA.GA[o.r[1]]+'"')+'>'+(dentro?'':gaLbl(DATA.GA[o.r[1]]))
-    +'</td><td class="st-cod">'+o.r[2]+(o.movio?'<span class="mov" data-tip="Tuvo movimiento este mes"></span>':'')
+    +'</td><td class="st-cod">'+o.r[2]
     +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
     +'</td><td class="num st-d">'+fmtIng(o.r[ING],DATA.CAT[o.r[3]])
     +'</td><td class="num st-v st-b">'+fmtI(o.r[79])
@@ -1072,7 +1068,6 @@ function renderAll(){updBtns();st.tope={};st.dirty.fc=st.dirty.st=st.dirty.liq=s
 function exportCSV(){const rows=sortRows(visibleRows());let head=["UN","GA","Codigo","Categoria","Meses/Cat","Stock actual","Meses actual"];ALLM.forEach(m=>MFIELDS.forEach(f=>head.push(DATA.months[m]+" - "+f)));
   let lines=[head.join(";")];rows.forEach(r=>{let l=[DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5]];ALLM.forEach(m=>{for(let f=0;f<6;f++)l.push(mval(r,m,f));});lines.push(l.join(";"));});
   const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="forecast_dashboard.csv";a.click();}
-function exportPNG(){html2canvas(document.getElementById('resumenInner'),{backgroundColor:'#eef0f8',scale:2}).then(c=>{const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="forecast_pedidos.png";a.click();});}
 document.getElementById('gen').textContent="Actualizado: "+DATA.gen;
 // Tooltip propio. El `title` nativo lo pinta el sistema operativo y no admite estilos,
 // y hacia falta que el nombre de la columna y la ayuda de uso fueran de distinto color.
