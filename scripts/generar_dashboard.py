@@ -60,6 +60,9 @@ def extract(path):
     for row in all_rows[3:]:
         cod=row[2]
         if not (cod and str(cod).strip()): continue
+        # fila separadora del Excel: codigo "-", sin UN ni datos. Ensuciaba el
+        # filtro de Categoria con un "-" que no existe como categoria.
+        if str(cod).strip()=="-": continue
         if str(row[1]).strip()=="Adicionales": continue  # GA sin valor estadistico
         ui=idx(UN,row[0]); gi=idx(GA,row[1]); cti=idx(CAT,row[5])
         sa=N(row[ci("BN")-1]); ma=F1(row[ci("BO")-1])
@@ -89,7 +92,20 @@ def extract(path):
             try: _rr.append(abs(float(row[cc])))
             except: _rr.append(None)
         realmap[str(cod).strip()]=_rr
-        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax]+[vaj])
+        # Col G "Primer ingreso": cuando entro el codigo al catalogo. Va como numero
+        # AAAAMMDD para que ordene solo; la plantilla lo muestra dd/mm/aa.
+        _g=row[ci("G")-1]
+        try: ing=int(_g.strftime("%Y%m%d"))
+        except Exception: ing=None
+        # una celda vacia puede venir como 01/01/1900: no es una fecha de ingreso
+        if ing is not None and ing < 20000101: ing=None
+        # Col CP "Stock maximo": la suma de la demanda de los proximos "Meses por
+        # Cat." meses, cada uno con su estacionalidad. Arranca en el mes en curso
+        # (busca la columna por el nombre del mes), a diferencia de CB que arranca
+        # fija en AU. Es la base del maximo de Estado Stock.
+        try: maxe=float(row[ci("CP")-1] or 0)
+        except (TypeError,ValueError): maxe=0.0
+        rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax]+[vaj]+[ing]+[maxe])
     # IMPO por GA
     def estado_of(H1,b):
         for off in (8,9):
@@ -174,7 +190,12 @@ def extract(path):
     if bo:
         mm=re.search(r"(\d{1,2}:\d{2})",str(bo)); hora=mm.group(1) if mm else ""
     stock_ts=ts+(" / "+hora+" hs" if hora else "")
-    return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,"season":season,
+    # La misma fecha en formato comparable: el stock_ts es para mostrar y no se puede
+    # ordenar ("Martes 15 de Septiembre"). Esta se usa para saber si la foto del stock
+    # es nueva respecto de la corrida anterior (ver aplicar_memoria).
+    stock_iso=(bn.strftime("%Y-%m-%d")+((" "+hora) if hora else "")) if hasattr(bn,"strftime") else ""
+    return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,
+            "stock_iso":stock_iso,"season":season,
             "real":realmap,"real_labels":real_labels,
             "src":os.path.basename(path),"gen":datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}
 
@@ -399,6 +420,62 @@ def build_historico(folder, real_map, real_labels, cache_path, realusd, imp_cods
         if any_: vpm[cod]=vr; realm[cod]=rr; mixm[cod]=mm; reald[cod]=rd
     return {"months":months,"vp":vpm,"real":realm,"mix":mixm,"reald":reald}
 
+# --------------------------------------------------------------------------------
+# Memoria del mes: el dashboard anterior ES la foto anterior del stock.
+#
+# stock hoy = stock inicio + lo que entro - lo que se vendio. Son dos incognitas y una
+# sola ecuacion, asi que con una foto sola no se puede saber cuanto se vendio en el mes
+# en curso: si un codigo va 0 -> 1 -> 0, la venta desaparece. Y el Excel no lo publica
+# (V.R. mensual llega hasta el mes cerrado anterior).
+#
+# La foto anterior ya existe: es el propio Dashboard_Forecast.html que estamos por
+# pisar. Asi que el generador se lee a si mismo, suma lo que BAJO desde la corrida
+# anterior y lo guarda en el HTML nuevo. No hace falta saber por que subio el stock
+# -- nota de credito, devolucion de cliente, correccion de stock --: solo se cuentan
+# las bajas, que es lo unico que es venta.
+#
+# No agrega ningun archivo al circuito y no se puede desincronizar: si el HTML no esta,
+# arranca de cero y el dashboard se comporta como antes.
+VACU = 109   # venta acumulada del mes; ultimo campo de cada fila de rows[]
+
+def leer_anterior(path):
+    """(mes, stock_iso, {cod: [stock, acumulado]}) del HTML anterior, o None."""
+    if not os.path.exists(path): return None
+    try:
+        s=open(path,encoding="utf-8").read()
+        i=s.index("const DATA =")+len("const DATA =")
+        prev=json.loads(s[i:s.index("\n",i)].rstrip().rstrip(";"))
+    except Exception as e:
+        print("  Memoria: no se pudo leer el dashboard anterior (%s)"%e); return None
+    iso=prev.get("stock_iso") or ""
+    d={}
+    for r in prev.get("rows",[]):
+        if len(r)>4: d[r[2]]=[r[4] or 0, (r[VACU] if len(r)>VACU else 0) or 0]
+    return (iso[:7], iso, d)
+
+def aplicar_memoria(data, out_html):
+    ant=leer_anterior(out_html)
+    mes=(data.get("stock_iso") or "")[:7]
+    if not ant or ant[0]!=mes:
+        # mes nuevo, o no hay dashboard anterior: se empieza a contar desde aca
+        for r in data["rows"]: r.append(0)
+        print("  Memoria: arranca de cero (mes nuevo o sin dashboard anterior)")
+        return
+    _,iso_ant,d=ant
+    if iso_ant>=(data.get("stock_iso") or ""):
+        # el mismo Excel, o uno mas viejo: no hay foto nueva, no se inventa nada
+        for r in data["rows"]: r.append(d.get(r[2],[None,0])[1])
+        print("  Memoria: sin foto nueva (anterior %s), se arrastra lo acumulado"%iso_ant)
+        return
+    nuevas=0; tocados=0
+    for r in data["rows"]:
+        st,ac=d.get(r[2],[None,0])
+        baja=max(0,(st or 0)-(r[4] or 0)) if st is not None else 0
+        if baja: nuevas+=baja; tocados+=1
+        r.append(ac+baja)
+    print("  Memoria: %s -> %s | %d unidades en %d codigos"
+          %(iso_ant,data["stock_iso"],nuevas,tocados))
+
 def build(data, out_html, tpl_path):
     tpl=open(tpl_path,encoding="utf-8").read()
     html=tpl.replace("/*__DATA__*/", json.dumps(data,ensure_ascii=False,separators=(",",":")))
@@ -423,4 +500,5 @@ if __name__=="__main__":
     except Exception as e:
         print("Historico: error",e); data["hist"]={"months":[],"vp":{},"real":{}}
     data.pop("real",None); data.pop("real_labels",None)
+    aplicar_memoria(data, out)
     build(data, out, tpl)

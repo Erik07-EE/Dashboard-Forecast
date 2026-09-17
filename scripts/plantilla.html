@@ -205,7 +205,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 @media print{.filterbar,.btns,.res-toggle{display:none;}.tablewrap,#resumen{max-height:none;overflow:visible;}body{background:#fff;}}
 
 /* pestana Stock: clases, para no repetir estilos en 5.500 filas */
-.st-ga{text-align:left;color:#5f6690;overflow:hidden;text-overflow:ellipsis;}
+.st-ga{text-align:left;color:#5f6690;overflow:hidden;white-space:normal;line-height:1.15;}
 .st-cod{text-align:left;font-weight:700;}
 .st-ct{text-align:center;}
 .st-d{color:#5f6690;}
@@ -214,10 +214,13 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .st-v{color:#1e7e34;}
 .st-p{display:inline-block;min-width:92px;text-align:center;padding:1px 7px;border-radius:9px;font-size:.6rem;font-weight:800;}
 .st-p-cero{background:#e53935;color:#fff;}
-.st-p-riesgo{background:#1565c0;color:#fff;}
+.st-p-riesgo{background:#ef6c00;color:#fff;}
 .st-p-ideal{background:#2e7d32;color:#fff;}
 .st-p-exceso{background:#ffd600;color:#e30613;}
 .st-p-sinrot{background:#78839c;color:#fff;}
+.st-p-lanz{background:#1565c0;color:#fff;}
+/* el codigo se movio en lo que va del mes, aunque la ventana de 6 meses diga que no */
+.mov{display:inline-block;width:7px;height:7px;border-radius:50%;background:#1e7e34;margin-left:7px;vertical-align:middle;}
 
 /* el boton activo de Accion toma el color de lo que hace:
    liquidacion = amarillo con letra roja | oferta = verde con letra blanca */
@@ -261,8 +264,8 @@ const IDEAL=78;const CAJAX=105;
 const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alternadores","Estatores","Rotores","Bujes de plástico","Portaescobillas de arranque","Portaescobillas de alternador","Escobillas de arranque","Escobillas de alternador","Impulsores","Poleas de alternador","Extractores de polea","Reductores","Planetarios","Reguladores de voltaje","Plaquetas rectificadoras","Diodos","Rodamientos","Lámparas principales","Lámparas auxiliares","Faros y barras"];
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
-const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:1,stMult:1,stFil:'all',stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
+const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."],["EST","5 · Estado","Estado","Buscar..."]];
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:1,stMult:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -284,7 +287,18 @@ function mUN(r){return st.UN.size===0||st.UN.has(r[0]);}
 function mGA(r){return st.GA.size===0||st.GA.has(r[1]);}
 function mCAT(r){return st.CAT.size===0||st.CAT.has(r[3]);}
 function mCOD(r){return st.COD.size===0||st.COD.has(r[2]);}
-let _vrK='',_vrC=null;function visibleRows(){const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',');if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r)&&mCOD(r));return _vrC;}
+// rowsBase = todo menos el estado. Lo necesitan las tarjetas de Estado Stock: si
+// se calcularan con el estado ya filtrado, al elegir Quiebre las otras cinco
+// mostrarian cero y se perderia el panorama.
+let _vbK='',_vbC=null;function rowsBase(){
+  const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',');
+  if(_vbC&&k===_vbK)return _vbC;_vbK=k;
+  _vbC=DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r)&&mCOD(r));return _vbC;}
+function mEST(r){if(st.EST.size===0)return true;const o=stkOf(r);return !!o&&st.EST.has(o.k);}
+let _vrK='',_vrC=null;function visibleRows(){
+  const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',')
+    +'|'+[...st.EST].join(',')+'|'+(st.stMult||1);
+  if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=rowsBase().filter(mEST);return _vrC;}
 function countBy(rows,k){const m=new Map();rows.forEach(r=>m.set(r[k],(m.get(r[k])||0)+1));return m;}
 function resMonths(){return st.RMES.size?[...st.RMES].sort((a,b)=>a-b):[0];}
 
@@ -297,11 +311,34 @@ function tglRMes(i){st.RMES.has(i)?st.RMES.delete(i):st.RMES.add(i);renderAll();
 
 function setSmSort(m,v){if(!v){st.sort=null;}else{st.sort={m:m,f:v==='ini'?1:5};}st.dir=1;renderForecast();}
 function updateDots(){document.querySelectorAll('#tabla .dot').forEach(d=>{if(d.dataset.g==='1'||d.dataset.nd==='1')return;const v=parseFloat(d.dataset.v),id=parseFloat(d.dataset.id);const red=(!isNaN(v)&&!isNaN(id)&&id>0&&v<id);d.className='dot '+(red?'d-red':'dnone');});}
+// Cada desplegable muestra lo que existe con TODOS los otros filtros puestos, sin
+// importar el orden. Antes la cadena era fija (UN -> GA -> CAT -> COD) y Estado no
+// achicaba a nadie: se podia elegir Lanzamientos + Categoria D y quedaba vacio.
+function rowsExcept(dim){
+  return DATA.rows.filter(r=>(dim==='UN'||mUN(r))&&(dim==='GA'||mGA(r))
+    &&(dim==='CAT'||mCAT(r))&&(dim==='COD'||mCOD(r))&&(dim==='EST'||mEST(r)));}
+// Lo ya elegido no se cae de la lista aunque otro filtro lo deje en cero: si se
+// cayera no habria forma de destildarlo y la tabla quedaria vacia sin explicacion.
+function conElegidos(dim,lista,mk){
+  const hay=new Set(lista.map(o=>o.key));
+  st[dim].forEach(k=>{if(!hay.has(k))lista.push(mk(k));});
+  return lista;}
 function optionsFor(dim){
-  if(dim==='UN'){const c=countBy(DATA.rows,0);return DATA.UN.map((v,i)=>({key:i,label:v,n:c.get(i)||0}));}
-  if(dim==='GA'){const b=DATA.rows.filter(mUN);const c=countBy(b,1);return DATA.GA.map((v,i)=>({key:i,label:v,n:c.get(i)||0})).filter(o=>o.n>0).sort((a,b)=>prioName(a.label)-prioName(b.label));}
-  if(dim==='CAT'){const b=DATA.rows.filter(r=>mUN(r)&&mGA(r));const c=countBy(b,3);return DATA.CAT.map((v,i)=>({key:i,label:v||'(s/cat)',n:c.get(i)||0})).filter(o=>o.n>0);}
-  if(dim==='COD'){const b=DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r));return b.map(r=>({key:r[2],label:r[2],sub:DATA.GA[r[1]],n:null}));}
+  const b=rowsExcept(dim);
+  if(dim==='UN'){const c=countBy(b,0);
+    return DATA.UN.map((v,i)=>({key:i,label:v,n:c.get(i)||0}));}
+  if(dim==='GA'){const c=countBy(b,1);
+    return conElegidos('GA',DATA.GA.map((v,i)=>({key:i,label:v,n:c.get(i)||0})).filter(o=>o.n>0),
+      k=>({key:k,label:DATA.GA[k],n:0})).sort((a,b)=>prioName(a.label)-prioName(b.label));}
+  if(dim==='CAT'){const c=countBy(b,3);
+    return conElegidos('CAT',DATA.CAT.map((v,i)=>({key:i,label:v||'(s/cat)',n:c.get(i)||0})).filter(o=>o.n>0),
+      k=>({key:k,label:DATA.CAT[k]||'(s/cat)',n:0}));}
+  if(dim==='COD'){
+    return conElegidos('COD',b.map(r=>({key:r[2],label:r[2],sub:DATA.GA[r[1]],n:null})),
+      k=>({key:k,label:k,sub:'',n:null}));}
+  if(dim==='EST'){const c={};b.forEach(r=>{const o=stkOf(r);if(o)c[o.k]=(c[o.k]||0)+1;});
+    return conElegidos('EST',STK.map(x=>({key:x[0],label:x[1],n:c[x[0]]||0})).filter(o=>o.n>0),
+      k=>({key:k,label:STLBL[k]||k,n:0}));}
 }
 function renderPanel(dim){const q=(document.getElementById('srch-'+dim).value||"").toLowerCase();let opts=optionsFor(dim);
   if(q)opts=opts.filter(o=>o.label.toLowerCase().includes(q)||(o.sub&&o.sub.toLowerCase().includes(q)));
@@ -327,12 +364,13 @@ function selectAllF(dim,e){e.stopPropagation();const q=(document.getElementById(
   if(dim==='CAT'){pruneCOD();}
   renderAll();renderPanel(dim);}
 function clearF(dim,e){e.stopPropagation();st[dim].clear();pruneCOD();renderAll();renderPanel(dim);}
-function clearAll(){['UN','GA','CAT','COD'].forEach(d=>st[d].clear());st.sort=null;renderAll();}
+function clearAll(){['UN','GA','CAT','COD','EST'].forEach(d=>st[d].clear());st.sort=null;renderAll();}
 document.addEventListener('click',e=>{if(!e.target.closest('.dd'))document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));});
 function toggleRes(){const r=document.getElementById('resumen');r.classList.toggle('collapsed');document.getElementById('resIco').textContent=r.classList.contains('collapsed')?'▸':'▾';}
 // La Cat siempre como pastilla, igual en las 5 solapas.
 function catPill(c){return c?'<span class="cat cat-'+c+'">'+c+'</span>':'';}
-function nameOf(dim,k){if(dim==='UN')return DATA.UN[k];if(dim==='GA')return DATA.GA[k];if(dim==='CAT')return DATA.CAT[k]||'(s/cat)';return k;}
+function nameOf(dim,k){if(dim==='UN')return DATA.UN[k];if(dim==='GA')return DATA.GA[k];
+  if(dim==='CAT')return DATA.CAT[k]||'(s/cat)';if(dim==='EST')return STLBL[k]||k;return k;}
 function updBtns(){DIMS.forEach(([d,cap,def])=>{const s=st[d];
   let txt="Todos";if(s.size){const ns=[...s].map(k=>nameOf(d,k));txt=ns.slice(0,2).join(', ')+(ns.length>2?' +'+(ns.length-2):'');}
   document.getElementById('cnt-'+d).textContent=txt;const btn=document.getElementById('cnt-'+d).closest('.dd-btn');btn.classList.toggle('empty',s.size===0);
@@ -523,8 +561,21 @@ function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(vi
 function renderLiqTable(rows){const t=document.getElementById('tablaLiq');const _lt=document.getElementById('liqTot');rows=sortRows(rows);if(rows.length===0){t.innerHTML='<tbody><tr><td class="empty">Sin resultados.</td></tr></tbody>';if(_lt)_lt.innerHTML='';return;}if(_lt)_lt.innerHTML='';let b='';const cap=3000;rows.slice(0,cap).forEach(r=>{const id=r[IDEAL];const _exm=(r[5]!=null&&id!=null)?(r[5]-id):null;const exc=(_exm!=null&&_exm>0)?_exm:0;const vp=mval(r,0,3);const _eu=excU(r,st.liq||1);const excu=(_eu!=null&&_eu>0)?_eu:0;b+=`<tr><td>${DATA.UN[r[0]]}</td><td>${DATA.GA[r[1]]}</td><td class="code">${r[2]}</td><td><span class="cat cat-${DATA.CAT[r[3]]}">${DATA.CAT[r[3]]}</span></td><td class="num" style="color:var(--verde);font-weight:700">${fmtI(vp)}</td><td class="num">${fmtCat(id)}</td><td class="num">${fmtI(r[4])}</td><td class="num" style="color:var(--azul3);font-weight:700">${fmtI(excu)}</td><td class="num">${fmtM(r[5])}</td><td class="num" style="color:${exc>0?'var(--verde)':'var(--rojo)'};font-weight:700">${exc>0?'+'+exc.toFixed(1):'0.0'}</td></tr>`;});t.innerHTML='<thead><tr><th>UN</th><th>GA</th><th>Código</th><th>Cat</th><th class="num">VP</th><th class="num">Meses máx</th><th class="num">Stock act.</th><th class="num">Exceso unid.</th><th class="num">Meses act.</th><th class="num">Exceso meses</th></tr></thead><tbody>'+b+'</tbody>';}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 const VAJ=106;  // venta ajustada mensual (col BV del Forecast)
-function idealU(r,h){const v=r[VAJ];if(h==null||h<=0||v==null||v<=0)return 0;return h*v;}
-function excU(r,f){const id=r[IDEAL];if(id==null||id<=0||r[4]==null)return null;return r[4]-idealU(r,id*f);}
+const ING=107;  // primer ingreso (col G), como AAAAMMDD para que ordene solo
+const MAXE=108; // stock maximo del Excel (col CP), con estacionalidad
+const VACU=109; // venta acumulada del mes en curso, la arma el generador
+                // comparandose con el dashboard anterior (ver aplicar_memoria)
+// Los Cat P todavia no ingresaron: en vez de un guion se dice por que. Va un
+// punto mas chico porque "Proximamente" no entra al tamanio de una fecha.
+const fmtIng=(v,cat)=>{
+  if(cat==='P')return '<span style="font-size:.62rem;color:#1565c0">Próximamente</span>';
+  if(!v)return '–';const s=String(v);
+  return s.slice(6,8)+'/'+s.slice(4,6)+'/'+s.slice(2,4);};
+// El exceso de Accion comercial sale de la MISMA base que Estado Stock: el stock
+// maximo del Excel (col CP), no de meses x ritmo plano. Si no, las dos solapas
+// muestran distinto exceso para el mismo codigo -- pasaba en 1.494.
+function excU(r,f){const id=r[IDEAL];if(id==null||id<=0||r[4]==null)return null;
+  return r[4]-(r[MAXE]||0)*f;}
 function computeLiq(r){const c=DATA.costos&&DATA.costos[r[2]];if(!c||!c[1]||c[2]==null)return null;const costo=c[0]||0,lista=c[1],cur=c[3]||'USD';
   const vp=mval(r,0,3),ideal=r[IDEAL],stock=r[4],meses=r[5];
   // CMM: viene del Gestor de precios (col F). Los CMM con descuento se derivan de ese
@@ -668,30 +719,61 @@ function renderLiq(){let rows=visibleRows();const m=st.liqMode;if(!m){rows=[];}e
 // por eso el punto rojo del tab Forecast y esta pestana ya no se contradicen.
 // STK = [clave, etiqueta, fondo de pastilla, color de letra, subtitulo]
 const STK=[['cero','Quiebre','#e53935','#fff','Sin stock o en negativo'],
-           ['riesgo','Riesgo','#1565c0','#fff','Por debajo del mínimo'],
+           ['riesgo','Riesgo','#ef6c00','#fff','Por debajo del mínimo'],
            ['ideal','Ideal','#2e7d32','#fff','Entre el mínimo y el máximo'],
            ['exceso','Exceso','#ffd600','#e30613','Por encima del máximo'],
-           ['sinrot','Sin rotación','#78839c','#fff','Con stock y sin ventas en 6 meses']];
+           ['sinrot','Sin rotación','#78839c','#fff','Con stock y sin ventas en 6 meses'],
+           ['lanz','Lanzamientos','#1565c0','#fff','Cat N y P']];
 const STROJO='#c0392b', STVERDE='#1e7e34';
-function stkOf(r){
+let _skC=new Map(),_skM=null;
+function stkOf(r){const m=st.stMult||1;
+  if(_skM!==m){_skC=new Map();_skM=m;}
+  let v=_skC.get(r);if(v===undefined){v=stkCalc(r);_skC.set(r,v);}return v;}
+function stkCalc(r){
   const id=r[IDEAL],stock=r[4];
   if(stock==null||id==null||id<=0)return null;
-  const mx=id*(st.stMult||1), mn=minMeses(r,mx);
-  const maxU=idealU(r,mx), minU=idealU(r,mn);
-  if(maxU==null)return null;
+  // El maximo sale del Excel (col CP): la suma de la demanda de los proximos
+  // "Meses por Cat." meses, cada uno con SU estacionalidad. Antes era meses por
+  // venta ajustada, un ritmo plano, y siempre daba mas.
+  const maxU=(r[MAXE]||0)*(st.stMult||1);
+  // El minimo es la regla de siempre, en proporcion sobre esa base: importados
+  // un mes menos, el resto la mitad. No se puede restar "un mes" en unidades
+  // porque los meses de CP no valen lo mismo entre si.
+  const minU=maxU*((DATA.UN[r[0]]===UN_IMPO)?Math.max(0,(id-1)/id):0.5);
   const exc=Math.max(0,stock-maxU),falta=Math.max(0,maxU-stock);
   // Sin rotacion va ANTES que el resto: un codigo que no vendio tiene ritmo cero,
   // asi que su maximo da cero y caeria en Exceso siempre. Ponerlo primero saca del
   // Exceso a los que estan ahi por no venderse, no por haber comprado de mas.
+  //
+  // La ventana de vrHist son los 6 meses CERRADOS: el mes en curso no esta. Por eso
+  // se mira aparte si el stock bajo desde el 1ro -- si se movio, vendio, y no puede
+  // decir "sin ventas". Esos van a su estado por min/max y llevan el punto verde.
+  //
+  // Y los Cat N van aparte: un C que no se vende no es lo mismo que un lanzamiento
+  // que todavia no se exhibio. Ademas pesan: eran el 76% de los dolares parados.
+  // La venta del mes en curso, que el Excel no publica. Dos fuentes:
+  //  - r[VACU]: lo que el generador viene sumando corrida a corrida comparandose
+  //    con el dashboard anterior. Cuenta las BAJAS, asi que no le importa por que
+  //    subio el stock (nota de credito, devolucion, correccion) y agarra el caso
+  //    que se perdia: el codigo que va 0 -> 1 -> 0 entre el 1ro y hoy.
+  //  - la baja neta contra el stock del 1ro, que cubre lo que paso ANTES de que
+  //    el generador empezara a acordarse.
+  // Se toma la mayor: la acumulada nunca puede ser menor que la neta.
+  const vend=Math.max(r[VACU]||0,Math.max(0,(mval(r,0,0)||0)-stock));
+  const movio=vend>0;
   let k;
-  if(stock<=0)k='cero';
-  else if(!vrHist(r[2]))k='sinrot';
+  // Cat P es "proximamente": nunca tuvo stock, asi que los 22 caian en Quiebre
+  // y lo ensuciaban con una falta que no es tal.
+  const _cat=DATA.CAT[r[3]];
+  if(_cat==='N'||_cat==='P')k='lanz';
+  else if(stock<=0)k='cero';
+  else if(!vrHist(r[2])&&!movio)k='sinrot';
   else if(stock<minU)k='riesgo';
   else if(stock>maxU)k='exceso';
   else k='ideal';
   const cc=DATA.costos&&DATA.costos[r[2]];
   const costo=(cc&&cc[0]!=null)?cc[0]:null,cur=(cc&&cc[3])?cc[3]:'$',mix=r[104];
-  return {k:k,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,cur:cur,
+  return {k:k,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,cur:cur,
     excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null,
     perd:(k==='cero'||k==='riesgo')?perdU(r):0,
@@ -701,7 +783,11 @@ function stkOf(r){
     meses:r[5], r:r};
 }
 function setStMult(el){st.stMult=parseFloat(el.value)||1;renderStock();}
-function setStFil(k){st.stFil=k;renderStock();}
+// La tarjeta ES el filtro de la barra: un solo lugar donde se guarda, y asi no se
+// pueden contradecir. Se puede elegir mas de un estado.
+function setStFil(k){if(k==='all')st.EST.clear();
+  else if(st.EST.has(k))st.EST.delete(k);else st.EST.add(k);
+  renderAll();}
 // La tabla se puede mirar por codigo o por grupo. Por grupo se ven los GA sumados
 // y se abre el que interese para ver sus codigos: es lo que antes hacian los
 // paneles de Exceso y de Quiebres en tablas aparte.
@@ -717,22 +803,25 @@ function stBadge(k,chico){const s=STK.find(x=>x[0]===k);
   return '<span style="display:inline-block;min-width:112px;text-align:center;padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+s[2]+';color:'+s[3]+';">'+s[1]+'</span>';}
 function renderStock(){
   const el=document.getElementById('view-st');
-  const dat=visibleRows().map(stkOf).filter(Boolean);
+  const dat=rowsBase().map(stkOf).filter(Boolean);
   const M=(c,n)=>c+' '+Math.round(n||0).toLocaleString('es-AR');
-  const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0};});
+  const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0,cA:0,cB:0,cN:0,cP:0};});
   const P={};
   const add=(b,cur,v)=>{if(v==null||!v)return;(P[b]||(P[b]={}))[cur]=(P[b][cur]||0)+v;};
   dat.forEach(o=>{const g=G[o.k];g.n++;g.u+=o.stock;g.exc+=o.exc;g.falta+=o.falta;
+    const _c=DATA.CAT[o.r[3]];
+    if(_c==='A')g.cA++;else if(_c==='B')g.cB++;else if(_c==='N')g.cN++;else if(_c==='P')g.cP++;
     // la plata va al bucket del estado y a ninguno mas: si no, el Exceso se comia
     // la de los codigos sin rotacion, que tienen exceso solo porque su maximo es 0
     if(o.k==='exceso'){add('excC',o.cur,o.excC);add('excM',o.cur,o.excM);}
     add('perd_'+o.k,o.cur,o.perdM);
     if(o.k==='sinrot'){add('stkC_sinrot',o.cur,o.stkC);add('stkM_sinrot',o.cur,o.stkM);}
+    if(o.k==='lanz'){add('stkC_lanz',o.cur,o.stkC);add('stkM_lanz',o.cur,o.stkM);}
     // el faltante va por estado: destapar un quiebre no es lo mismo que
     // completar hasta el maximo algo que ya tiene stock
     add('falC_'+o.k,o.cur,o.falC);});
   const tot=dat.length||1;
-  const F=st.stFil||'all';
+  const F=(st.EST.size===1)?[...st.EST][0]:'all';
   const VIS=st.stVista||'cod';
   // --- las 5 tarjetas ---
   // Los 5 estados son excluyentes y suman 100%.
@@ -740,10 +829,11 @@ function renderStock(){
   // con eso se comio las cajas "Faltante" y "Exceso de stock", que repetian lo mismo.
   // Tocar una filtra la tabla y, si tiene detalle, abre su panel debajo.
   const CARDS=[['cero','Quiebre','#e53935','#fff','Sin stock o negativo','Costo a invertir (máximo)','falC_cero','Venta mix perdida','perd_cero'],
-    ['riesgo','Riesgo','#1565c0','#fff','Bajo el mínimo','Costo a invertir (máximo)','falC_riesgo','Venta mix perdida','perd_riesgo'],
+    ['riesgo','Riesgo','#ef6c00','#fff','Bajo el mínimo','Costo a invertir (máximo)','falC_riesgo','Venta mix perdida','perd_riesgo'],
     ['ideal','Ideal','#2e7d32','#fff','Entre mín. y máx.','Costo a invertir (máximo)','falC_ideal','',''],
     ['exceso','Exceso','#ffd600','#e30613','Sobre el máximo','Costo inmovilizado','excC','Venta mix inmovilizado','excM'],
-    ['sinrot','Sin rotación','#78839c','#fff','Sin ventas en 6 meses','Costo parado','stkC_sinrot','Venta mix parado','stkM_sinrot']];
+    ['sinrot','Sin rotación','#78839c','#fff','Sin ventas en 6 meses','Costo parado','stkC_sinrot','Venta mix parado','stkM_sinrot'],
+    ['lanz','Lanzamientos','#1565c0','#fff','Cat N y P','Costo invertido','stkC_lanz','Venta mix a generar','stkM_lanz']];
   const badge=(lbl,bg,fg)=>'<span style="display:inline-block;min-width:112px;text-align:center;'
     +'padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+bg+';color:'+fg+';">'+lbl+'</span>';
   // el costo en rojo y la venta en verde, igual que en la tabla de abajo
@@ -755,7 +845,7 @@ function renderStock(){
   const par=(l1,b1,c1,l2,b2,c2)=>'<div style="border-top:1px solid #eceef7;margin:9px 0 7px;"></div>'
     +'<div style="display:flex;gap:12px;">'+colP(l1,b1,c1)
       +(l2?colP(l2,b2,c2):'<div style="flex:1 1 0"></div>')+'</div>';
-  const card=c=>{const k=c[0],on=F===k,g=G[k];
+  const card=c=>{const k=c[0],on=st.EST.has(k),g=G[k];
     // Sin rotacion se dibuja apagado: es plata quieta, no una alarma.
     const gris=(k==='sinrot'),cNum=gris?'#78839c':'#1a237e',c1=gris?'#78839c':STROJO,c2=gris?'#78839c':STVERDE;
     return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;width:285px;flex:0 0 285px;background:#fff;border-radius:10px;border:2px solid '+(on?c[2]:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 12px;">'
@@ -768,15 +858,20 @@ function renderStock(){
       +'<div style="display:flex;align-items:baseline;gap:7px;">'
         +'<span style="font-size:1.35rem;font-weight:800;color:'+cNum+';line-height:1.1;">'+fmtI(g.n)+'</span>'
         +'<span style="font-size:.6rem;color:#5f6690;">SKU · <b style="font-size:.74rem;color:#1a237e;">'+(g.n/tot*100).toFixed(1).replace('.',',')+'%</b></span>'
+        // A y B aparte: son las dos categorias que a Erik le importan
+        // en Lanzamientos no hay A ni B: ahi las dos que importan son N y P
+        +(()=>{const d=(k==='lanz')?['N',g.cN,'P',g.cP]:['A',g.cA,'B',g.cB];
+          return '<span style="font-size:.58rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
+            +d[0]+' '+fmtI(d[1])+' · '+d[2]+' '+fmtI(d[3])+'</span>';})()
       +'</div>'
       +par(c[5],c[6],c1,c[7],c[8],c2)
       +'</div>';};
   // --- tabla ---
-  let rows=(F==='all')?dat:dat.filter(o=>o.k===F);
+  let rows=(st.EST.size===0)?dat:dat.filter(o=>st.EST.has(o.k));
   const SF=st.stSort||'cod',DIR=st.stDir||1;
   // Los GA se ordenan con la misma prioridad que los filtros de arriba (PRIORITY).
   const key=o=>({ga:prioName(DATA.GA[o.r[1]]),cod:o.r[2],minU:o.minU,maxU:o.maxU,stock:o.stock,
-                 vp:(o.r[79]||0),meses:o.meses,perd:o.perd,perdM:o.perdM,
+                 ing:(o.r[ING]||0),vp:(o.r[79]||0),meses:o.meses,perd:o.perd,perdM:o.perdM,
                  falta:o.falta,falC:o.falC,exc:o.exc,excC:o.excC,excM:o.excM}[SF]);
   rows=rows.slice().sort((a,b)=>{const x=key(a),y=key(b);
     if(typeof x==='string')return DIR*String(x).localeCompare(String(y),'es',{numeric:true});
@@ -790,11 +885,11 @@ function renderStock(){
   const TH='color:#fff;background:#1a237e;font-weight:800;font-size:.58rem;text-transform:uppercase;text-align:center;padding:4px 4px;height:24px;position:sticky;top:28px;z-index:5;box-shadow:inset 0 -3px 0 #ffd600;';
   const H=(f,t)=>'<th onclick="setStSort(&quot;'+f+'&quot;)" style="'+TH+'cursor:pointer;">'+t+(SF===f?(DIR<0?' ▾':' ▴'):'')+'</th>';
   const HP=t=>'<th style="'+TH+'">'+t+'</th>';
-  const COLS=[214,120,46,88,88,88,88,88,120,88,124,88,124,88,124,124];
+  const COLS=[150,130,41,83,56,93,53,53,65,64,111,60,78,89,119,60,84,84];
   const cg='<colgroup>'+COLS.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>';
-  const th='<thead><tr>'+GH('Producto',4,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#1a237e','#fff')
+  const th='<thead><tr>'+GH('Producto',6,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#1a237e','#fff')
       +GH('V.P. mensual perdida',2,'#c8e6c9','#1b5e20')+GH('Faltante<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">(para llegar al stock máximo)</span>',2,'#c62828','#fff')+GH('Exceso<span style="text-transform:none;font-weight:600;opacity:.85;margin-left:8px;">(sobre el stock máximo)</span>',3,'#ffd600','#e30613')+'</tr>'
-    +'<tr>'+H('ga','Grupo')+H('cod','Código')+HP('Cat')+H('vp','V.P. mes')
+    +'<tr>'+H('ga','Grupo')+H('cod','Código')+HP('Cat')+H('ing','Fecha ing.')+H('vp','V.P. mes')+H('vend','Venta en curso')
       +H('minU','Mín u')+H('maxU','Máx u')+H('stock','Stock hoy')+H('meses','Meses hoy')+HP('Estado')
       +H('perd','Unidades')+H('perdM','Venta mix')
       +H('falta','Unidades')+H('falC','Costo')
@@ -803,9 +898,11 @@ function renderStock(){
   // La misma fila sirve suelta o colgando de un grupo (con sangria).
   const fila=(o,dentro)=>'<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
     +'<td class="st-ga"'+(dentro?' style="padding-left:22px"':'')+'>'+(dentro?'':DATA.GA[o.r[1]])
-    +'</td><td class="st-cod">'+o.r[2]
+    +'</td><td class="st-cod">'+o.r[2]+(o.movio?'<span class="mov" title="Tuvo movimiento este mes"></span>':'')
     +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
-    +'</td><td class="num st-v">'+fmtI(o.r[79])
+    +'</td><td class="num st-d">'+fmtIng(o.r[ING],DATA.CAT[o.r[3]])
+    +'</td><td class="num st-v st-b">'+fmtI(o.r[79])
+    +'</td><td class="num st-v">'+(o.vend?fmtI(o.vend):D)
     +'</td><td class="num st-d">'+fmtI(o.minU)
     +'</td><td class="num st-d">'+fmtI(o.maxU)
     +'</td><td class="num st-b">'+fmtI(o.stock)
@@ -826,9 +923,9 @@ function renderStock(){
   const mkGrp=()=>{
     const G={},ord=[];
     rows.forEach(o=>{const g=DATA.GA[o.r[1]];let e=G[g];
-      if(!e){e=G[g]={ga:g,n:0,vp:0,minU:0,maxU:0,stock:0,perd:0,falta:0,exc:0,
+      if(!e){e=G[g]={ga:g,n:0,vp:0,vend:0,minU:0,maxU:0,stock:0,perd:0,falta:0,exc:0,
         pm:{},fc:{},ec:{},em:{},pmT:0,fcT:0,ecT:0,emT:0,items:[]};ord.push(e);}
-      e.n++;e.vp+=(o.r[79]||0);e.minU+=o.minU;e.maxU+=o.maxU;e.stock+=o.stock;e.perd+=o.perd;e.falta+=o.falta;e.exc+=o.exc;
+      e.n++;e.vp+=(o.r[79]||0);e.vend+=o.vend;e.minU+=o.minU;e.maxU+=o.maxU;e.stock+=o.stock;e.perd+=o.perd;e.falta+=o.falta;e.exc+=o.exc;
       if(o.perdM){e.pm[o.cur]=(e.pm[o.cur]||0)+o.perdM;e.pmT+=o.perdM;}
       if(o.falC){e.fc[o.cur]=(e.fc[o.cur]||0)+o.falC;e.fcT+=o.falC;}
       if(o.excC){e.ec[o.cur]=(e.ec[o.cur]||0)+o.excC;e.ecT+=o.excC;}
@@ -836,7 +933,7 @@ function renderStock(){
       e.items.push(o);});
     // "Codigo" no existe a nivel grupo, asi que ese orden cae en el de los filtros.
     const SFG=(SF==='cod')?'ga':SF;
-    const keyG=e=>({ga:prioName(e.ga),cod:e.n,vp:e.vp,minU:e.minU,maxU:e.maxU,stock:e.stock,meses:e.n,
+    const keyG=e=>({ga:prioName(e.ga),cod:e.n,ing:e.n,vp:e.vp,vend:e.vend,minU:e.minU,maxU:e.maxU,stock:e.stock,meses:e.n,
       perd:e.perd,perdM:e.pmT,falta:e.falta,falC:e.fcT,exc:e.exc,excC:e.ecT,excM:e.emT}[SFG]);
     ord.sort((a,b)=>{const x=keyG(a),y=keyG(b);
       if(typeof x==='string')return DIR*String(x).localeCompare(String(y),'es',{numeric:true});
@@ -850,7 +947,9 @@ function renderStock(){
         +'<td class="st-ga" style="font-weight:800;color:#1a237e">'+(on?'\u25be ':'\u25b8 ')+e.ga+'</td>'
         +'<td class="st-cod" style="color:#5f6690;font-weight:600">'+fmtI(e.n)+' SKU</td>'
         +'<td class="st-ct">'+D+'</td>'
-        +'<td class="num st-v">'+fmtI(e.vp)+'</td>'
+        +'<td class="num st-d">'+D+'</td>'
+        +'<td class="num st-v st-b">'+fmtI(e.vp)+'</td>'
+        +'<td class="num st-v">'+(e.vend?fmtI(e.vend):D)+'</td>'
         +'<td class="num st-d">'+fmtI(e.minU)+'</td>'
         +'<td class="num st-d">'+fmtI(e.maxU)+'</td>'
         +'<td class="num st-b">'+fmtI(e.stock)+'</td>'
@@ -898,7 +997,14 @@ function vrHist(cod){const H=DATA.hist;if(!H||!H.real)return null;const a=H.real
 // Ninguna de las dos sola sirve: la proyectada da CERO justo en los peores quiebres
 // (ASX11: demanda 1.316, proyectada 0) y la demanda cobra ventas que si vas a hacer
 // cuando llegue el pedido (MA-4147: demanda 96, proyectada 89, perdes 7).
-function perdU(r){return Math.max(0,(r[79]||0)-(mval(r,0,3)||0));}
+// ⚠️ La proyectada esta topeada por el stock al 1ro + compras, no por el de HOY. Si
+// entro mercaderia durante el mes (REDB-111: 0 al 1ro, 1 hoy) proyecta cero y la
+// perdida salia entera, contradiciendo la columna "Stock hoy" de la misma fila.
+// Vendible = lo mayor entre la proyectada y lo que hay en la mano.
+function perdU(r){
+  const vend=Math.max(r[VACU]||0,Math.max(0,(mval(r,0,0)||0)-(r[4]||0)));
+  const v=Math.max(mval(r,0,3)||0,vend+(r[4]||0));
+  return Math.max(0,(r[79]||0)-v);}
 function renderTab(t){const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='st')renderStock();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 function renderActive(){renderTab(st.tab);}
 let _rt=null;
