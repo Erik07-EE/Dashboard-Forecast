@@ -191,7 +191,7 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 #tablaLiq tbody tr:nth-child(even) td{background:#fafbff;}
 .btnpri{font:inherit;font-size:.72rem;font-weight:700;background:var(--verde);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;}
 .prevt{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;width:100%;table-layout:fixed;}
-.prevt th,.prevt td{padding:5px 6px;}
+.prevt th,.prevt td{padding:5px 5px;}
 .prevt td.ccmm{color:#7b1fa2;}
 .prevt thead tr.g th{color:#fff;background:#1a237e;font-weight:800;font-size:10px;text-transform:uppercase;text-align:center;padding:6px 4px;height:28px;position:sticky;top:0;z-index:4;}
 .prevt thead tr.g th.g-art{background:#ffd600;color:#e30613;}.prevt .g-act,.prevt .g-usd,.prevt .g-cm,.prevt .g-tot{background:#1a237e;}
@@ -788,7 +788,13 @@ function stkCalc(r){
   // un mes menos, el resto la mitad. No se puede restar "un mes" en unidades
   // porque los meses de CP no valen lo mismo entre si.
   const minU=maxU*((DATA.UN[r[0]]===UN_IMPO)?Math.max(0,(id-1)/id):0.5);
-  const exc=Math.max(0,stock-maxU),falta=Math.max(0,maxU-stock);
+  // ⚠️ El Faltante responde "cuanto tengo que comprar", asi que descuenta la
+  // compra del mes que ya esta en camino. Sin esto pedia invertir de nuevo en
+  // 1.413 codigos que ya estaban cubiertos por su propia compra (el 52% de los
+  // que estan en Quiebre o Riesgo): USD 70.373 y $ 3,3 millones ya gastados.
+  const compraMes=mval(r,0,2)||0;
+  const exc=Math.max(0,stock-maxU),falta=Math.max(0,maxU-stock-compraMes);
+  const faltaBruto=Math.max(0,maxU-stock);
   // Sin rotacion va ANTES que el resto: un codigo que no vendio tiene ritmo cero,
   // asi que su maximo da cero y caeria en Exceso siempre. Ponerlo primero saca del
   // Exceso a los que estan ahi por no venderse, no por haber comprado de mas.
@@ -821,7 +827,8 @@ function stkCalc(r){
   else k='ideal';
   const cc=DATA.costos&&DATA.costos[r[2]];
   const costo=(cc&&cc[0]!=null)?cc[0]:null,cur=(cc&&cc[3])?cc[3]:'$',mix=r[104];
-  return {k:k,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,cur:cur,
+  return {k:k,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
+    faltaBruto:faltaBruto,compraMes:compraMes,cur:cur,
     excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null,
     perd:(k==='cero'||k==='riesgo')?perdU(r):0,
@@ -937,14 +944,14 @@ function renderStock(){
   const TH='color:#fff;background:#1a237e;font-weight:800;font-size:10px;text-transform:uppercase;text-align:center;padding:6px 4px;height:28px;position:sticky;top:28px;z-index:5;box-shadow:inset 0 -3px 0 #ffd600;';
   const H=(f,t,ti)=>'<th'+(ti?' data-tip="'+ti+'"':'')+' data-tip2="clic para ordenar" onclick="setStSort(&quot;'+f+'&quot;)" style="'+TH+'cursor:pointer;">'+t+'</th>';
   const HP=(t,ti)=>'<th'+(ti?' data-tip="'+ti+'"':'')+' style="'+TH+'">'+t+'</th>';
-  const COLS=[128,128,37,77,51,48,48,48,58,56,105,44,75,51,81,51,81,81];
+  const COLS=[145,112,33,75,49,46,46,46,56,54,103,42,73,57,49,73,49,79,79];
   const cg='<colgroup>'+COLS.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>';
   const th='<thead><tr>'+GH('Producto',6,'#1a237e','#fff')+GH('Stock<span style="text-transform:none;font-weight:400;opacity:.85;margin-left:8px;">'+(DATA.stock_ts?('al '+DATA.stock_ts):'')+'</span>',5,'#1a237e','#fff')
-      +GH('Venta perdida',2,'#c8e6c9','#1b5e20')+GH('Faltante',2,'#c62828','#fff','Para llegar al stock máximo')+GH('Exceso',3,'#ffd600','#e30613','Sobre el stock máximo')+'</tr>'
+      +GH('Venta perdida',2,'#c8e6c9','#1b5e20')+GH('Faltante',3,'#c62828','#fff','Para llegar al stock máximo')+GH('Exceso',3,'#ffd600','#e30613','Sobre el stock máximo')+'</tr>'
     +'<tr>'+HP('Grupo')+H('cod','Código')+HP('Cat','Categoría')+H('ing','Fecha ing.','Fecha del primer ingreso')+H('vp','VD','Venta demanda')+H('vend','VC','Venta en curso')
       +H('minU','Mín u','Cantidad mínima en unidades')+H('maxU','Máx u','Cantidad máxima en unidades')+H('stock','Stock h.','Stock hoy')+H('meses','Meses h.','Meses hoy')+HP('Estado')
       +H('perd','Unid.','Unidades')+H('perdM','Venta mix')
-      +H('falta','Unid.','Unidades')+H('falC','Costo')
+      +H('compraMes','Compra','Compra del mes, ya en camino')+H('falta','Unid.','Unidades')+H('falC','Costo')
       +H('exc','Unid.','Unidades')+H('excC','Costo')+H('excM','Venta mix')+'</tr></thead>';
   const D='–';
   // La misma fila sirve suelta o colgando de un grupo (con sangria).
@@ -962,7 +969,8 @@ function renderStock(){
     +'</td><td class="st-ct"><span class="st-p st-p-'+o.k+'">'+STLBL[o.k]
     +'</span></td><td class="num st-b">'+(o.perd?fmtI(o.perd):D)
     +'</td><td class="num st-v">'+(o.perdM?M(o.cur,o.perdM):D)
-    +'</td><td class="num st-b">'+(o.falta?fmtI(o.falta):D)
+    +'</td><td class="num st-d">'+(o.compraMes?fmtI(o.compraMes):D)
+    +'</td><td class="num st-b"'+(o.compraMes>0?' data-tip="Para el m\u00e1ximo faltan '+fmtI(o.faltaBruto)+' \u00b7 ya vienen '+fmtI(o.compraMes)+'"':'')+'>'+(o.falta?fmtI(o.falta):D)
     +'</td><td class="num st-r">'+(o.falC?M(o.cur,o.falC):D)
     +'</td><td class="num st-b">'+(o.exc?fmtI(o.exc):D)
     +'</td><td class="num st-r">'+(o.excC?M(o.cur,o.excC):D)
@@ -978,9 +986,9 @@ function renderStock(){
   const mkGrp=()=>{
     const G={},ord=[];
     rows.forEach(o=>{const g=DATA.GA[o.r[1]];let e=G[g];
-      if(!e){e=G[g]={ga:g,n:0,vp:0,vend:0,minU:0,maxU:0,stock:0,perd:0,falta:0,exc:0,
+      if(!e){e=G[g]={ga:g,n:0,vp:0,vend:0,minU:0,maxU:0,stock:0,perd:0,compraMes:0,falta:0,exc:0,
         pm:{},fc:{},ec:{},em:{},pmT:0,fcT:0,ecT:0,emT:0,items:[]};ord.push(e);}
-      e.n++;e.vp+=(o.r[79]||0);e.vend+=o.vend;e.minU+=o.minU;e.maxU+=o.maxU;e.stock+=o.stock;e.perd+=o.perd;e.falta+=o.falta;e.exc+=o.exc;
+      e.n++;e.vp+=(o.r[79]||0);e.vend+=o.vend;e.minU+=o.minU;e.maxU+=o.maxU;e.stock+=o.stock;e.perd+=o.perd;e.compraMes+=o.compraMes;e.falta+=o.falta;e.exc+=o.exc;
       if(o.perdM){e.pm[o.cur]=(e.pm[o.cur]||0)+o.perdM;e.pmT+=o.perdM;}
       if(o.falC){e.fc[o.cur]=(e.fc[o.cur]||0)+o.falC;e.fcT+=o.falC;}
       if(o.excC){e.ec[o.cur]=(e.ec[o.cur]||0)+o.excC;e.ecT+=o.excC;}
@@ -989,7 +997,7 @@ function renderStock(){
     // "Codigo" no existe a nivel grupo, asi que ese orden cae en el de los filtros.
     const SFG=(SF==='cod')?'ga':SF;
     const keyG=e=>({ga:prioName(e.ga),cod:e.n,ing:e.n,vp:e.vp,vend:e.vend,minU:e.minU,maxU:e.maxU,stock:e.stock,meses:e.n,
-      perd:e.perd,perdM:e.pmT,falta:e.falta,falC:e.fcT,exc:e.exc,excC:e.ecT,excM:e.emT}[SFG]);
+      perd:e.perd,perdM:e.pmT,compraMes:e.compraMes,falta:e.falta,falC:e.fcT,exc:e.exc,excC:e.ecT,excM:e.emT}[SFG]);
     ord.sort((a,b)=>{const x=keyG(a),y=keyG(b);
       if(typeof x==='string')return DIR*String(x).localeCompare(String(y),'es',{numeric:true});
       return DIR*((x==null?-Infinity:x)-(y==null?-Infinity:y));});
@@ -1012,6 +1020,7 @@ function renderStock(){
         +'<td class="st-ct">'+D+'</td>'
         +'<td class="num st-b">'+(e.perd?fmtI(e.perd):D)+'</td>'
         +'<td class="num st-v">'+plat(e.pm)+'</td>'
+        +'<td class="num st-d">'+(e.compraMes?fmtI(e.compraMes):D)+'</td>'
         +'<td class="num st-b">'+(e.falta?fmtI(e.falta):D)+'</td>'
         +'<td class="num st-r">'+plat(e.fc)+'</td>'
         +'<td class="num st-b">'+(e.exc?fmtI(e.exc):D)+'</td>'

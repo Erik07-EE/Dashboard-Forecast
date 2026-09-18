@@ -301,6 +301,20 @@ Venta mix) · Faltante (Unidades, Costo) · Exceso (Unidades, Costo, Venta mix).
   (MA-4147: demanda 96, proyectada 89, perdes 7). **No volver a cambiarlo.**
 - Faltante perdio "Venta mix": ese mix era el de vender hasta el maximo, o sea 3 o 4
   meses de venta en uno. Para cubrir el mes sirve el de la venta perdida.
+- ⚠️ **El Faltante DESCUENTA la compra del mes** (18/09): `max(0, maximo - stock -
+  compra)`. Responde "cuanto tengo que comprar", asi que no puede pedir de nuevo lo que
+  ya esta en camino. Erik lo vio en PRO-T11-39-B: decia "Faltante 456 · USD 390" con
+  **800 unidades ya compradas**. *"No tendria que decir faltante"*.
+  - Medido: de 2.703 codigos en Quiebre o Riesgo, **1.453 tienen compra en camino y
+    1.413 ya estan cubiertos del todo** -- el 52%. El "Costo a invertir" de las tarjetas
+    bajo de USD 323.552 / $ 12.067.465 a **USD 253.179 / $ 8.716.105**: USD 70.373 que
+    ya estaban gastados y el dashboard volvia a pedir.
+  - La columna **Compra** va en el bloque Faltante, antes de las unidades, para que la
+    fila se lea sola: *viene esto, falta esto, cuesta esto*. Sin ella, un Quiebre con
+    faltante "-" parece un error. El globo agrega "Para el maximo faltan 456 · ya
+    vienen 800".
+  - ⚠️ La venta perdida **ya contemplaba la compra** por el tope con la col CK: era el
+    otro lado de la misma moneda. No se toco.
 - Se probo un "% del total" en Exceso: con 1.700 filas daba 0,02% en casi todas. Fuera.
 - **Los GA se ordenan con la prioridad de los filtros** (`prioName`), no alfabeticamente,
   en las dos vistas. A igualdad, por codigo.
@@ -439,23 +453,32 @@ venta**. Un ajuste de inventario que suba el stock no molesta -- solo se cuentan
 bajas -- pero uno que lo **baje** se va a contar como venta, y desde el stock solo no hay
 forma de distinguirlos.
 
-### Pendiente: descontar lo vendido de forma mas agresiva
+### Descontar lo vendido de forma mas agresiva: CERRADO (18/09)
 
-⚠️ **Erik pidio el 17/09 que se lo traiga de nuevo para charlarlo bien.** Es el unico
-punto abierto del modelo. **Proponerlo al empezar la proxima sesion**, sin esperar a que
-el lo mencione.
+**No se hace. Erik lo cerro el 18/09 despues de ver los numeros. No reproponerlo.**
 
-De que se trata: descontar del calculo **lo que ya se vendio del mes** de una forma mas
-agresiva que la actual. Bajaria Quiebre de $ 3.833.387 a $ 2.942.726.
+La idea era sacar el tope con la venta proyectada del Excel. Una nota vieja decia que
+bajaria el Quiebre de $ 3.833.387 a $ 2.942.726, pero esa nota era de **antes** de la
+venta perdida que se aplico el 17/09. Medido sobre el modelo actual, el efecto es el
+contrario:
 
-⚠️ **No es lo mismo que la venta perdida que ya se aplico**: esa tambien descuenta lo
-vendido, pero por el `max` con la venta proyectada del Excel **no mueve el Quiebre**
-(ahi `proyectada >= vendido + stock` casi siempre). La diferencia esta justamente en
-que habria que sacar ese tope, y eso hay que discutirlo: el tope es lo que hace que la
-cuenta contemple **las compras que todavia no llegaron**.
+| | Venta mix perdida (Quiebre + Riesgo) |
+|---|---|
+| Como esta hoy | USD 89.140 · $ 4.999.628 |
+| Sin el tope | USD 114.466 · $ 9.784.119 |
 
-Para la charla conviene tener a mano: cuantos codigos de Quiebre cambian, cuanto baja en
-plata, y que pasa con los que tienen compra en camino.
+⚠️ **El tope ES la compra del mes.** La col CK del Excel vale
+`min(demanda, stock al 1ro + compras del mes)`, asi que sacarlo seria ignorar la
+mercaderia ya comprada y en camino. Erik: *"para mi el ingreso hay que tenerlo en
+cuenta, o sea la compra del mes en cuestion"*.
+
+De los 110 codigos que cambiarian, **77 tienen compra en camino**. Ejemplo:
+PRO-T11-39-B tiene demanda 160, stock -1 y **compra de 800**; hoy marca perdida 0, que
+es lo correcto, y sin el tope marcaria 161. Los 33 sin compra tampoco mejoran: ASX11
+pasaria de 1.316 a 1.416 porque se sumaria el stock negativo como demanda extra.
+
+**Lo que Erik queria -- descontar lo ya vendido -- ya funciona** desde el 17/09: es la
+columna VC y la cuenta `demanda - max(venta proyectada, ya vendido + stock hoy)`.
 
 ## Datos del Excel que conviene mirar
 - [x] **Venta ajustada negativa: CORREGIDO por Erik el 17/09.** Eran 6 códigos con más
@@ -608,6 +631,10 @@ confirmarlo**.
   que se ve cerca está en el código muerto.
 - ⚠️ La vista por grupo de Estado Stock se llama **`'ga'`, no `'grp'`**. Medirla mal
   devuelve los mismos números que la de código y no se nota.
+- ⚠️ **Medir o verificar anchos SIN levantar el tope de 500 filas mide solo esas 500**, y
+  los valores más anchos están más abajo. Hay que poner `st.tope={st:DATA.rows.length}`
+  y volver a dibujar **antes** de medir y antes de verificar. Paso el 18/09: daba cero
+  cortes y en realidad había 100. También aplica al chequeo de filas partidas en dos.
 - ⚠️ En la plantilla **los acentos conviven en dos formas**: como carácter (`á`) y como
   escape literal (`á`). Un anclaje que no use la forma correcta no engancha.
 
