@@ -135,8 +135,8 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;}
 .vptable th,.vptable td{border-right:1px solid #eceef7;border-bottom:1px solid #eceef7;padding:6px 8px;}
 .vptable thead th{position:sticky;top:0;background:var(--azul);color:#fff;z-index:3;font-weight:800;font-size:10px;text-align:center;}
-.vptable thead tr.r2b th{top:104px;background:var(--azul2);color:#c5cae9;font-size:10px;text-transform:uppercase;box-shadow:inset 0 -3px 0 var(--amarillo);}
-.vptable thead tr.r1 th{vertical-align:top;height:104px;padding-top:6px;}
+.vptable thead tr.r2b th{top:110px;background:var(--azul2);color:#c5cae9;font-size:10px;text-transform:uppercase;box-shadow:inset 0 -3px 0 var(--amarillo);}
+.vptable thead tr.r1 th{vertical-align:top;height:110px;padding-top:6px;}
 .vptable thead tr.r1 th.mcol{box-shadow:none;}
 .vptable thead tr.r1 th.vpid{box-shadow:inset 0 -3px 0 var(--amarillo);}
 .vptable .vpmes{font-size:1.12rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:.5px;}
@@ -166,8 +166,18 @@ tfoot td{position:sticky;bottom:0;background:#fff5cc;font-weight:800;border-top:
 .vptable td.vpusd{color:var(--verde);font-weight:700;}
 .vptable td.vpcmvc{color:#c0392b;font-weight:700;}
 .vptable td.vpcv{color:#1a237e;font-weight:700;}
-.vptable.histt thead tr.r1 th{height:112px;vertical-align:top;padding-top:6px;}
-.vptable.histt thead tr.r2b th{top:112px;}
+.vptable.histt thead tr.r1 th{vertical-align:top;padding-top:6px;}
+/* ⚠️ Un solo alto para las tres tablas (Proyección, Histórico VP/VR y la foto de
+   estados): al alternar las vistas el encabezado saltaba de 106 a 75 px.
+   El top de la segunda fila lo escribe fijarR2() midiendo, no este CSS. */
+.vptable.hstkt{table-layout:fixed;}
+/* Los dos gráficos van lado a lado: apilados empujaban la tabla fuera de pantalla. */
+.hstkrow{display:flex;gap:10px;margin-bottom:10px;}
+.hstkgraf{flex:1 1 0;min-width:0;background:#fff;border:1px solid #d7dbe8;
+  border-radius:10px;padding:8px 12px 6px;height:264px;display:flex;flex-direction:column;}
+.hstkctl{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:11px;font-weight:800;color:#1a237e;margin-bottom:4px;min-height:22px;}
+.hstkcv{flex:1 1 auto;min-height:0;position:relative;}
 .tablewrap.pg{overflow-x:auto;}
 
 
@@ -567,10 +577,203 @@ function renderVP(){const el=document.getElementById('view-vp');const M=DATA.mon
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="tablewrap pg" id="tw-vp"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  window._vpExport={impR,distR,segImp,segDist,colLbl};el.innerHTML='<div class="tablewrap pg" id="tw-vp"><table class="vptable"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';fijarR2(el.querySelector('table'));
   IW.forEach(i=>recalcVP(i));}
 function recalcHist(i){const S=window._histSeg;const el=document.getElementById('htc_'+i);if(!el)return;if(el.value==='')delete st.histTC[i];else st.histTC[i]=el.value;const on=el.value!=='';el.style.background=on?'#fff5cc':'#fff';el.style.borderColor=on?'#e6a700':'#ffd600';el.style.color=on?'#8a5a00':'#1a237e';const vpE=document.getElementById('hvp_'+i),vrE=document.getElementById('hvr_'+i),rE=document.getElementById('hrat_'+i);const tc=parseFloat(el.value);if(!S||isNaN(tc)||tc<=0){if(vpE)vpE.textContent='–';if(vrE)vrE.textContent='–';if(rE){rE.textContent='–';rE.style.color='#0d1b5e';}return;}const f=n=>'$ '+Math.round(n).toLocaleString('es-AR');const vp=(S.impVP[i]||0)*tc+(S.distVP[i]||0),vr=(S.impVR[i]||0)*tc+(S.distVR[i]||0);if(vpE)vpE.textContent=f(vp);if(vrE)vrE.textContent=f(vr);const pct=vp?((vr-vp)/vp*100):null;if(rE){rE.textContent=pct==null?'–':((pct>=0?'+':'')+pct.toFixed(1)+'%');rE.style.color=pct==null?'#0d1b5e':(pct<0?'#b3261e':'#0b7a3b');}}
-function renderHist(){const el=document.getElementById('view-hist');const H=DATA.hist||{months:[],vp:{},real:{},mix:{}};const M=H.months||[];
+
+// ---------------------------------------------------------------- historico de stock
+// La foto mensual de los 6 estados, congelada por el generador (ver foto_mensual en
+// generar_dashboard.py). Una por mes, escrita en la primera corrida y nunca mas tocada.
+const HSTK_AB={cero:'Quiebre',riesgo:'Riesgo',ideal:'Ideal',exceso:'Exceso',
+  sinrot:'S. rot.',lanz:'Lanz.'};
+// ⚠️ Los colores de las pastillas estan pensados para fondo BLANCO: sobre el azul del
+// encabezado, el verde del Ideal y el azul de Lanzamientos casi no se ven. Son los mismos
+// colores aclarados, los que ya usa el resto del dashboard sobre fondo azul.
+const HSTK_C={cero:'#ff8a80',riesgo:'#ffb74d',ideal:'#69f0ae',exceso:'#ffd600',
+  sinrot:'#b0bec5',lanz:'#82b1ff'};
+// El amarillo del Exceso tampoco sirve como linea sobre blanco: va en ambar, que se
+// distingue del naranja del Riesgo y sigue leyendose como el amarillo de la pastilla.
+const HSTK_L={exceso:'#e0a800'};
+const HSTK_W=56;   // ancho de cada columna, MEDIDO: el titulo mas largo pide 55
+const HSTK_M=3;    // meses a la vez: con 4 la tabla da 1.494px y vuelve el scroll lateral
+// Que significa la plata en cada estado. Son los mismos dos bloques que muestra la
+// tarjeta en Estado Stock -- ver CARDS -- y por eso el titulo cambia segun el estado.
+const HSTK_PL={
+  c:{cero:'Costo a invertir',riesgo:'Costo a invertir',ideal:'Costo a invertir',
+     exceso:'Costo inmovilizado',sinrot:'Costo parado',lanz:'Costo invertido'},
+  m:{cero:'Venta mix perdida',riesgo:'Venta mix perdida',ideal:'',
+     exceso:'Venta mix inmovilizado',sinrot:'Venta mix parado',lanz:'Venta mix a generar'}};
+
+function setHistVista(v){st.histVista=v;st.dirty.hist=true;renderTab('hist');}
+function setHistGrupo(v){st.histGrupo=v;st.dirty.hist=true;renderTab('hist');}
+function setHistPlata(campo,cur){
+  if(campo)st.histPlata=campo; if(cur)st.histCur=cur;
+  st.dirty.hist=true;renderTab('hist');}
+
+function renderHistStock(el){
+  const H=DATA.hstk||{};
+  const meses=Object.keys(H).sort();
+  if(!meses.length){el.innerHTML='<div class="empty">Todav\u00eda no hay ninguna foto guardada. '
+    +'Se guarda una por mes, en la primera corrida del mes.</div>';return;}
+  // que grupos se ven, segun los filtros que esta vista puede respetar
+  const gaVis={},gaImp={};
+  DATA.rows.forEach(r=>{if(!mUN(r)||!mGA(r))return;
+    const g=DATA.GA[r[1]];gaVis[g]=1;if(DATA.UN[r[0]]==='Importados')gaImp[g]=1;});
+  const vis=Object.keys(gaVis);
+  if(!vis.length){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';return;}
+  const NL=meses.length;
+  let _ms=st.mstart.hist||0;_ms=Math.max(0,Math.min(_ms,NL-HSTK_M));if(NL<=HSTK_M)_ms=0;
+  const MW=[];for(let i=_ms;i<Math.min(_ms+HSTK_M,NL);i++)MW.push(meses[i]);
+  const NF=n=>n==null?'\u2013':Math.round(n).toLocaleString('es-AR');
+  const porEstado=(st.histGrupo||'mes')==='est';
+
+  // Las columnas se arman una sola vez y las dos agrupaciones comparten todo lo demas:
+  // cambia el ORDEN, no el contenido. bloques = los encabezados de arriba (con colspan).
+  let bloques=[],cols=[];
+  if(porEstado){
+    STK.forEach((e,j)=>{bloques.push({lbl:e[1],col:HSTK_C[e[0]],n:MW.length,alt:j%2});
+      MW.forEach(m=>cols.push({m:m,k:e[0],lbl:mesCorto(m),col:null,alt:j%2}));});
+  }else{
+    MW.forEach((m,j)=>{bloques.push({lbl:mesLargo(m),col:null,n:STK.length,alt:j%2});
+      STK.forEach(e=>cols.push({m:m,k:e[0],lbl:HSTK_AB[e[0]],col:HSTK_C[e[0]],alt:j%2}));});
+  }
+  let cg='<colgroup><col style="width:150px">';
+  cols.forEach(()=>{cg+='<col style="width:'+HSTK_W+'px">';});
+  cg+='</colgroup>';
+  let r1='<tr class="r1">'+esquinaHist();
+  bloques.forEach(b=>{r1+='<th colspan="'+b.n+'" class="mcol'+(b.alt?' mo':'')+'">'
+    +'<div class="vpmes"'+(b.col?' style="color:'+b.col+'"':'')+'>'+b.lbl+'</div></th>';});
+  r1+='</tr>';
+  let r2='<tr class="r2b">';
+  cols.forEach(c=>{r2+='<th class="num'+(c.alt?' mo':'')+'"'
+    +(c.col?' style="color:'+c.col+'"':'')
+    +' data-tip="'+(porEstado?mesLargo(c.m):STLBL[c.k])+'"'
+    +' data-tip2="'+(porEstado?STLBL[c.k]:'SKU en este estado')+'">'+c.lbl+'</th>';});
+  r2+='</tr>';
+  // filas
+  const uno=(m,g,k)=>{const x=((H[m]||{}).ga||{})[g];return (x&&x[k])?x[k].n:null;};
+  const suma=(lista,m,k)=>{let t=0,hay=false;
+    lista.forEach(g=>{const v=uno(m,g,k);if(v!=null){t+=v;hay=true;}});return hay?t:null;};
+  const fila=(lbl,get,cls)=>{let b='<tr'+(cls?' class="'+cls+'"':'')+'><td class="vpid">'+lbl+'</td>';
+    cols.forEach(c=>{const v=get(c.m,c.k);
+      b+='<td class="num'+(c.alt?' mo':'')+'"'+(v?' style="font-weight:700"':' style="color:#b9bfd6"')
+        +'>'+NF(v)+'</td>';});
+    return b+'</tr>';};
+  const imp=vis.filter(g=>gaImp[g]),dist=vis.filter(g=>!gaImp[g]);
+  const ordena=a=>a.slice().sort((x,y)=>prioName(x)-prioName(y));
+  let body='';
+  if(imp.length){body+=fila('TOTAL IMPORTADOS',(m,k)=>suma(imp,m,k),'vphdr');
+    ordena(imp).forEach(g=>{body+=fila(gaLbl(g),(m,k)=>uno(m,g,k));});}
+  if(dist.length){body+=fila('TOTAL DISTRIB. / RECONSTR.',(m,k)=>suma(dist,m,k),'vphdr');
+    ordena(dist).forEach(g=>{body+=fila(gaLbl(g),(m,k)=>uno(m,g,k));});}
+  el.innerHTML=barraGraficos()
+    +'<div class="tablewrap pg" style="max-height:400px">'
+    +'<table class="vptable histt hstkt">'+cg
+    +'<thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';
+  fijarR2(el.querySelector('table'));
+  graficoHistStock(meses,vis,H);
+}
+
+// Los dos graficos, lado a lado. ⚠️ Usan TODOS los meses guardados, no los 3 de la
+// tabla: la tabla es para leer el numero y el grafico para ver la forma.
+function barraGraficos(){
+  const campo=st.histPlata||'c', cur=st.histCur||'$';
+  const b=(txt,on,fn)=>'<button onclick="'+fn+'" style="font:inherit;font-size:10px;'
+    +'font-weight:700;cursor:pointer;border:1px solid '+(on?'#1a237e':'#c5cad8')+';'
+    +'background:'+(on?'#1a237e':'#fff')+';color:'+(on?'#fff':'#5a6178')+';'
+    +'border-radius:20px;padding:2px 9px;">'+txt+'</button>';
+  return '<div class="hstkrow">'
+    +'<div class="hstkgraf"><div class="hstkctl"><span>SKU por estado</span></div>'
+    +'<div class="hstkcv"><canvas id="hstkChart"></canvas></div></div>'
+    +'<div class="hstkgraf"><div class="hstkctl"><span>Plata por estado</span>'
+    +'<span style="display:inline-flex;gap:4px;">'
+    +b('Costo',campo==='c','setHistPlata(&quot;c&quot;)')
+    +b('Venta mix',campo==='m','setHistPlata(&quot;m&quot;)')
+    +'<span style="width:6px"></span>'
+    +b('$',cur==='$',"setHistPlata(null,'$')")
+    +b('USD',cur==='USD',"setHistPlata(null,'USD')")
+    +'</span></div>'
+    +'<div class="hstkcv"><canvas id="hstkChartP"></canvas></div></div></div>';
+}
+let _hstkCh=null,_hstkChP=null;
+function graficoHistStock(meses,vis,H){
+  if(typeof Chart==='undefined')return;
+  const campo=st.histPlata||'c', cur=st.histCur||'$';
+  const suma=(m,k,f)=>{let t=0;vis.forEach(g=>{const x=((H[m]||{}).ga||{})[g];
+    if(x&&x[k]){if(f==='n')t+=x[k].n;else t+=((x[k][f]||{})[cur]||0);}});return t;};
+  const arma=(cv,viejo,f,fmt)=>{
+    if(viejo){viejo.destroy();}
+    if(!cv)return null;
+    // ⚠️ El reparto es muy disparejo (Quiebre 2.477 contra Lanzamientos 58), asi que las
+    // lineas chicas quedan pegadas al piso. Por eso la referencia es clickeable: tocando
+    // un estado se apaga y el eje se reacomoda con los que quedan.
+    const ds=STK.filter(e=>f==='n'||HSTK_PL[f][e[0]]).map(e=>{const c=HSTK_L[e[0]]||e[2];
+      return {label:e[1],data:meses.map(m=>suma(m,e[0],f)),
+        borderColor:c,backgroundColor:c,borderWidth:2,pointRadius:3,pointHoverRadius:5,
+        tension:.25,fill:false};});
+    return new Chart(cv,{type:'line',data:{labels:meses.map(mesCorto),datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,
+          pointStyle:'line',font:{size:10},padding:8}},
+          tooltip:{callbacks:{
+            title:it=>it[0].label,
+            label:c=>{const e=STK[c.datasetIndex];
+              const ttl=(f==='n')?'SKU':HSTK_PL[f][e?e[0]:''];
+              return c.dataset.label+' \u00b7 '+ttl+': '+fmt(c.parsed.y);}}}},
+        scales:{y:{beginAtZero:true,ticks:{font:{size:10},callback:fmt},
+          grid:{color:'#eceff6'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  };
+  const nf=v=>Math.round(v).toLocaleString('es-AR');
+  // La plata se abrevia en miles y millones: sin eso el eje son numeros de 9 digitos.
+  const mf=v=>{const a=Math.abs(v);
+    if(a>=1e6)return cur+' '+(v/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+'M';
+    if(a>=1e3)return cur+' '+(v/1e3).toLocaleString('es-AR',{maximumFractionDigits:0})+'k';
+    return cur+' '+Math.round(v).toLocaleString('es-AR');};
+  _hstkCh=arma(document.getElementById('hstkChart'),_hstkCh,'n',nf);
+  _hstkChP=arma(document.getElementById('hstkChartP'),_hstkChP,campo,mf);
+}
+// El nombre del mes, de "2026-09" a "Septiembre 2026"
+function mesLargo(m){const N=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio',
+  'Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const p=m.split('-');return (N[parseInt(p[1],10)-1]||m)+' '+p[0];}
+// El mismo mes, corto, para el eje del grafico y para la cabecera por estado.
+function mesCorto(m){const N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct',
+  'Nov','Dic'];const p=m.split('-');return (N[parseInt(p[1],10)-1]||m)+" '"+p[0].slice(2);}
+// ⚠️ El top pegajoso de la segunda fila se MIDE, no se escribe a mano. Escrito a mano ya
+// se desincronizo dos veces del alto real de la primera fila, y el sintoma es feo: queda
+// un hueco por el que pasan las filas del cuerpo al scrollear.
+function fijarR2(t){if(!t)return;setTimeout(()=>{
+  const r1=t.querySelector('thead tr.r1');if(!r1)return;
+  const h=Math.round(r1.getBoundingClientRect().height);
+  t.querySelectorAll('thead tr.r2b th').forEach(th=>{th.style.top=h+'px';});},0);}
+// La esquina: el nombre de la columna, las dos historias, el agrupamiento y las flechas.
+function esquinaHist(){
+  const stk=(st.histVista||'vp')==='stk';
+  const p=(v,l,act,fn)=>{const on=act===v;
+    return '<button onclick="'+fn+'(&quot;'+v+'&quot;)" style="font:inherit;font-size:10px;'
+      +'font-weight:700;cursor:pointer;border:1px solid '+(on?'#ffd600':'rgba(255,255,255,.35)')+';'
+      +'background:'+(on?'#ffd600':'transparent')+';color:'+(on?'#1a237e':'#c5cae9')+';'
+      +'border-radius:20px;padding:1px 9px;">'+l+'</button>';};
+  let h='<th class="vpid" rowspan="2"><div class="vpcorner">'
+    +'<span>Grupo de art\u00edculo</span>'
+    +'<span style="display:inline-flex;gap:4px;">'
+    +p('vp','Proyecci\u00f3n',st.histVista||'vp','setHistVista')
+    +p('stk','Estado stock',st.histVista||'vp','setHistVista')+'</span>';
+  if(stk)h+='<span style="display:inline-flex;gap:4px;">'
+    +p('mes','Por mes',st.histGrupo||'mes','setHistGrupo')
+    +p('est','Por estado',st.histGrupo||'mes','setHistGrupo')+'</span>';
+  h+='<span class="mnav">'
+    +'<button onclick="pageMonths(&quot;hist&quot;,-1)" data-tip="Mes anterior">\u25c0</button>'
+    +'<button onclick="pageMonths(&quot;hist&quot;,1)" data-tip="Mes siguiente">\u25b6</button>'
+    +'</span></div></th>';
+  return h;}
+
+function renderHist(){const el=document.getElementById('view-hist');
+  // Dos historias en la misma solapa: la de siempre (VP contra VR) y la foto
+  // mensual de los 6 estados. Se alternan con el selector de la esquina.
+  if((st.histVista||'vp')==='stk'){renderHistStock(el);return;}
+  const H=DATA.hist||{months:[],vp:{},real:{},mix:{}};const M=H.months||[];
   if(!M.length){el.innerHTML='<div class="empty">Sin histórico disponible todavía (falta cachear los archivos "Forecast MM-AA").</div>';return;}
   const rows=visibleRows();
   if(!rows.length){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';return;}
@@ -591,7 +794,7 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   const NF=n=>n==null?'–':Math.round(n).toLocaleString('es-AR');
   let sAbs=0,sVp=0;disp.forEach(d=>{for(let i=0;i<NL;i++){sVp+=d.o.vp[i];sAbs+=Math.abs(d.o.re[i]-d.o.vp[i]);}});
   const prec=sVp>0?(100-sAbs/sVp*100):null;
-  let r1='<tr class="r1"><th class="vpid" rowspan="2"><div class="vpcorner"><span>'+colLbl+'</span><span class="mnav"><button onclick="pageMonths(&quot;hist&quot;,-1)" data-tip="Mes anterior">\u25c0</button><button onclick="pageMonths(&quot;hist&quot;,1)" data-tip="Mes siguiente">\u25b6</button></span></div></th>';
+  let r1='<tr class="r1">'+esquinaHist()+'';
   IW.forEach(i=>{const m=M[i];const _tc=(st.histTC[i]!=null)?st.histTC[i]:'';r1+=`<th colspan="6" class="mcol ${i%2?'mo':''}"><div class="vpmes">${m.label}</div><div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#dfe3ff;font-weight:500"><span style="width:26px;text-align:right">TC:</span><input id="htc_${i}" class="tcinput" value="${_tc}" placeholder="—" oninput="recalcHist(${i})"></div><div style="display:flex;align-items:center;gap:8px"><div style="text-align:right;min-width:150px"><div style="color:#a9c2ff;font-size:12px;font-weight:500">VP $: <b id="hvp_${i}">–</b></div><div style="color:#69f0ae;font-size:12px;font-weight:500;margin-top:1px">VR $: <b id="hvr_${i}">–</b></div></div><div style="background:#ffd600;color:#0d1b5e;border-radius:8px;padding:3px 9px;line-height:1.1;text-align:center"><div style="font-size:9px;font-weight:500">Real/Proy</div><div style="font-size:14px;font-weight:500" id="hrat_${i}">–</div></div></div></div></th>`;});r1+='</tr>';
   let r2='<tr class="r2b">';IW.forEach(i=>{const c=i%2?' mo':'';r2+=`<th class="num${c}" data-tip="Venta proyectada en unidades">VP</th><th class="num${c}">%</th><th class="num${c}" data-tip="Venta real en unidades">VR</th><th class="num${c}" data-tip="Venta proyectada en $ y USD">VP $-USD</th><th class="num${c}">%</th><th class="num${c}" data-tip="Venta real en $ y en USD">VR $-USD</th>`;});r2+='</tr>';
   const pctCell=(a,b)=>{const ra=Math.round(a),rb=Math.round(b);if(rb&&ra!==rb){const dv=(ra-rb)/rb*100;return {t:(dv>=0?'+':'')+dv.toFixed(1)+'%',s:dv<0?'color:var(--rojo)':'color:var(--verde)'};}return {t:'–',s:''};};
@@ -601,7 +804,7 @@ function renderHist(){const el=document.getElementById('view-hist');const H=DATA
   let body='';
   if(impR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL IMPORTADOS</td>${cells(segImp,'USD',1)}</tr>`;impR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'USD')}</tr>`;});}
   if(distR.length){body+=`<tr class="vphdr"><td class="vpid">TOTAL DISTRIB. / RECONSTR.</td>${cells(segDist,'$',1)}</tr>`;distR.forEach(d=>{body+=`<tr><td class="vpid">${d.label}</td>${cells(d.o,'$')}</tr>`;});}
-  el.innerHTML='<div class="tablewrap pg" id="tw-hist" style="max-height:520px"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';IW.forEach(i=>recalcHist(i));}
+  el.innerHTML='<div class="tablewrap pg" id="tw-hist" style="max-height:520px"><table class="vptable histt"><thead>'+r1+r2+'</thead><tbody>'+body+'</tbody></table></div>';fijarR2(el.querySelector('table'));IW.forEach(i=>recalcHist(i));}
 function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 const VAJ=106;  // venta ajustada mensual (col BV del Forecast)

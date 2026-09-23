@@ -129,13 +129,60 @@ los 6 estados **por grupo** y el estado de **cada código** (una letra).
 - Al HTML viaja **solo el total por grupo** (`solo_ga`). El detalle por código se guarda
   pero no se publica: son 5,4 KB por mes que hoy nadie lee, y si no se guardaran, el mes
   se cerraría sin ellos y no habría forma de recuperarlos.
+- **Cada estado guarda además su plata**: `c` y `m`, abiertos por moneda. ⚠️ **No son el
+  valor del stock: son los dos montos que muestra su tarjeta en Estado Stock**, y el
+  significado cambia según el estado (costo a invertir / inmovilizado / parado, y la venta
+  mix perdida / inmovilizada / parada). La cuenta vive en `plata_de()`, copiada de `CARDS`.
 - ⚠️ La regla de los 6 estados está escrita **dos veces** — `stkCalc` en la plantilla y
-  `estado_de` en el generador. No hay forma de evitarlo: la foto se calcula antes de armar
-  el HTML. **`scripts/probar_estados.py` es el seguro**: correrlo después de tocar
-  cualquier cosa de los estados. El 23/09 las dos reglas coinciden en los 5.372 códigos.
+  `estado_de` en el generador — y desde el 23/09 **la plata también** (`plata_de` contra
+  `CARDS`). No hay forma de evitarlo: la foto se calcula antes de armar el HTML.
+  **`scripts/probar_estados.py` es el seguro** y ahora compara las dos cosas: correrlo
+  después de tocar cualquier cosa de los estados **o de la plata de las tarjetas**. El
+  23/09 coinciden en los 5.372 códigos y en los 20 buckets de plata.
+- **Septiembre se rearmó el 23/09 para sumarle la plata** (`scripts/congelar_mes.py`),
+  desde el dashboard del commit `caeae9e`, que es exactamente el del stock 17/09 12:35.
+  No es reescribir la historia: es la misma foto con los campos que faltaban, y los SKU
+  por estado dieron idénticos. Verificación fuerte: la venta mix perdida de Quiebre +
+  Riesgo dio **USD 89.140**, el mismo número que ya estaba medido.
+  - ⚠️ **La plata de septiembre usa los costos de septiembre**, como corresponde a una
+    foto. Eso significa que el primer salto sep → oct en el gráfico de **costo** va a
+    incluir el arreglo de recetas del Gestor, no solo movimiento real: medido, Exceso en
+    pesos +12%, Riesgo +18%, Quiebre −35%, Sin rotación +8%. En **USD es +1%** y **la
+    venta mix no se mueve nada** (el mix es precio de venta, no costo), así que ese
+    gráfico se lee limpio desde septiembre.
 
-⚠️ **La vista del histórico de estados NO está en producción.** Vive en el preview
-(`armar_hist_stock.py`). Lo que sí está en producción es el guardado de la foto.
+### La solapa Histórico, las dos historias (23/09)
+
+El selector de la esquina alterna **Proyección** (VP contra VR, la de siempre) y
+**Estado stock** (la foto mensual de los 6 estados).
+
+- **Dos gráficos de líneas, lado a lado**: SKU a la izquierda, plata a la derecha.
+  ⚠️ **Lado a lado y no apilados**: en vertical eran 500px de gráficos antes del primer
+  número de la tabla. El de plata elige **Costo / Venta mix** y **$ / USD** — el dashboard
+  nunca suma pesos con dólares, así que un solo eje con las dos monedas sería mentira.
+  - ⚠️ El reparto es muy disparejo (Quiebre 2.477 contra Lanzamientos 58; en plata el
+    Exceso se come el eje). **La referencia es clickeable**: apagar un estado reacomoda el
+    eje. Es la única forma de mirar los chicos.
+  - Usan **todos los meses guardados**, no los 3 de la tabla: la tabla es para leer el
+    número y el gráfico para ver la forma.
+- **La tabla agrupa de dos maneras, a elección** (`st.histGrupo`). Erik: *"mi única duda
+  es si agrupar los estados y de esa forma veo en la tabla los quiebres uno al lado del
+  otro"*. Es la misma data ordenada distinto, así que en vez de elegir por él quedó el
+  botón: **Por mes** (como Proyección) y **Por estado** (los quiebres pegados).
+- **Tres meses a la vez.** Con 6 sub-columnas por mes, cuatro dan 1.494px contra los 1.307
+  útiles y vuelve el scroll lateral. Con tres da 1.253 y entra entero.
+- ⚠️ **Los seis títulos van con el color de su estado y los valores todos iguales.** Erik:
+  el amarillo del Exceso sobre fondo blanco no se leía. Y sobre el azul del encabezado hay
+  que **aclarar** los colores (`HSTK_C`) o el verde del Ideal y el azul de Lanzamientos
+  desaparecen; como línea sobre blanco, el Exceso va en ámbar (`HSTK_L`).
+- ⚠️ **El `top` pegajoso de la segunda fila se MIDE** (`fijarR2`), no se escribe a mano.
+  Escrito a mano ya se desincronizó dos veces del alto real de la primera fila y el
+  síntoma es feo: queda un hueco por el que pasan las filas del cuerpo al scrollear.
+  Las tres tablas de Proyección e Histórico van al **mismo alto de encabezado, 110px**:
+  antes saltaba de 106 a 75 al alternar las vistas.
+- ⚠️ La vista responde a los filtros de **Unidad de negocio y Grupo solamente**. Categoría,
+  Código y Estado necesitan el detalle por código, que se guarda en el JSON pero no viaja
+  al HTML.
 
 ## Estado anterior (14/09/2026)
 

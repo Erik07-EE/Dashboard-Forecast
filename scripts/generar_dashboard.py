@@ -516,6 +516,84 @@ def estado_de(r, data):
 LETRA = {"cero": "q", "riesgo": "r", "ideal": "i", "exceso": "e",
          "sinrot": "s", "lanz": "l"}
 
+MIX = 104        # precio Mix (col AS)
+DEM = 79         # demanda, col CJ "V.Ajust. c/stock"
+
+
+def plata_de(r, data, k):
+    """Los DOS montos de plata de un codigo: lo que cuesta y lo que se puede vender.
+
+    ⚠️ Son exactamente los dos bloques que muestra su tarjeta en Estado Stock, y el
+    bucket **depende del estado** -- por eso recibe `k`. Copiado de `CARDS` en la
+    plantilla, que es la fuente:
+
+        Quiebre / Riesgo   costo a invertir (falta x costo)   venta mix perdida
+        Ideal              costo a invertir                   --
+        Exceso             costo inmovilizado (exc x costo)   venta mix inmovilizado
+        Sin rotacion       costo parado (stock x costo)       venta mix parado
+        Lanzamientos       costo invertido (stock x costo)    venta mix a generar
+
+    Devuelve (moneda, costo, venta_mix). Cualquiera de los dos puede ser None.
+    """
+    cc = (data.get("costos") or {}).get(r[2])
+    costo = cc[0] if (cc and cc[0] is not None) else None
+    cur = (cc[3] if (cc and len(cc) > 3 and cc[3]) else "$")
+    mix = r[MIX]
+    stock = r[4] or 0
+    maxU = r[MAXE] or 0
+    compra = mval(r, 0, 2) or 0
+    exc = max(0, stock - maxU)
+    falta = max(0, maxU - stock - compra)
+
+    if k in ("cero", "riesgo", "ideal"):
+        c = falta * costo if costo is not None else None
+        if k == "ideal":
+            m = None
+        else:
+            # la venta perdida: demanda menos lo que igual vas a vender
+            vend = max(r[VACU] or 0, max(0, (r[6] or 0) - stock))
+            v = max(mval(r, 0, 3) or 0, vend + stock)
+            perd = max(0, (r[DEM] or 0) - v)
+            m = perd * mix if mix is not None else None
+    elif k == "exceso":
+        c = exc * costo if costo is not None else None
+        m = exc * mix if mix is not None else None
+    else:                                   # sinrot y lanz: lo que esta parado
+        c = stock * costo if (costo is not None and stock > 0) else None
+        m = stock * mix if (mix is not None and stock > 0) else None
+    return cur, c, m
+
+
+def mval(r, m, f):
+    """El campo `f` del mes `m`, igual que en la plantilla: 12 meses x 6 campos."""
+    return r[6 + 6 * m + f]
+
+
+def foto_de(data):
+    """Arma la foto de un mes: por grupo y estado, cuantos SKU, cuantas unidades y la
+    plata; mas el estado de cada codigo en una letra.
+
+    ⚠️ `c` y `m` son **los dos montos de la tarjeta** (ver `plata_de`), no el valor del
+    stock: `c` es lo que hay que invertir / lo que esta inmovilizado / lo que esta
+    parado segun el estado, y `m` la venta mix que le corresponde. Van abiertos por
+    moneda porque el dashboard nunca mezcla pesos con dolares.
+
+    Esta aparte de `foto_mensual` para poder rearmar la foto de un mes desde un
+    dashboard viejo (ver `congelar_septiembre.py`).
+    """
+    ga, cod = {}, {}
+    for r in data["rows"]:
+        k = estado_de(r, data)
+        cod[r[2]] = LETRA[k]
+        g = ga.setdefault(data["GA"][r[1]], {}).setdefault(
+            k, {"n": 0, "u": 0, "c": {}, "m": {}})
+        g["n"] += 1
+        g["u"] += r[4] or 0
+        cur, c, m = plata_de(r, data, k)
+        if c: g["c"][cur] = round(g["c"].get(cur, 0) + c, 2)
+        if m: g["m"][cur] = round(g["m"].get(cur, 0) + m, 2)
+    return {"ga": ga, "cod": cod}
+
 
 def foto_mensual(data, ruta):
     """El reparto de los 6 estados por grupo, mes a mes.
@@ -548,18 +626,9 @@ def foto_mensual(data, ruta):
         print("  Foto mensual: el stock es de %s y ya hay foto de %s. No se toca nada."
               % (mes, max(hist)))
         data["hstk"] = solo_ga(hist); return
-    ga, cod = {}, {}
-    for r in data["rows"]:
-        k = estado_de(r, data)
-        cod[r[2]] = LETRA[k]
-        g = ga.setdefault(data["GA"][r[1]], {}).setdefault(k, {"n": 0, "u": 0, "c": {}})
-        g["n"] += 1
-        g["u"] += r[4] or 0
-        cc = (data.get("costos") or {}).get(r[2])
-        if cc and cc[0] is not None and (r[4] or 0) > 0:
-            cur = cc[3] if len(cc) > 3 and cc[3] else "$"
-            g["c"][cur] = round(g["c"].get(cur, 0) + (r[4] or 0) * cc[0], 2)
-    hist[mes] = {"fecha": data.get("stock_iso"), "ga": ga, "cod": cod}
+    hist[mes] = foto_de(data)
+    hist[mes]["fecha"] = data.get("stock_iso")
+    ga = hist[mes]["ga"]
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(hist, f, ensure_ascii=False, separators=(",", ":"))
     tot = {}
