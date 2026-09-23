@@ -82,32 +82,47 @@ assert fila(d2, "REDB-111")[G.VACU] == (base["rows"] and [r for r in base["rows"
 print("   OK: repetir el mismo Excel no inventa ventas\n")
 
 # --- corrida 3: foto mas nueva, REDB-111 vendio su unica unidad
-escribir(d2, TMP, html)
-d3 = copy.deepcopy(d2)
+#
+# ⚠️ El escenario se ARMA, no se toma del dashboard del dia. Antes se daba por sentado
+# que REDB-111 tenia stock 1 y acumulado 0, que era cierto el 17/09 y dejo de serlo en
+# cuanto la memoria empezo a acumular de verdad: el 23/09 el codigo ya venia con stock 0
+# y acumulado 1, y la prueba fallaba sin que nada estuviera roto. Es la misma trampa que
+# las fechas escritas a mano. La foto anterior se fabrica con los valores del caso.
+def sembrar(data, cod, stock, acumulado):
+    r = fila(data, cod)
+    r[4] = stock
+    while len(r) <= G.VACU:
+        r.append(0)
+    r[G.VACU] = acumulado
+    return r
+
+
+prev = copy.deepcopy(base)
+p = sembrar(prev, "REDB-111", 1, 0)
+p[79] = 31                 # demanda
+p[6 + 3] = 0               # venta proyectada del Excel (col CK)
+sembrar(prev, "VRI-1515", 114, 0)
+sembrar(prev, "PB225", 100, 0)
+escribir(prev, TMP, html)
+
+d3 = copy.deepcopy(prev)
 for x in d3["rows"]:
     del x[G.VACU]
-d3["stock_iso"] = correr(base["stock_iso"], 1)
+d3["stock_iso"] = correr(prev["stock_iso"], 1)
 fila(d3, "REDB-111")[4] = 0                      # 1 -> 0
-fila(d3, "VRI-1515")[4] = fila(d3, "VRI-1515")[4] - 14   # 114 -> 100
-fila(d3, "PB225")[4] = fila(d3, "PB225")[4] + 5          # sube: no debe restar
+fila(d3, "VRI-1515")[4] = 100                    # 114 -> 100
+fila(d3, "PB225")[4] = 105                       # sube: no debe restar
 G.aplicar_memoria(d3, TMP)
 a = fila(d3, "REDB-111")
+perdida = max(0, a[79] - max(a[6 + 3] or 0, a[G.VACU] + a[4]))
 print("   REDB-111  stock hoy=%s  acumulado=%s   -> venta en curso = %s"
       % (a[4], a[G.VACU], max(a[G.VACU], max(0, a[6] - a[4]))))
 print("   perdida = demanda %s - max(vp %s, encurso+stock %s) = %s"
-      % (a[79], a[6 + 3], a[G.VACU] + a[4],
-         max(0, a[79] - max(a[6 + 3] or 0, a[G.VACU] + a[4]))))
-# ⚠️ Se comparan DIFERENCIAS contra lo que ya traia el dashboard, no valores absolutos:
-# desde que la memoria viene funcionando, el acumulado de arranque ya no es cero.
-def acum(data, cod):
-    r = fila(data, cod)
-    return r[G.VACU] if len(r) > G.VACU else 0
-
-
-assert a[G.VACU] - acum(base, "REDB-111") == 1, a[G.VACU]
-assert max(0, a[79] - max(a[6 + 3] or 0, a[G.VACU] + a[4])) == 30
-assert acum(d3, "VRI-1515") - acum(base, "VRI-1515") == 14, acum(d3, "VRI-1515")
-assert acum(d3, "PB225") - acum(base, "PB225") == 0, "un alza de stock no puede contar como venta"
+      % (a[79], a[6 + 3], a[G.VACU] + a[4], perdida))
+assert a[G.VACU] == 1, a[G.VACU]
+assert perdida == 30, perdida
+assert fila(d3, "VRI-1515")[G.VACU] == 14, fila(d3, "VRI-1515")[G.VACU]
+assert fila(d3, "PB225")[G.VACU] == 0, "un alza de stock no puede contar como venta"
 print("   OK: la unidad que entro y salio quedo contada; la perdida da 30\n")
 
 # --- corrida 4: alguien regenera con un Excel MAS VIEJO

@@ -71,8 +71,17 @@ Erik dice **«actualizar»** y con eso alcanza — no preguntarle qué actualiza
 
 1. **Bajar el Gestor de precios** con el conector de Drive
    (`download_file_content`, fileId `1-X6PyLTioEo_mhMI_P2hKq5zIOywnsIkOPGfKFYRg2Y`,
-   exportMimeType xlsx). La respuesta excede el límite de tokens y queda en un `.txt`:
-   decodificar el base64 del campo `content` y guardarlo en `scripts/costos_gestor.xlsx`.
+   **exportMimeType `text/csv`**). La respuesta excede el límite de tokens y queda en un
+   `.txt` con JSON `{content,...}`: el `content` viene en **base64**, hay que decodificarlo
+   (utf-8-sig) y **rearmar el xlsx** que espera el generador — una hoja llamada `General`
+   con las mismas columnas, guardada en `scripts/costos_gestor.xlsx`.
+
+   ⚠️ **El export a xlsx ya no funciona** (desde el 23/09/2026 devuelve
+   *«File too large for export»*: el Sheet pesa 4 MB). El CSV exporta **solo la primera
+   hoja**, que es justo `General` — las otras 21 hojas del Sheet no se usan. Verificar
+   siempre el encabezado antes de regenerar: `B=Codigo · F=CMM % · H=Moneda ·
+   I=Lista vigente · M=Costo`. Si alguna vez se corren de lugar, **frenar**: el generador
+   lee por posición y un corrimiento mete costos equivocados en todo el dashboard.
 2. **Regenerar:** `python scripts/generar_dashboard.py "<Forecast.xlsm de G:>" Dashboard_Forecast.html`
 3. **Chequear:** `python scripts/chequear_actualizacion.py`. Si avisa algo, frenar y preguntarle.
 4. **Contarle qué cambió** y pedirle que corra `Subir_a_GitHub.bat` (publicar es de él).

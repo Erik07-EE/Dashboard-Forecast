@@ -476,6 +476,112 @@ def aplicar_memoria(data, out_html):
     print("  Memoria: %s -> %s | %d unidades en %d codigos"
           %(iso_ant,data["stock_iso"],nuevas,tocados))
 
+# --------------------------------------------------------------------------------
+# Foto mensual de los 6 estados.
+#
+# Erik: "el historico es foto, congela lo que esta hecho hasta ese momento". Asi que la
+# foto de un mes se escribe **una sola vez** -- la primera corrida de ese mes -- y no se
+# vuelve a tocar aunque despues cambie una regla. Es un registro de lo que se vio, no una
+# reconstruccion.
+#
+# ⚠️ ESTA REGLA ESTA DUPLICADA. La que manda en pantalla vive en `stkCalc` de
+# plantilla.html; esta es su gemela en Python, porque la foto hay que calcularla antes de
+# generar el HTML. Si se toca una, HAY QUE TOCAR LA OTRA.
+# `scripts/probar_estados.py` compara las dos sobre los 5.526 codigos y falla si difieren
+# en uno solo. Correrlo despues de cualquier cambio en los estados.
+VRM = 6          # meses cerrados de la ventana de "sin rotacion"
+IDEAL = 78       # Meses por Cat. (col H)
+MAXE = 108       # stock maximo del Excel (col CP)
+
+def estado_de(r, data):
+    """Los 6 estados, con la misma regla y el mismo orden que stkCalc."""
+    cat = data["CAT"][r[3]]
+    if cat in ("N", "P"): return "lanz"
+    stock = r[4] or 0
+    if stock <= 0: return "cero"
+    maxU = r[MAXE] or 0
+    h = r[IDEAL] or 0
+    imp = (data["UN"][r[0]] == "Importados")
+    minU = maxU * (max(0.0, (h-1)/h) if (imp and h) else 0.5)
+    a = (data.get("hist") or {}).get("real", {}).get(r[2])
+    vendio6 = bool(a) and sum(x or 0 for x in a[-VRM:]) > 0
+    movio = max(r[VACU] or 0, max(0, (r[6] or 0) - stock)) > 0
+    if not vendio6 and not movio: return "sinrot"
+    if stock < minU: return "riesgo"
+    if stock > maxU: return "exceso"
+    return "ideal"
+
+
+# Una letra por estado, para guardar el detalle por codigo sin que pese.
+LETRA = {"cero": "q", "riesgo": "r", "ideal": "i", "exceso": "e",
+         "sinrot": "s", "lanz": "l"}
+
+
+def foto_mensual(data, ruta):
+    """El reparto de los 6 estados por grupo, mes a mes.
+
+    ⚠️ **La foto se saca en la PRIMERA corrida del mes y no se toca nunca mas.** Erik,
+    18/09: *"necesito que septiembre se congele a hoy... si manana cambian los valores no
+    importa. Despues en octubre con la primer corrida, y si el 2 de octubre cambia algo no
+    importa, ya tenemos la foto del 1/10"*.
+
+    Es una foto de inicio de mes, no un cierre: sirve para comparar de donde arranco cada
+    mes. Que el dato se mueva despues es esperable y no la invalida.
+
+    ⚠️ Guarda **dos niveles**: los totales por grupo (`ga`), que son los que viajan al
+    dashboard, y el estado de **cada codigo** (`cod`), una sola letra por codigo. El
+    detalle todavia no se muestra, pero si no se guarda hoy el mes se cierra sin el y ya
+    no hay forma de recuperarlo. Cuesta 5,4 KB por mes.
+    """
+    mes = (data.get("stock_iso") or "")[:7]
+    if not mes: return
+    try:
+        hist = json.load(open(ruta, encoding="utf-8")) if os.path.exists(ruta) else {}
+    except Exception as e:
+        print("  Foto mensual: no se pudo leer el historico (%s)" % e); return
+    if mes in hist:
+        print("  Foto mensual: %s ya estaba congelada (%s)" % (mes, hist[mes].get("fecha", "?")))
+        data["hstk"] = solo_ga(hist); return
+    # ⚠️ Si el Excel viene con un stock de un mes anterior al ultimo guardado, tampoco se
+    # escribe: un mes cerrado no se vuelve a tocar ni por accidente.
+    if hist and mes < max(hist):
+        print("  Foto mensual: el stock es de %s y ya hay foto de %s. No se toca nada."
+              % (mes, max(hist)))
+        data["hstk"] = solo_ga(hist); return
+    ga, cod = {}, {}
+    for r in data["rows"]:
+        k = estado_de(r, data)
+        cod[r[2]] = LETRA[k]
+        g = ga.setdefault(data["GA"][r[1]], {}).setdefault(k, {"n": 0, "u": 0, "c": {}})
+        g["n"] += 1
+        g["u"] += r[4] or 0
+        cc = (data.get("costos") or {}).get(r[2])
+        if cc and cc[0] is not None and (r[4] or 0) > 0:
+            cur = cc[3] if len(cc) > 3 and cc[3] else "$"
+            g["c"][cur] = round(g["c"].get(cur, 0) + (r[4] or 0) * cc[0], 2)
+    hist[mes] = {"fecha": data.get("stock_iso"), "ga": ga, "cod": cod}
+    with open(ruta, "w", encoding="utf-8") as f:
+        json.dump(hist, f, ensure_ascii=False, separators=(",", ":"))
+    tot = {}
+    for g in ga.values():
+        for k, v in g.items(): tot[k] = tot.get(k, 0) + v["n"]
+    print("  Foto mensual: %s CONGELADA | %s" % (
+        mes, " ".join("%s %d" % x for x in sorted(tot.items()))))
+    otros = sorted(m for m in hist if m != mes)
+    if otros:
+        print("  Meses ya congelados (no se tocan): %s" % ", ".join(otros))
+    data["hstk"] = solo_ga(hist)
+
+
+def solo_ga(hist):
+    """Lo que viaja al dashboard: los totales por grupo, sin el detalle por codigo.
+
+    El detalle queda guardado en el JSON para el dia que se muestre, pero mandarlo al HTML
+    hoy serian 5,4 KB por mes que nadie lee.
+    """
+    return {m: {"fecha": v.get("fecha"), "ga": v.get("ga", {})} for m, v in hist.items()}
+
+
 def build(data, out_html, tpl_path):
     tpl=open(tpl_path,encoding="utf-8").read()
     html=tpl.replace("/*__DATA__*/", json.dumps(data,ensure_ascii=False,separators=(",",":")))
@@ -501,4 +607,5 @@ if __name__=="__main__":
         print("Historico: error",e); data["hist"]={"months":[],"vp":{},"real":{}}
     data.pop("real",None); data.pop("real_labels",None)
     aplicar_memoria(data, out)
+    foto_mensual(data, os.path.join(folder, "historico_stock.json"))
     build(data, out, tpl)

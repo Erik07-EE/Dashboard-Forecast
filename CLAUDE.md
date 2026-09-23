@@ -91,7 +91,53 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
-## Estado actual (14/09/2026)
+## Última actualización (23/09/2026)
+
+Dashboard regenerado con **stock del lunes 21/09/2026 14:28**: **5.372 códigos**
+(eran 5.526). El chequeo previo pasó: el stock avanzó del 17/09 al 21/09.
+
+- **Salieron 154 códigos**, toda la familia `*ESP-FC*` (BESP-FC01…, CESP-FC01…,
+  EESP-FC01…). Erik los sacó del Forecast **y** del Gestor a la vez, así que es una baja
+  deliberada, no un dato que se perdió. No entró ninguno.
+- **La memoria del mes funcionó por primera vez con datos reales**: entre el 17/09 12:35
+  y el 21/09 14:28 registró **9.654 unidades vendidas en 910 códigos**. Hasta ahora
+  siempre había dado cero porque no había dos fotos que comparar.
+- **Los costos se movieron mucho**: de 5.479 códigos comparables, 3.279 quedaron igual,
+  2.059 subieron hasta el doble y **41 subieron más de 10 veces**. Esos 41 venían todos
+  con el mismo costo de 37,32 — son recetas incompletas que Erik terminó de cargar (ver
+  el pendiente de los 1.687). A-109 pasó de 37,32 a 5.167,25. **No es un error de
+  lectura**: se verificó columna por columna contra la copia anterior y los códigos que
+  Erik no tocó dan idéntico.
+- Ningún código quedó sin costo.
+
+⚠️ **Cambió la forma de bajar el Gestor de precios.** El export a xlsx del conector de
+Drive dejó de funcionar (*«File too large for export»*, el Sheet pesa 4 MB). Ahora se baja
+como **CSV**, que trae solo la primera hoja —que es `General`, la única que se usa— y se
+rearma el xlsx. El detalle está en la skill `forecast-dashboard`. **Verificar el
+encabezado antes de regenerar**: el generador lee por posición de columna.
+
+### La foto mensual del estado de stock (18/09)
+
+`foto_mensual()` en el generador guarda, en `scripts/historico_stock.json`, el reparto de
+los 6 estados **por grupo** y el estado de **cada código** (una letra).
+
+- ⚠️ **La foto se saca en la PRIMERA corrida del mes y no se toca nunca más.** Erik:
+  *"si el 2 de octubre cambia algo no importa, ya tenemos la foto del 1/10"*. Es una foto
+  de inicio de mes, no un cierre.
+- **Septiembre quedó congelado el 18/09** con el stock del 17/09 12:35, desde el dashboard
+  que estaba publicado (`scripts/congelar_septiembre.py`, que existe solo para esa vez).
+- Al HTML viaja **solo el total por grupo** (`solo_ga`). El detalle por código se guarda
+  pero no se publica: son 5,4 KB por mes que hoy nadie lee, y si no se guardaran, el mes
+  se cerraría sin ellos y no habría forma de recuperarlos.
+- ⚠️ La regla de los 6 estados está escrita **dos veces** — `stkCalc` en la plantilla y
+  `estado_de` en el generador. No hay forma de evitarlo: la foto se calcula antes de armar
+  el HTML. **`scripts/probar_estados.py` es el seguro**: correrlo después de tocar
+  cualquier cosa de los estados. El 23/09 las dos reglas coinciden en los 5.372 códigos.
+
+⚠️ **La vista del histórico de estados NO está en producción.** Vive en el preview
+(`armar_hist_stock.py`). Lo que sí está en producción es el guardado de la foto.
+
+## Estado anterior (14/09/2026)
 
 - Proyecto ordenado y migrado a Claude Code. El generador pasó de `Generador/` a `scripts/`.
 - Dashboard regenerado con **stock del lunes 14/09/2026 06:37**: 5.528 códigos, 38 GA con
@@ -420,6 +466,11 @@ mes cerrado anterior; las columnas VR del mes base estan vacias en las 5.582 fil
   credito, devoluciones de clientes o errores de stock. Asi no hace falta saber **por
   que** subio: sube y no pasa nada, baja y eso es venta. Agarra el caso que se perdia,
   el codigo que va 0 -> 1 -> 0 entre el 1ro y hoy.
+- ⚠️ **`probar_memoria.py` ARMA su escenario, no lo toma del dashboard del dia.** Daba por
+  sentado que REDB-111 tenia stock 1 y acumulado 0 — cierto el 17/09, falso el 23/09 en
+  cuanto la memoria empezo a acumular de verdad, y la prueba fallaba sin que nada
+  estuviera roto. Es la misma trampa que las fechas escritas a mano. **Ningun valor del
+  dia puede quedar clavado en la prueba.**
 - Las cinco situaciones estan probadas (`probar_memoria.py`): mismo Excel = no suma nada;
   foto nueva = suma solo las bajas; el stock sube = no resta; **Excel mas viejo = arrastra
   lo acumulado sin volver a contar** (se compara por `stock_iso`, la fecha del stock en
