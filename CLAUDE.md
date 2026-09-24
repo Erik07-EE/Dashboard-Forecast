@@ -670,6 +670,16 @@ Cada barra sobre las tablas gastaba un renglón. Se metieron adentro del encabez
 
 ### Ordenar: una sola regla
 
+⚠️ **El orden de arranque es UNO SOLO, `porCodigo()` (24/09): grupo con la prioridad de
+los filtros, después código en orden NATURAL** (`localeCompare('es',{numeric:true})`).
+Antes cada tabla tenía el suyo — Forecast alfabético puro, Acción comercial el orden crudo
+del Excel sin agrupar, Estado Stock ya el natural. Erik lo encontró filtrando Exceso:
+Estado Stock y Acción comercial mostraban **listas distintas**. Eran los mismos 1.751
+códigos, pero ordenados distinto, y **como cada tabla corta en 500 la primera página no
+coincidía**. En alfabético puro MA-10461025 cae entre MA-0037 y MA-3023: son 370 códigos
+con números largos metiéndose en el medio. Arrastra el CSV del Forecast y el Excel de
+Acción comercial, que siguen a su tabla. **Proyección e Histórico no se tocan.**
+
 **Un clic ordena de mayor a menor. El segundo vuelve al orden por código.** Sin flechas
 ni símbolos: el globo dice "clic para ordenar". Rige en Forecast, Estado Stock y Acción
 comercial.

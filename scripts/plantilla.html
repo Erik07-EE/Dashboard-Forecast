@@ -471,9 +471,18 @@ function renderResumen(){const rms=resMonths();const inner=document.getElementBy
     if(donutCharts[j.id])donutCharts[j.id].destroy();const cv=document.getElementById(j.id);
     if(cv)donutCharts[j.id]=new Chart(cv,{type:'doughnut',data:{labels:['Venta proy.','Remanente'],datasets:[{data:[cov.vp,Math.max(cov.stk-cov.vp,0)],backgroundColor:['#3949ab','#e8eaf6'],borderWidth:0}]},options:{cutout:'62%',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});});}
 
-function sortRows(rows){if(!st.sort){return rows.slice().sort((a,b)=>{const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}
-  const s=st.sort,d=st.dir;if(typeof s==='object'&&s&&(s.f===1||s.f===5)){const isRed=r=>{const id=r[IDEAL];const v=mval(r,s.m,s.f);return (id!=null&&id>0&&v!=null&&v<minMeses(r,id))?0:1;};return rows.slice().sort((a,b)=>{const ra=isRed(a),rb=isRed(b);if(ra!==rb)return ra-rb;const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;return String(a[2]).localeCompare(String(b[2]));});}const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;return mval(r,s.m,s.f)??-1;};
-  return rows.slice().sort((a,b)=>{const x=val(a),y=val(b);if(typeof x==='string')return d*x.localeCompare(y);return d*(x-y);});}
+// ⚠️ EL ORDEN DE ARRANQUE DE TODAS LAS TABLAS: primero el grupo con la prioridad de
+// los filtros, despues el codigo en orden NATURAL ('es',{numeric:true}).
+// El natural importa: en alfabetico puro MA-10461025 cae entre MA-0037 y MA-3023,
+// porque compara caracter por caracter. Son 370 codigos con numeros largos que se
+// metian en el medio de los cortos. Erik lo vio filtrando Exceso: Estado Stock y
+// Accion comercial mostraban listas distintas -- los mismos 1.751 codigos, pero
+// ordenados distinto, y como cada tabla corta en 500 la primera pagina no coincidia.
+function porCodigo(a,b){const pa=gaPrio(a[1]),pb=gaPrio(b[1]);if(pa!==pb)return pa-pb;
+  return String(a[2]).localeCompare(String(b[2]),'es',{numeric:true});}
+function sortRows(rows){if(!st.sort){return rows.slice().sort(porCodigo);}
+  const s=st.sort,d=st.dir;if(typeof s==='object'&&s&&(s.f===1||s.f===5)){const isRed=r=>{const id=r[IDEAL];const v=mval(r,s.m,s.f);return (id!=null&&id>0&&v!=null&&v<minMeses(r,id))?0:1;};return rows.slice().sort((a,b)=>{const ra=isRed(a),rb=isRed(b);if(ra!==rb)return ra-rb;return porCodigo(a,b);});}const val=r=>{if(s==='cod')return r[2];if(s==='sa')return r[4]??-1;if(s==='ma')return r[5]??-1;return mval(r,s.m,s.f)??-1;};
+  return rows.slice().sort((a,b)=>{const x=val(a),y=val(b);if(typeof x==='string')return d*String(x).localeCompare(String(y),'es',{numeric:true});return d*(x-y);});}
 // Misma regla que Estado Stock y Accion comercial: un clic ordena de mayor a
 // menor y el segundo vuelve al orden por codigo. Sin ida y vuelta y sin flechas.
 function setSort(k){
@@ -845,7 +854,9 @@ function setLiqSort(f){
   // El segundo clic en la misma columna saca el orden y vuelve al de arranque.
   if(st.liqSort===f){st.liqSort=null;}else{st.liqSort=f;st.liqSortDir=-1;}renderTab('liq');}
 function renderLiqPreview(rows){const el=document.getElementById('tablaLiqPrev');const _isOf=st.acMode==='of';
-  let cand=rows.map(computeLiq).filter(Boolean);if(st.ofQty==='full'){cand=cand.filter(o=>(o.excmes||0)>0);}else if(st.ofQty&&st.ofQty!=='all'){cand=cand.slice().sort((a,b)=>(b.excmes||0)-(a.excmes||0)).slice(0,parseInt(st.ofQty));}if(st.liqSort){const _f=st.liqSort,_d=st.liqSortDir||-1;cand.sort((a,b)=>{const va=a[_f]==null?-1e18:a[_f],vb=b[_f]==null?-1e18:b[_f];return _d*(va-vb);});}window._liqExport=cand;
+  // ⚠️ Arranca con el MISMO orden que Forecast y Estado Stock (porCodigo). Antes
+  // salia en el orden crudo del Excel, sin agrupar, y no coincidia con las otras.
+  let cand=rows.slice().sort(porCodigo).map(computeLiq).filter(Boolean);if(st.ofQty==='full'){cand=cand.filter(o=>(o.excmes||0)>0);}else if(st.ofQty&&st.ofQty!=='all'){cand=cand.slice().sort((a,b)=>(b.excmes||0)-(a.excmes||0)).slice(0,parseInt(st.ofQty));}if(st.liqSort){const _f=st.liqSort,_d=st.liqSortDir||-1;cand.sort((a,b)=>{const va=a[_f]==null?-1e18:a[_f],vb=b[_f]==null?-1e18:b[_f];return _d*(va-vb);});}window._liqExport=cand;
   if(!cand.length){el.innerHTML='<tbody><tr><td class="empty">Elegí una acción arriba para ver el preview (códigos con datos de costo).</td></tr></tbody>';return;}
   const pI=n=>n==null?'':Math.round(n).toLocaleString('es-AR');const p1=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});const p2=n=>n==null?'':Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});const pc=n=>n==null?'':Math.round(n*100)+'%';const pcc=n=>n==null?'':(n*100).toFixed(1)+'%';
   const cmO=st.liqCM;
