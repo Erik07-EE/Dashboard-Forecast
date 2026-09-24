@@ -40,8 +40,8 @@ VRM = 6
 
 
 def como_en_pantalla(r):
-    cat = D["CAT"][r[3]]
-    if cat in ("N", "P"): return "lanz"
+    cat = (D["CAT"][r[3]] or "").strip()
+    if cat in ("N", "P") or not cat: return "lanz"
     stock = r[4] or 0
     if stock <= 0: return "cero"
     maxU = r[108] or 0

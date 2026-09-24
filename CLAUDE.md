@@ -91,7 +91,29 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
-## Última actualización (23/09/2026)
+## Última actualización (24/09/2026)
+
+Stock del **jueves 24/09 09:16**. **5.385 códigos** (eran 5.372). La memoria del mes
+registró **15.995 unidades en 925 códigos** desde el 23/09 06:30.
+
+- **Entraron 13 códigos nuevos** de Faros y barras y Lámparas principales (ECO-*,
+  HL20-*, HL40-*, PRO-SQ*), todos **sin Categoría**.
+- ⚠️ **Sin Cat ahora es LANZAMIENTO.** Erik, 24/09: *"los sku sin categoría entran en
+  Lanzamientos, ahí se guardan los N, P y sin CAT"*. Antes caían en Quiebre, porque no
+  son N ni P y tienen stock 0 — un faltante que no existe. Lanzamientos pasó de 58 a 71,
+  exactamente esos 13, y son los únicos sin Cat en todo el dashboard. La tarjeta ahora
+  cuenta **N · P · s/C**. La regla está en los tres lados: `stkCalc`, `estado_de` y la
+  transcripción de `probar_estados.py`.
+- **1.006 costos subieron**, todos en pesos, mediana **+12,3%** (de 5,7% a 34,2%).
+  Ningún código quedó sin costo.
+
+⚠️ **`chequear_actualizacion.py` comparaba las filas POR POSICIÓN y se corregió el 24/09.**
+El día que entran o salen códigos se corre todo lo que viene después y el chequeo cantaba
+miles de cambios inexistentes: decía *"cambiaron 3.699 códigos"* cuando en realidad no
+había cambiado **ninguno**. Ahora compara **por código** y además informa cuáles entraron
+y cuáles salieron.
+
+## Actualización anterior (23/09/2026)
 
 Dashboard regenerado con **stock del lunes 21/09/2026 14:28**: **5.372 códigos**
 (eran 5.526). El chequeo previo pasó: el stock avanzó del 17/09 al 21/09.
@@ -441,7 +463,7 @@ Se evaluan en este orden y son excluyentes:
 
 | | Regla | Color |
 |---|---|---|
-| **Lanzamientos** | Cat **N o P**, sin importar el stock | azul |
+| **Lanzamientos** | Cat **N, P o sin Cat**, sin importar el stock | azul |
 | **Quiebre** | stock <= 0 | rojo |
 | **Sin rotacion** | sin ventas en los 6 meses cerrados **y** sin movimiento este mes | gris |
 | **Riesgo** | stock < minimo | naranja |

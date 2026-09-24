@@ -495,8 +495,11 @@ MAXE = 108       # stock maximo del Excel (col CP)
 
 def estado_de(r, data):
     """Los 6 estados, con la misma regla y el mismo orden que stkCalc."""
-    cat = data["CAT"][r[3]]
-    if cat in ("N", "P"): return "lanz"
+    cat = (data["CAT"][r[3]] or "").strip()
+    # Sin Cat tambien es Lanzamiento. Erik, 24/09: *"los sku sin categoria entran en
+    # Lanzamientos, ahi se guardan los N, P y sin CAT"*. Son codigos recien cargados,
+    # sin stock: contarlos como Quiebre inventaba un faltante que no existe.
+    if cat in ("N", "P") or not cat: return "lanz"
     stock = r[4] or 0
     if stock <= 0: return "cero"
     maxU = r[MAXE] or 0

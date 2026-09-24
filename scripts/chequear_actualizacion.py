@@ -144,11 +144,15 @@ def main():
         print("  ==============================================")
         return 2
 
-    cambiadas = 0
-    v_rows, n_rows = viejo.get("rows") or [], nuevo.get("rows") or []
-    for i in range(min(len(v_rows), len(n_rows))):
-        if v_rows[i] != n_rows[i]:
-            cambiadas += 1
+    # ⚠️ Se compara POR CODIGO, no por posicion. Comparando por posicion, el dia que
+    # entran o salen codigos se corre todo lo que viene despues y el chequeo canta miles
+    # de cambios que no existen: el 24/09 entraron 13 codigos y decia "cambiaron 3.699"
+    # cuando en realidad **no habia cambiado ninguno** de los 5.372 que ya estaban.
+    v_rows = {r[2]: r for r in (viejo.get("rows") or [])}
+    n_rows = {r[2]: r for r in (nuevo.get("rows") or [])}
+    entraron = sorted(set(n_rows) - set(v_rows))
+    salieron = sorted(set(v_rows) - set(n_rows))
+    cambiadas = sum(1 for c in (set(v_rows) & set(n_rows)) if v_rows[c] != n_rows[c])
 
     v_cos, n_cos = viejo.get("costos") or {}, nuevo.get("costos") or {}
     cambiados_cos = sum(1 for k in n_cos if v_cos.get(k) != n_cos[k])
@@ -158,7 +162,12 @@ def main():
         print("  Cambiaron %s codigos (stock, compras, proyeccion)." % cambiadas)
     if cambiados_cos:
         print("  Cambiaron %s costos o CMM." % cambiados_cos)
-    if not cambiadas and not cambiados_cos:
+    for etiqueta, lista in (("Entraron", entraron), ("Salieron", salieron)):
+        if lista:
+            print("  %s %s codigos: %s%s" % (
+                etiqueta, len(lista), ", ".join(lista[:8]),
+                " ..." if len(lista) > 8 else ""))
+    if not cambiadas and not cambiados_cos and not entraron and not salieron:
         print("  No cambio ningun dato: el dashboard publicado ya es el ultimo.")
     return 0 if costos_ok else 2
 
