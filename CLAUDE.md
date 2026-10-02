@@ -91,7 +91,39 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
-## Última actualización (24/09/2026)
+## Última actualización (02/10/2026) — primer mes nuevo
+
+Stock del **jueves 01/10 06:39**. **5.385 códigos**.
+
+- ⚠️ **Se congeló la foto de OCTUBRE**, la primera que saca el circuito solo. Septiembre
+  quedó intacto, como estaba previsto. El Histórico → Estado stock ya tiene **dos meses**
+  y los gráficos dibujan línea en vez de un punto.
+- La memoria del mes **arrancó de cero**: mes nuevo, es lo esperado.
+- El histórico de Proyección sumó **septiembre** (leyó `Forecast 09-26.xlsm`): 8 meses.
+  La venta real ya llega a septiembre y pasó de 2.716 a **5.494 códigos**.
+
+| Estado | sep | oct |
+|---|---|---|
+| Quiebre | 2.477 | 2.393 |
+| Riesgo | 226 | 204 |
+| Ideal | 251 | 207 |
+| Exceso | 1.770 | 1.797 |
+| Sin rotación | 744 | 713 |
+| Lanzamientos | 58 | 71 |
+
+⚠️ **El primer salto del gráfico de COSTO no se lee como movimiento real.** Exceso pasó
+de $ 65,1M a $ 72,2M (+10,9%), y el arreglo de recetas del Gestor ya explicaba +12% por
+sí solo (medido el 23/09). La **venta mix sí es limpia**: la perdida de Quiebre + Riesgo
+bajó de USD 89.140 a **USD 40.802 (−54%)**. De noviembre en adelante las dos series se
+leen derecho.
+
+⚠️ **`probar_memoria.py` ancla su escenario al día 15 del mes** (02/10). Antes salía de
+la fecha del stock del día, y con stock del 1/10 la corrida «Excel más viejo» se iba a
+septiembre: cambio de mes, la memoria arranca de cero como corresponde, y la prueba
+fallaba sin que nada estuviera roto. Es la tercera vez que esta prueba se rompe por
+depender del dato del día.
+
+## Actualización anterior (24/09/2026)
 
 Stock del **jueves 24/09 09:16**. **5.385 códigos** (eran 5.372). La memoria del mes
 registró **15.995 unidades en 925 códigos** desde el 23/09 06:30.

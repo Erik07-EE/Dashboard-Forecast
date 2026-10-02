@@ -98,6 +98,11 @@ def sembrar(data, cod, stock, acumulado):
 
 
 prev = copy.deepcopy(base)
+# ⚠️ La fecha del escenario se ancla al DIA 15 del mes real. Antes salia de la fecha
+# del stock del dia, y el 2/10 la corrida 4 (un dia menos que el 1/10) se iba a
+# septiembre: cambio de mes, la memoria arranca de cero como corresponde, y la prueba
+# fallaba sin que nada estuviera roto. A mitad de mes ningun +-1 dia cruza el borde.
+prev["stock_iso"] = base["stock_iso"][:8] + "15 09:00"
 p = sembrar(prev, "REDB-111", 1, 0)
 p[79] = 31                 # demanda
 p[6 + 3] = 0               # venta proyectada del Excel (col CK)
@@ -130,7 +135,8 @@ escribir(d3, TMP, html)
 d4 = copy.deepcopy(d3)
 for x in d4["rows"]:
     del x[G.VACU]
-d4["stock_iso"] = correr(base["stock_iso"], -1)
+# un dia ANTES que la foto guardada, pero dentro del mismo mes
+d4["stock_iso"] = correr(d3["stock_iso"], -1)
 fila(d4, "REDB-111")[4] = 1
 G.aplicar_memoria(d4, TMP)
 assert fila(d4, "REDB-111")[G.VACU] == fila(d3, "REDB-111")[G.VACU], "conto de nuevo con un Excel viejo"
@@ -141,7 +147,7 @@ escribir(d3, TMP, html)
 d5 = copy.deepcopy(d3)
 for x in d5["rows"]:
     del x[G.VACU]
-d5["stock_iso"] = correr(base["stock_iso"], 40)
+d5["stock_iso"] = correr(prev["stock_iso"], 40)
 G.aplicar_memoria(d5, TMP)
 assert fila(d5, "REDB-111")[G.VACU] == 0
 print("   OK: al cambiar de mes arranca de cero\n")
