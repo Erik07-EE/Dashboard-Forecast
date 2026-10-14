@@ -91,7 +91,20 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
-## Última actualización (02/10/2026) — primer mes nuevo
+## Última actualización (14/10/2026)
+
+Stock del **martes 13/10 12:37** (era del 02/10). **5.384 códigos**: salió `BI0906.60N`,
+no entró ninguno.
+
+- **La memoria del mes registró 21.740 unidades en 1.143 códigos** desde el 02/10. El
+  acumulado de octubre va en **24.049 unidades en 1.266 códigos**.
+- El stock se movió fuerte a favor: **Quiebre −113, Riesgo −58, Exceso +142**.
+- **3.739 costos cambiaron**, casi todos chicos (mediana 0%, rango −21% a +31%). El
+  único salto grande es **HL20-P13W, de USD 0,10 a 8,17**: era uno de los Faros y
+  Lámparas cargados a fin de septiembre con costo de relleno, ahora tiene el real.
+- Ningún código quedó sin costo. La foto de octubre no se tocó, como corresponde.
+
+## Actualización anterior (02/10/2026) — primer mes nuevo
 
 Stock del **jueves 01/10 06:39**. **5.385 códigos**.
 
