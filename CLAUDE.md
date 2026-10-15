@@ -631,6 +631,12 @@ Rotación: Septiembre · Octubre · Rot. % · Dif. cant.
 
 - Ordena con la regla de siempre: un clic de mayor a menor, el segundo vuelve al orden de
   arranque (por cuánto se movió el ritmo).
+- **Tiene las dos vistas, Por código y Por grupo.** ⚠️ Al principio no: con un cruce
+  activo se dibujaba la tabla sin mirar `VIS` y el botón "Ver" quedaba de adorno. Erik lo
+  encontró. La vista por grupo reusa `st.gaOpen` y `tglGA`, igual que la tabla de siempre.
+- ⚠️ **El Rot. % de un grupo NO es el promedio de los de sus códigos**: sale de los
+  totales, `suma(hoy) / suma(anterior) − 1`. Promediar porcentajes le daría el mismo peso
+  a un código que mueve 2 unidades que a uno que mueve 900.
 - ⚠️ **La columna Cat necesita 46px**, igual que en la tabla principal: la pastilla mide
   41 y con 33 recortaba. Es el mismo valor que ya estaba documentado y se volvió a pisar.
 

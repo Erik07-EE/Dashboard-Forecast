@@ -1362,9 +1362,11 @@ function renderStock(){
     const vistas=orden.slice(0,tope);
     const pc=p=>{if(p===null)return D;if(p===Infinity)return 'nuevo';
       return (p>=0?'+':'\u2212')+Math.abs(p*100).toFixed(0)+'%';};
-    let b='';
-    vistas.forEach(o=>{const p=rotPct(o.r),a=_BVA.get(o.r),dl=rotDelta(o.r);
-      b+='<tr><td class="st-ga" data-tip="'+DATA.GA[o.r[1]]+'">'+gaLbl(DATA.GA[o.r[1]])
+    // la misma fila sirve suelta o colgando de un grupo, con sangria
+    const filaRot=(o,dentro)=>{const p=rotPct(o.r),a=_BVA.get(o.r),dl=rotDelta(o.r);
+      return '<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
+        +'<td class="st-ga"'+(dentro?' style="padding-left:22px"':' data-tip="'+DATA.GA[o.r[1]]+'"')+'>'
+        +(dentro?'':gaLbl(DATA.GA[o.r[1]]))
         +'</td><td class="st-cod">'+o.r[2]
         +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
         +'</td><td class="num st-d">'+fmtIng(o.r[ING],DATA.CAT[o.r[3]])
@@ -1377,7 +1379,39 @@ function renderStock(){
         +'</td><td class="num st-b">'+fmtI(o.r[VAJ]||0)
         +'</td><td class="num" style="font-weight:800;color:'+((p!==null&&p!==Infinity&&p<0)?'#c62828':'#1e7e34')+'">'+pc(p)
         +'</td><td class="num st-b">'+(dl!=null?fmtI(dl):D)
-        +'</td></tr>';});
+        +'</td></tr>';};
+    // ---- por grupo: una fila por GA con sus totales, que se abre a sus codigos
+    if(VIS==='ga'){
+      const G={},ord=[];
+      orden.forEach(o=>{const g=DATA.GA[o.r[1]];let e=G[g];
+        if(!e){e=G[g]={ga:g,n:0,vp:0,vend:0,stock:0,vaa:0,vah:0,dif:0,items:[]};ord.push(e);}
+        e.n++;e.vp+=(o.r[79]||0);e.vend+=o.vend;e.stock+=o.stock;
+        e.vaa+=(_BVA.get(o.r)||0);e.vah+=(o.r[VAJ]||0);e.dif+=(rotDelta(o.r)||0);
+        e.items.push(o);});
+      ord.sort((a,b)=>prioName(a.ga)-prioName(b.ga));
+      st.gaOpen=st.gaOpen||{};
+      let bg='';
+      ord.forEach(e=>{const on=!!st.gaOpen[e.ga];
+        // ⚠️ El % del grupo sale de los TOTALES, no del promedio de los porcentajes:
+        // promediar le daria el mismo peso a un codigo de 2 unidades que a uno de 900.
+        const pg=(e.vaa>0)?(e.vah/e.vaa-1):null;
+        bg+='<tr onclick="tglGA(&quot;'+e.ga.replace(/"/g,'')+'&quot;)" style="cursor:pointer;'+(on?'background:#eef2ff;':'')+'">'
+          +'<td class="st-ga" style="font-weight:800;color:#1a237e" data-tip="'+e.ga+'">'+(on?'\u25be ':'\u25b8 ')+gaLbl(e.ga)+'</td>'
+          +'<td class="st-cod" style="color:#5f6690;font-weight:600">'+fmtI(e.n)+' SKU</td>'
+          +'<td class="st-ct">'+D+'</td><td class="num st-d">'+D+'</td>'
+          +'<td class="num st-v st-b">'+fmtI(e.vp)+'</td>'
+          +'<td class="num st-v">'+(e.vend?fmtI(e.vend):D)+'</td>'
+          +'<td class="num st-b">'+fmtI(e.stock)+'</td>'
+          +'<td class="num">'+D+'</td><td class="st-ct">'+D+'</td>'
+          +'<td class="num st-d">'+fmtI(e.vaa)+'</td>'
+          +'<td class="num st-b">'+fmtI(e.vah)+'</td>'
+          +'<td class="num" style="font-weight:800;color:'+((pg!==null&&pg<0)?'#c62828':'#1e7e34')+'">'
+            +(pg===null?D:((pg>=0?'+':'\u2212')+Math.abs(pg*100).toFixed(0)+'%'))+'</td>'
+          +'<td class="num st-b">'+fmtI(e.dif)+'</td></tr>';
+        if(on)e.items.forEach(o=>{bg+=filaRot(o,true);});});
+      return '<table class="prevt">'+cgR+thR+'<tbody>'+bg+'</tbody></table>';}
+    // ---- por codigo
+    let b='';vistas.forEach(o=>{b+=filaRot(o,false);});
     return '<table class="prevt">'+cgR+thR+'<tbody>'+b+'</tbody></table>'
       +pieTope('st',orden.length,vistas.length);};
   // La misma fila sirve suelta o colgando de un grupo (con sangria).
