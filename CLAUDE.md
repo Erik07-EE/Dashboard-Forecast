@@ -526,6 +526,29 @@ Se evaluan en este orden y son excluyentes:
   1.733 en todo el dashboard).
 - Cada tarjeta muestra **A y B** al lado del %: son las dos categorias que importan.
 
+### Quiebre y Riesgo "con ingreso" (15/10)
+
+Erik lo vio en Lámparas auxiliares: 12 códigos en Quiebre, todos con compra de 400 u 800
+unidades y faltante "–". La fila era correcta —Quiebre es el stock de **hoy** y la compra
+es lo que entra **este mes**— pero a simple vista parecían el mismo problema que un
+quiebre sin nada en camino. Él: *"se podría marcar el estado como Quiebre con ingreso y
+que tenga otro color"*, y enseguida *"seguramente pase lo mismo en riesgo"*. Tenía razón.
+
+- ⚠️ **NO son estados nuevos: es una marca dentro del estado.** El código sigue contando
+  como Quiebre o Riesgo en la tarjeta, en el filtro y en la foto mensual; lo único que
+  cambia es la pastilla. **Un séptimo y octavo estado romperían dos cosas ya pedidas**:
+  que los 6 sean excluyentes y sumen 100%, y que las 6 tarjetas entren en un renglón en
+  la notebook.
+- Medido el 15/10: **Quiebre 91 de 2.319 (4%)**, 68 ya cubiertos hasta el máximo;
+  **Riesgo 75 de 161 (47%)**, 31 cubiertos. En Riesgo es casi la mitad del estado.
+- ⚠️ **El color es el del estado pero EN CLARO, con la letra oscura**
+  (`.st-p-cero-ing` #ffcdd2/#b71c1c, `.st-p-riesgo-ing` #ffe0b2/#e65100). Erik pidió
+  *"rojo pero más claro"*: un rojo claro con letra blanca es ilegible en una pastilla de
+  0,6rem. Fondo claro con letra oscura se lee, y ya es patrón del dashboard (Exceso es
+  amarillo con letra roja).
+- La tarjeta agrega **"N c/ing."** al lado del conteo. La pastilla mide 92px, igual que
+  las otras: **la tabla no se ensanchó** (1.266px, los mismos que antes).
+
 ### El filtro Estado y los filtros cruzados (17/09)
 
 - Hay un **quinto filtro global, "Estado"**, con los 6. Filtra las cinco solapas.

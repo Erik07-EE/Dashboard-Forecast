@@ -238,6 +238,9 @@ box-shadow:0 5px 16px rgba(0,0,0,.3);max-width:280px;white-space:normal;}
 .st-v{color:#1e7e34;}
 .st-p{display:inline-block;min-width:92px;text-align:center;padding:1px 7px;border-radius:9px;font-size:.6rem;font-weight:800;}
 .st-p-cero{background:#e53935;color:#fff;}
+/* Con mercaderia en camino: mismo color, mas claro. Mismo problema, ya resuelto. */
+.st-p-cero-ing{background:#ffcdd2;color:#b71c1c;}
+.st-p-riesgo-ing{background:#ffe0b2;color:#e65100;}
 .st-p-riesgo{background:#ef6c00;color:#fff;}
 .st-p-ideal{background:#2e7d32;color:#fff;}
 .st-p-exceso{background:#ffd600;color:#e30613;}
@@ -1041,7 +1044,11 @@ function stkCalc(r){
   else k='ideal';
   const cc=DATA.costos&&DATA.costos[r[2]];
   const costo=(cc&&cc[0]!=null)?cc[0]:null,cur=(cc&&cc[3])?cc[3]:'$',mix=r[104];
-  return {k:k,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
+  // ⚠️ Marca, no estado: el codigo sigue siendo 'cero' o 'riesgo' para la tarjeta, el
+  // filtro y la foto mensual. Solo cambia la pastilla, para no confundir un faltante
+  // que ya tiene el pedido viajando con uno que no tiene nada en camino.
+  const ing=((k==='cero'||k==='riesgo')&&compraMes>0);
+  return {k:k,ing:ing,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
     faltaBruto:faltaBruto,compraMes:compraMes,cur:cur,
     excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null,
@@ -1078,10 +1085,11 @@ function renderStock(){
   const el=document.getElementById('view-st');
   const dat=rowsBase().map(stkOf).filter(Boolean);
   const M=(c,n)=>c+' '+Math.round(n||0).toLocaleString('es-AR');
-  const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0,cA:0,cB:0,cN:0,cP:0,cS:0};});
+  const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0,cA:0,cB:0,cN:0,cP:0,cS:0,cIng:0};});
   const P={};
   const add=(b,cur,v)=>{if(v==null||!v)return;(P[b]||(P[b]={}))[cur]=(P[b][cur]||0)+v;};
   dat.forEach(o=>{const g=G[o.k];g.n++;g.u+=o.stock;g.exc+=o.exc;g.falta+=o.falta;
+    if(o.ing)g.cIng++;
     const _c=DATA.CAT[o.r[3]];
     if(_c==='A')g.cA++;else if(_c==='B')g.cB++;else if(_c==='N')g.cN++;
     else if(_c==='P')g.cP++;else if(!_c)g.cS++;
@@ -1135,8 +1143,14 @@ function renderStock(){
         // A y B aparte: son las dos categorias que a Erik le importan
         // en Lanzamientos no hay A ni B: ahi las dos que importan son N y P
         +(()=>{const d=(k==='lanz')?[['N',g.cN],['P',g.cP],['s/C',g.cS]]:[['A',g.cA],['B',g.cB]];
-          return '<span style="font-size:.58rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
-            +d.map(x=>x[0]+' '+fmtI(x[1])).join(' · ')+'</span>';})()
+          let t='<span style="font-size:.58rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
+            +d.map(x=>x[0]+' '+fmtI(x[1])).join(' · ')+'</span>';
+          // en Quiebre y Riesgo interesa cuantos ya tienen el pedido viajando
+          if(g.cIng)t='<span style="font-size:.58rem;font-weight:800;color:'
+            +(k==='cero'?'#c62828':'#e65100')+';margin-left:auto;white-space:nowrap;"'
+            +' data-tip="'+STLBL[k]+' con ingreso" data-tip2="Con compra del mes en camino">'
+            +fmtI(g.cIng)+' c/ing.</span>'+t.replace('margin-left:auto;','margin-left:8px;');
+          return t;})()
       +'</div>'
       +par(c[5],c[6],c1,c[7],c[8],c2)
       +'</div>';};
@@ -1181,7 +1195,9 @@ function renderStock(){
     +'</td><td class="num st-d">'+fmtI(o.maxU)
     +'</td><td class="num st-b">'+fmtI(o.stock)
     +'</td><td class="num">'+fmtM(o.meses)
-    +'</td><td class="st-ct"><span class="st-p st-p-'+o.k+'">'+STLBL[o.k]
+    +'</td><td class="st-ct"><span class="st-p st-p-'+o.k+(o.ing?'-ing':'')+'"'
+    +(o.ing?' data-tip="'+STLBL[o.k]+' con ingreso" data-tip2="Con compra del mes en camino"':'')
+    +'>'+STLBL[o.k]+(o.ing?' c/ing.':'')
     +'</span></td><td class="num st-b">'+(o.perd?fmtI(o.perd):D)
     +'</td><td class="num st-v">'+(o.perdM?M(o.cur,o.perdM):D)
     +'</td><td class="num st-d">'+(o.compraMes?fmtI(o.compraMes):D)
