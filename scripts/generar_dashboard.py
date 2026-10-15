@@ -660,6 +660,75 @@ def build(data, out_html, tpl_path):
     open(out_html,"w",encoding="utf-8").write(html)
     print("OK ->",out_html, round(os.path.getsize(out_html)/1024),"KB | codigos:",len(data["rows"]),"| GA con IMPO:",len(data["impo"]))
 
+# ----------------------------------------------------------------- rotacion mes a mes
+# ⚠️ Compara la **col BV "Venta ajustada"** del Forecast de HOY contra la del Forecast
+# congelado del mes anterior (la copia de `Histórico\Forecast MM-AA.xlsm`). Es el ritmo
+# mensual con el que el Excel calcula "Meses actual", o sea la misma base que usan el
+# minimo, el maximo y los 6 estados: si ese ritmo se cae o se dispara, se mueve todo.
+#
+# Erik lo pidio con el ejemplo de MA-0002: septiembre 180, octubre 122, una baja del 32%.
+# Verificado contra el Excel: esos dos numeros son BV, no CJ.
+#
+# ⚠️ OJO CON EL NOMBRE: en el dashboard **VD es la col CJ**. Esto es BV, que es otra
+# columna. Para no pisar el vocabulario, en la interfaz se llama **rotacion**, nunca VD.
+#
+# El archivo del mes anterior pesa ~19 MB y tarda en leerse, asi que se cachea en
+# `scripts/rotacion_prev.json` y solo se vuelve a leer cuando cambia el mes.
+def _bv_de(path):
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
+    ws = wb["Forecast"]
+    k = ci("BV") - 1
+    out = {}
+    for row in ws.iter_rows(min_row=4, max_row=6000, max_col=k + 1, values_only=True):
+        c = row[2]
+        if not (c and str(c).strip()) or str(c).strip() == "-": continue
+        v = row[k]
+        if isinstance(v, (int, float)): out[str(c).strip()] = round(float(v), 2)
+    return out
+
+
+def rotacion_anterior(folder, data, cache_path):
+    """Agrega data['bvant'] (una lista alineada con rows) y data['bvant_mes'].
+
+    Va como lista y no como diccionario a proposito: {codigo: valor} para 5.400 codigos
+    son ~100 KB en el HTML; la lista alineada son ~25 KB y el dashboard es un archivo
+    que se manda por mail.
+    """
+    bases = [os.path.join(folder, "Histórico"), os.path.join(folder, "Historico")]
+    cand = []
+    for b in bases:
+        cand += glob.glob(os.path.join(b, "Forecast *"))
+    snaps = []
+    for p in cand:
+        bn = os.path.basename(p)
+        if bn.startswith("~$") or not bn.lower().endswith((".xlsx", ".xlsm")): continue
+        pr = _parse_fname(bn)
+        if pr: snaps.append((pr, p))
+    if not snaps:
+        print("  Rotacion: no hay ningun Forecast MM-AA en Historico."); return
+    # ⚠️ el mas reciente que NO sea del mes en curso: en octubre, el de septiembre
+    mes_hoy = (data.get("stock_iso") or "")[:7]
+    snaps = [s for s in sorted(snaps) if "%04d-%02d" % s[0] < mes_hoy] or sorted(snaps)
+    (yy, mm), path = snaps[-1]
+    clave = "%04d-%02d" % (yy, mm)
+    cache = {}
+    if os.path.exists(cache_path):
+        try: cache = json.load(open(cache_path, encoding="utf-8"))
+        except Exception: cache = {}
+    if cache.get("mes") != clave:
+        print("  Rotacion: leyendo %s (una sola vez, puede tardar)..." % os.path.basename(path))
+        cache = {"mes": clave, "bv": _bv_de(path)}
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, separators=(",", ":"))
+    bv = cache.get("bv") or {}
+    data["bvant"] = [bv.get(r[2]) for r in data["rows"]]
+    MESN = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+            "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    data["bvant_mes"] = "%s %d" % (MESN[mm - 1], yy)
+    hay = sum(1 for x in data["bvant"] if x)
+    print("  Rotacion: contra %s | %d codigos con ritmo anterior > 0" % (data["bvant_mes"], hay))
+
+
 if __name__=="__main__":
     folder=os.path.dirname(os.path.abspath(__file__))
     src = sys.argv[1] if len(sys.argv)>1 else find_latest(folder)
@@ -678,6 +747,9 @@ if __name__=="__main__":
     except Exception as e:
         print("Historico: error",e); data["hist"]={"months":[],"vp":{},"real":{}}
     data.pop("real",None); data.pop("real_labels",None)
+    # la carpeta del Forecast en Drive es donde vive "Histórico", no la de scripts
+    rotacion_anterior(os.path.dirname(os.path.abspath(src)), data,
+                      os.path.join(folder, "rotacion_prev.json"))
     aplicar_memoria(data, out)
     foto_mensual(data, os.path.join(folder, "historico_stock.json"))
     build(data, out, tpl)

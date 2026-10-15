@@ -320,7 +320,7 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."],["EST","5 · Estado","Estado","Buscar..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),RMES:new Set([0]),hideCols:new Set(),dotGap:1,stMult:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),ROT:null,rotU:30,rotSub:'sinrot',rotSort:null,RMES:new Set([0]),hideCols:new Set(),dotGap:1,stMult:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -350,10 +350,13 @@ let _vbK='',_vbC=null;function rowsBase(){
   if(_vbC&&k===_vbK)return _vbC;_vbK=k;
   _vbC=DATA.rows.filter(r=>mUN(r)&&mGA(r)&&mCAT(r)&&mCOD(r));return _vbC;}
 function mEST(r){if(st.EST.size===0)return true;const o=stkOf(r);return !!o&&st.EST.has(o.k);}
+// ⚠️ La rotacion es un CRUCE, no un estado: se combina con el filtro de estado en
+// vez de reemplazarlo. Por eso va aparte de st.EST y fuera de rowsBase().
+function mROT(r){return !st.ROT||rotClase(r)===st.ROT;}
 let _vrK='',_vrC=null;function visibleRows(){
   const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',')
-    +'|'+[...st.EST].join(',')+'|'+(st.stMult||1);
-  if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=rowsBase().filter(mEST);return _vrC;}
+    +'|'+[...st.EST].join(',')+'|'+(st.stMult||1)+'|'+(st.ROT||'')+'|'+(st.rotU||30);
+  if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=rowsBase().filter(r=>mEST(r)&&mROT(r));return _vrC;}
 function countBy(rows,k){const m=new Map();rows.forEach(r=>m.set(r[k],(m.get(r[k])||0)+1));return m;}
 function resMonths(){return st.RMES.size?[...st.RMES].sort((a,b)=>a-b):[0];}
 
@@ -820,6 +823,38 @@ function renderHist(){const el=document.getElementById('view-hist');
 function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 const VAJ=106;  // venta ajustada mensual (col BV del Forecast)
+// ---------------------------------------------------------------- rotacion
+// El ritmo del mes anterior, del Forecast congelado en Historico. Viaja como lista
+// alineada con rows[] y no como {codigo:valor}: son 25 KB en vez de 100.
+const _BVA=new Map();(DATA.bvant||[]).forEach((v,i)=>{if(v!=null)_BVA.set(DATA.rows[i],v);});
+// ⚠️ Devuelve la variacion del RITMO (col BV), no de la VD (col CJ). Son columnas
+// distintas del Excel y no hay que mezclarlas.
+//   null  = no se puede medir (no hay ritmo anterior y tampoco actual)
+//   Infinity = arranco de cero
+function rotPct(r){const a=_BVA.get(r),b=r[VAJ]||0;
+  if(a==null)return null;
+  if(a<=0)return (b>0)?Infinity:null;
+  return b/a-1;}
+function rotClase(r){const p=rotPct(r);if(p===null)return null;
+  // ⚠️ Los Sin rotacion quedan afuera: ya tienen su propio sub-estado y los tres son
+  // excluyentes. Erik lo vio filtrando 'En baja' y encontrando 2 Sin rotacion ahi.
+  // Los cruces con Exceso, Quiebre, Riesgo y Lanzamientos SI se mantienen.
+  const _o=stkOf(r);if(_o&&_o.k==='sinrot')return null;
+  const u=(st.rotU||30)/100;
+  if(p===Infinity)return 'alza';
+  if(p<=-u)return 'baja';
+  if(p>=u)return 'alza';
+  return null;}
+// ⚠️ Las unidades que se movio el ritmo mensual. Es la base de la plata de los dos
+// cruces: lo que importa de una baja no es el stock entero sino cuanto se cayo.
+// Erik: "MA-0002 baja 58 unidades (180-122), 58 x el costo unitario".
+function rotDelta(r){const a=_BVA.get(r);if(a==null)return null;
+  return Math.abs((r[VAJ]||0)-a);}
+function rotTxt(r){const p=rotPct(r);if(p===null)return '';
+  if(p===Infinity)return 'arranc\u00f3 a rotar (antes 0)';
+  const a=_BVA.get(r);
+  return 'Rotaci\u00f3n '+(p>=0?'+':'')+(p*100).toFixed(0)+'% \u00b7 '
+    +(DATA.bvant_mes||'mes anterior')+' '+Math.round(a)+' \u2192 hoy '+Math.round(r[VAJ]||0);}
 const ING=107;  // primer ingreso (col G), como AAAAMMDD para que ordene solo
 const MAXE=108; // stock maximo del Excel (col CP), con estacionalidad
 const VACU=109; // venta acumulada del mes en curso, la arma el generador
@@ -1048,7 +1083,7 @@ function stkCalc(r){
   // filtro y la foto mensual. Solo cambia la pastilla, para no confundir un faltante
   // que ya tiene el pedido viajando con uno que no tiene nada en camino.
   const ing=((k==='cero'||k==='riesgo')&&compraMes>0);
-  return {k:k,ing:ing,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
+  return {k:k,ing:ing,costo:costo,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
     faltaBruto:faltaBruto,compraMes:compraMes,cur:cur,
     excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null,
@@ -1059,6 +1094,21 @@ function stkCalc(r){
     meses:r[5], r:r};
 }
 function setStMult(el){st.stMult=parseFloat(el.value)||1;renderStock();}
+function setRotU(el){st.rotU=parseInt(el.value,10)||30;renderAll();}
+// Cual de los tres sub-estados muestra la tarjeta. El filtro se pone tocandola,
+// igual que en las otras cinco.
+function rotActivo(){const v=st.rotSub||'sinrot';
+  return (v==='sinrot')?st.EST.has('sinrot'):(st.ROT===v);}
+function rotPoner(v,on){st.EST.delete('sinrot');st.ROT=null;
+  if(on){if(v==='sinrot')st.EST.add('sinrot');else st.ROT=v;}}
+// ⚠️ Cambiar el desplegable ARRASTRA el filtro si estaba puesto, en vez de apagarlo:
+// pasar de 'En baja' a 'En alza' filtra directo, sin tener que tocar de nuevo.
+function setRotSub(v){const act=rotActivo();st.rotSub=v;rotPoner(v,act);renderAll();}
+function setRot(){const v=st.rotSub||'sinrot';rotPoner(v,!rotActivo());renderAll();}
+// La tabla de rotacion ordena con la misma regla que el resto del dashboard: un clic
+// de mayor a menor, el segundo vuelve al orden de arranque (por cuanto se movio).
+function setRotSort(f){if(st.rotSort===f){st.rotSort=null;}else{st.rotSort=f;}
+  st.dirty.st=true;renderStock();}
 // La tarjeta ES el filtro de la barra: un solo lugar donde se guarda, y asi no se
 // pueden contradecir. Se puede elegir mas de un estado.
 function setStFil(k){if(k==='all')st.EST.clear();
@@ -1102,6 +1152,29 @@ function renderStock(){
     // el faltante va por estado: destapar un quiebre no es lo mismo que
     // completar hasta el maximo algo que ya tiene stock
     add('falC_'+o.k,o.cur,o.falC);});
+  // ⚠️ Se cuentan sobre rowsBase(), igual que las tarjetas: si se usara lo ya
+  // filtrado, al tocar 'en baja' el conteo de 'en alza' daria cero.
+  // Los tres sub-estados, con la MISMA cuenta de plata: stock x costo y stock x mix.
+  // ⚠️ No se usa el bucket de la tarjeta de cada codigo: en un cruce mezclaria
+  // 'costo inmovilizado' con 'costo a invertir' y el total no significaria nada.
+  const ROTG={sinrot:null,baja:null,alza:null};
+  for(const kk in ROTG)ROTG[kk]={n:0,u:0,cA:0,cB:0,c:{},m:{}};
+  rowsBase().forEach(r=>{
+    const o=stkOf(r);if(!o)return;
+    const cl=rotClase(r),dest=[];
+    if(o.k==='sinrot')dest.push('sinrot');
+    if(cl)dest.push(cl);
+    if(!dest.length)return;
+    const cc=DATA.costos&&DATA.costos[r[2]],cur=(cc&&cc[3])?cc[3]:'$';
+    const stq=o.stock>0?o.stock:0, mix=r[104], dlt=rotDelta(r)||0;
+    dest.forEach(d=>{const g=ROTG[d];g.n++;
+      const _c=DATA.CAT[r[3]];if(_c==='A')g.cA++;else if(_c==='B')g.cB++;
+      // ⚠️ Sin rotacion va por el stock entero (esta parado); los dos cruces por la
+      // CAIDA o la suba del ritmo, que es lo que se quiere medir.
+      const q=(d==='sinrot')?stq:dlt;
+      if(d!=='sinrot')g.u+=dlt;
+      if(q&&cc&&cc[0]!=null)g.c[cur]=(g.c[cur]||0)+q*cc[0];
+      if(q&&mix!=null)g.m[cur]=(g.m[cur]||0)+q*mix;});});
   const tot=dat.length||1;
   const F=(st.EST.size===1)?[...st.EST][0]:'all';
   const VIS=st.stVista||'cod';
@@ -1114,48 +1187,106 @@ function renderStock(){
     ['riesgo','Riesgo','#ef6c00','#fff','Bajo el mínimo','Costo a invertir (máximo)','falC_riesgo','Venta mix perdida','perd_riesgo'],
     ['ideal','Ideal','#2e7d32','#fff','Entre mín. y máx.','Costo a invertir (máximo)','falC_ideal','',''],
     ['exceso','Exceso','#ffd600','#e30613','Sobre el máximo','Costo inmovilizado','excC','Venta mix inmovilizado','excM'],
-    ['sinrot','Sin rotación','#78839c','#fff','Sin ventas en 6 meses','Costo parado','stkC_sinrot','Venta mix parado','stkM_sinrot'],
-    ['lanz','Lanzamientos','#1565c0','#fff','Cat N, P y sin Cat','Costo invertido','stkC_lanz','Venta mix a generar','stkM_lanz']];
+    ['lanz','Lanzamientos','#1565c0','#fff','Cat N, P y sin Cat','Costo invertido','stkC_lanz','Venta mix a generar','stkM_lanz'],
+    // ⚠️ Sexta y distinta: fondo gris, sin % sobre el total y con tres sub-estados.
+    // No es una porcion del total como las otras cinco -- dos de sus sub-estados son
+    // CRUCES que se superponen con ellas.
+    ['sinrot','Rotación','#78839c','#fff','']];
   const badge=(lbl,bg,fg)=>'<span style="display:inline-block;min-width:112px;text-align:center;'
     +'padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+bg+';color:'+fg+';">'+lbl+'</span>';
   // el costo en rojo y la venta en verde, igual que en la tabla de abajo
   const plataL=(b,col)=>{const e=Object.entries(P[b]||{}).filter(x=>x[1]);
-    return e.length?e.map(x=>'<div style="font-size:.84rem;font-weight:800;color:'+col+';line-height:1.35;">'+M(x[0],x[1])+'</div>').join('')
-      :'<div style="font-size:.84rem;color:#b0b5cf;">–</div>';};
+    return e.length?e.map(x=>'<div style="font-size:.7rem;font-weight:800;color:'+col+';line-height:1.3;white-space:nowrap;">'+M(x[0],x[1])+'</div>').join('')
+      :'<div style="font-size:.7rem;color:#b0b5cf;">–</div>';};
   const colP=(lbl,b,col)=>'<div style="flex:1 1 0;min-width:0;">'
     +'<div style="font-size:.58rem;color:#8a90b0;line-height:1.2;height:22px;">'+lbl+'</div>'+plataL(b,col)+'</div>';
   const par=(l1,b1,c1,l2,b2,c2)=>'<div style="border-top:1px solid #eceef7;margin:9px 0 7px;"></div>'
-    +'<div style="display:flex;gap:12px;">'+colP(l1,b1,c1)
+    +'<div style="display:flex;gap:5px;">'+colP(l1,b1,c1)
       +(l2?colP(l2,b2,c2):'<div style="flex:1 1 0"></div>')+'</div>';
+  // La tarjeta de Rotacion: tres sub-estados, sin el % sobre el total.
+  // 'Sin rotacion' sigue filtrando por estado (st.EST); los otros dos por st.ROT.
+  // La tarjeta de Rotacion. ⚠️ Usa EL MISMO contenedor que las otras cinco (no
+  // class="card", que es otra cosa): mismo borde, mismo radio, misma sombra y el
+  // mismo min-width. Si no, las pastillas no arrancan a la misma altura.
+  // Lo unico distinto es el fondo tintado.
+  const panelRot=()=>{
+    const sub=st.rotSub||'sinrot', g=ROTG[sub], on=rotActivo();
+    const ritmo='Ritmo contra '+(DATA.bvant_mes||'el mes anterior');
+    const OPC=[['sinrot','Sin rotaci\u00f3n','\u00daltimos 6 meses','#78839c'],
+      ['baja','En baja',ritmo,'#c62828'],['alza','En alza',ritmo,'#2e7d32']];
+    const cur=OPC.find(x=>x[0]===sub)||OPC[0];
+    const sel='<select onchange="setRotSub(this.value)" onclick="event.stopPropagation()" '
+      +'style="font:inherit;font-size:.62rem;font-weight:700;color:#1a237e;background:#fff;'
+      +'border:1px solid #c5cae9;border-radius:5px;padding:1px 3px;max-width:100%;">'
+      +OPC.map(o=>'<option value="'+o[0]+'"'+(o[0]===sub?' selected':'')+'>'+o[1]+'</option>').join('')
+      +'</select>';
+    const plata=(d,col)=>{const e=Object.entries(d||{}).filter(x=>x[1]);
+      return e.length?e.map(x=>'<div style="font-size:.72rem;font-weight:800;color:'+col+';'
+        +'line-height:1.3;white-space:nowrap;">'+M(x[0],x[1])+'</div>').join('')
+        :'<div style="font-size:.72rem;color:#b0b5cf;">\u2013</div>';};
+    const colPV=(lbl,d,col)=>'<div style="flex:1 1 0;min-width:0;">'
+      +'<div style="font-size:.58rem;color:#8a90b0;line-height:1.2;height:22px;">'+lbl+'</div>'
+      +plata(d,col)+'</div>';
+    return '<div onclick="setRot()" title="Toc\u00e1 para '+(on?'quitar el filtro':'filtrar')+'" '
+      +'style="cursor:pointer;flex:1 1 0;min-width:186px;'
+      +'background:#dde2f0;border-radius:10px;'
+      +'border:2px solid '+(on?'#78839c':'#e8eaf6')+';box-shadow:0 1px 3px rgba(26,35,126,.07);'
+      +'padding:11px 12px;">'
+      // ⚠️ Pastilla y selector en el MISMO renglon, y la pastilla sin el min-width de
+      // 112px de las otras cinco: 112 + 6 + 84 = 202 y solo hay 172 utiles. Con el
+      // ancho de su texto da 165. Asi Rotacion tiene las mismas tres lineas que las
+      // demas y el conteo y los importes quedan a la misma altura.
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'
+        +'<span style="display:inline-block;text-align:center;padding:4px 10px;'
+          +'border-radius:10px;font-size:.78rem;font-weight:800;background:#78839c;color:#fff;">'
+          +'Rotaci\u00f3n</span>'+sel
+      +'</div>'
+      +'<div style="font-size:.58rem;color:#8a90b0;line-height:1.15;margin-bottom:5px;'
+        +'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+cur[2]+'</div>'
+      +'<div style="display:flex;align-items:baseline;gap:4px;">'
+        +'<span style="font-size:1.25rem;font-weight:800;color:'+cur[3]+';line-height:1.1;">'+fmtI(g.n)+'</span>'
+        +'<span style="font-size:.58rem;color:#5f6690;">SKU</span>'
+        +'<span style="font-size:.58rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">A '
+          +fmtI(g.cA)+' \u00b7 B '+fmtI(g.cB)+'</span>'
+      +'</div>'
+      +'<div style="font-size:.58rem;margin-top:1px;line-height:1.2;">&nbsp;</div>'
+      // ⚠️ La plata queda SOLO en Sin rotacion. En los dos cruces habia que inventar
+      // que significaba y no era una decision de compra: esa sale del estado del
+      // codigo, que ya tiene su tarjeta. Lo que importa aca es cuanto se movio.
+      +((sub==='sinrot')?('<div style="border-top:1px solid rgba(26,35,126,.12);margin:9px 0 7px;"></div>'
+        +'<div style="display:flex;gap:5px;">'
+        +colPV('Costo inmovilizado',g.c,'#c62828')
+        +colPV('Venta mix inmovilizado',g.m,'#1e7e34')+'</div>'):'')
+      +'</div>';};
   const card=c=>{const k=c[0],on=st.EST.has(k),g=G[k];
+    if(k==='sinrot')return panelRot();
     // Sin rotacion se dibuja apagado: es plata quieta, no una alarma.
     const gris=(k==='sinrot'),cNum=gris?'#78839c':'#1a237e',c1=gris?'#78839c':STROJO,c2=gris?'#78839c':STVERDE;
-    return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;flex:1 1 0;min-width:200px;background:#fff;border-radius:10px;border:2px solid '+(on?c[2]:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 12px;">'
+    return '<div onclick="setStFil(&quot;'+(on?'all':k)+'&quot;)" title="Tocá para '+(on?'quitar el filtro':'filtrar')+'" style="cursor:pointer;flex:1 1 0;min-width:186px;background:#fff;border-radius:10px;border:2px solid '+(on?c[2]:'#e8eaf6')+';box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 12px;">'
       // el subtitulo al lado del badge: ahi se gana el alto que piden los importes
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-        +badge(c[1],c[2],c[3])
-        +'<span style="font-size:.58rem;color:#8a90b0;line-height:1.15;">'+c[4]+'</span>'
-      +'</div>'
+      +'<div style="margin-bottom:3px;">'+badge(c[1],c[2],c[3])+'</div>'
+      +'<div style="font-size:.58rem;color:#8a90b0;line-height:1.15;margin-bottom:5px;'
+        +'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-tip="'+c[4]+'">'+c[4]+'</div>'
       // el conteo y el % en el mismo renglon: la tarjeta baja un escalon de alto
-      +'<div style="display:flex;align-items:baseline;gap:7px;">'
-        +'<span style="font-size:1.35rem;font-weight:800;color:'+cNum+';line-height:1.1;">'+fmtI(g.n)+'</span>'
-        +'<span style="font-size:.6rem;color:#5f6690;">SKU · <b style="font-size:.74rem;color:#1a237e;">'+(g.n/tot*100).toFixed(1).replace('.',',')+'%</b></span>'
+      +'<div style="display:flex;align-items:baseline;gap:4px;">'
+        +'<span style="font-size:1.25rem;font-weight:800;color:'+cNum+';line-height:1.1;">'+fmtI(g.n)+'</span>'
+        +'<span style="font-size:.58rem;color:#5f6690;">SKU · <b style="font-size:.72rem;color:#1a237e;">'+(g.n/tot*100).toFixed(1).replace('.',',')+'%</b></span>'
         // A y B aparte: son las dos categorias que a Erik le importan
         // en Lanzamientos no hay A ni B: ahi las dos que importan son N y P
         +(()=>{const d=(k==='lanz')?[['N',g.cN],['P',g.cP],['s/C',g.cS]]:[['A',g.cA],['B',g.cB]];
-          let t='<span style="font-size:.58rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
+          let t='<span style="font-size:.52rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
             +d.map(x=>x[0]+' '+fmtI(x[1])).join(' · ')+'</span>';
-          // en Quiebre y Riesgo interesa cuantos ya tienen el pedido viajando
-          if(g.cIng)t='<span style="font-size:.58rem;font-weight:800;color:'
-            +(k==='cero'?'#c62828':'#e65100')+';margin-left:auto;white-space:nowrap;"'
-            +' data-tip="'+STLBL[k]+' con ingreso" data-tip2="Con compra del mes en camino">'
-            +fmtI(g.cIng)+' c/ing.</span>'+t.replace('margin-left:auto;','margin-left:8px;');
           return t;})()
       +'</div>'
+      +'<div style="font-size:.58rem;font-weight:800;margin-top:1px;line-height:1.2;color:'
+        +(k==='cero'?'#c62828':'#e65100')+';"'+((g.cIng)?' data-tip="'+STLBL[k]+' con ingreso"'
+        +' data-tip2="Con compra del mes en camino"':'')+'>'
+        +((g.cIng)?fmtI(g.cIng)+' c/ing.':'&nbsp;')+'</div>'
       +par(c[5],c[6],c1,c[7],c[8],c2)
       +'</div>';};
   // --- tabla ---
   let rows=(st.EST.size===0)?dat:dat.filter(o=>st.EST.has(o.k));
+  if(st.ROT)rows=rows.filter(o=>rotClase(o.r)===st.ROT);
   const SF=st.stSort||'cod',DIR=st.stDir||1;
   // Los GA se ordenan con la misma prioridad que los filtros de arriba (PRIORITY).
   const key=o=>({ga:prioName(DATA.GA[o.r[1]]),cod:o.r[2],minU:o.minU,maxU:o.maxU,stock:o.stock,
@@ -1183,13 +1314,79 @@ function renderStock(){
       +H('compraMes','Compra','Compra del mes, ya en camino')+H('falta','Unid.','Unidades')+H('falC','Costo')
       +H('exc','Unid.','Unidades')+H('excC','Costo')+H('excM','Venta mix')+'</tr></thead>';
   const D='–';
+
+  // ⚠️ Tabla propia para los dos cruces de rotacion. Erik: *"no veo utilizable el diseno
+  // de tabla que tenemos para el resto de los estados en este caso"*. La de siempre esta
+  // armada para faltante y exceso; aca lo que importa es el ritmo de antes contra el de
+  // hoy. Sin rotacion NO la usa: es un estado de los de siempre y su tabla sirve.
+  const tablaRot=(lista)=>{
+    // ⚠️ VAA/VAH se agrandan a 76 porque llevan el nombre del mes en mayusculas.
+    // Total 1.266px contra 1.292 utiles: entra sin scroll lateral, pero sin aire.
+    // Sin el grupo PLATA: 13 columnas y 941px, sobra aire de ancho.
+    const CR=[145,112,46,75,49,46,56,54,103,76,76,52,64];
+    const cgR='<colgroup>'+CR.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>';
+    // Los dos meses salen solos: el de la izquierda es la foto de Historico y el de la
+    // derecha el mes en curso. El mes que viene van a decir Octubre y Noviembre sin tocar nada.
+    const mAnt=(DATA.bvant_mes||'Mes anterior').split(' ')[0];
+    const mHoy=(DATA.months&&DATA.months[0])||'Hoy';
+    const HR=(f,t,ti)=>'<th'+(ti?' data-tip="'+ti+'"':'')+' data-tip2="clic para ordenar"'
+      +' onclick="setRotSort(&quot;'+f+'&quot;)" style="'+TH+'cursor:pointer;">'+t+'</th>';
+    const thR='<thead><tr>'+GH('Producto',6,'#1a237e','#fff')
+        +GH('Stock',3,'#1a237e','#fff')
+        +GH('Rotaci\u00f3n',4,'#546e7a','#fff')+'</tr>'
+      +'<tr>'+HP('Grupo')+HR('cod','C\u00f3digo')+HP('Cat','Categor\u00eda')+HP('Fecha ing.','Fecha del primer ingreso')
+        +HR('vd','VD','Venta demanda')+HR('vend','VC','Venta en curso')
+        +HR('stock','Stock h.','Stock hoy')+HR('meses','Meses h.','Meses hoy')+HP('Estado')
+        +HR('vaa',mAnt,'Venta ajustada de '+(DATA.bvant_mes||''))
+        +HR('vah',mHoy,'Venta ajustada de hoy')
+        +HR('pct','Rot. %','Cu\u00e1nto cambi\u00f3 el ritmo')
+        +HR('dif','Dif. cant.','Unidades que se movi\u00f3 el ritmo mensual')
+        +'</tr></thead>';
+    const uni=o=>rotDelta(o.r)||0;
+    const KEY={cod:o=>o.r[2], vd:o=>o.r[79]||0, vend:o=>o.vend||0,
+      stock:o=>o.stock, meses:o=>(o.meses==null?-1:o.meses),
+      vaa:o=>(_BVA.get(o.r)||0), vah:o=>(o.r[VAJ]||0),
+      pct:o=>{const p=rotPct(o.r);return (p===Infinity||p==null)?-1e9:p;},
+      dif:uni};
+    let orden;
+    if(st.rotSort&&KEY[st.rotSort]){const k=KEY[st.rotSort];
+      orden=lista.slice().sort((a,b)=>{const x=k(a),y=k(b);
+        if(typeof x==='string')return String(x).localeCompare(String(y),'es',{numeric:true});
+        return y-x;});}
+    else{// el de arranque: lo que mas se movio arriba
+      orden=lista.slice().sort((a,b)=>{
+        const pa=rotPct(a.r),pb=rotPct(b.r);
+        const va=(pa===Infinity)?1e9:Math.abs(pa||0),vb=(pb===Infinity)?1e9:Math.abs(pb||0);
+        return vb-va;});}
+    const tope=vt('st');
+    const vistas=orden.slice(0,tope);
+    const pc=p=>{if(p===null)return D;if(p===Infinity)return 'nuevo';
+      return (p>=0?'+':'\u2212')+Math.abs(p*100).toFixed(0)+'%';};
+    let b='';
+    vistas.forEach(o=>{const p=rotPct(o.r),a=_BVA.get(o.r),dl=rotDelta(o.r);
+      b+='<tr><td class="st-ga" data-tip="'+DATA.GA[o.r[1]]+'">'+gaLbl(DATA.GA[o.r[1]])
+        +'</td><td class="st-cod">'+o.r[2]
+        +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
+        +'</td><td class="num st-d">'+fmtIng(o.r[ING],DATA.CAT[o.r[3]])
+        +'</td><td class="num st-v st-b">'+fmtI(o.r[79])
+        +'</td><td class="num st-v">'+(o.vend?fmtI(o.vend):D)
+        +'</td><td class="num st-b">'+fmtI(o.stock)
+        +'</td><td class="num">'+fmtM(o.meses)
+        +'</td><td class="st-ct"><span class="st-p st-p-'+o.k+(o.ing?'-ing':'')+'">'+STLBL[o.k]+(o.ing?' c/ing.':'')
+        +'</span></td><td class="num st-d">'+(a!=null?fmtI(a):D)
+        +'</td><td class="num st-b">'+fmtI(o.r[VAJ]||0)
+        +'</td><td class="num" style="font-weight:800;color:'+((p!==null&&p!==Infinity&&p<0)?'#c62828':'#1e7e34')+'">'+pc(p)
+        +'</td><td class="num st-b">'+(dl!=null?fmtI(dl):D)
+        +'</td></tr>';});
+    return '<table class="prevt">'+cgR+thR+'<tbody>'+b+'</tbody></table>'
+      +pieTope('st',orden.length,vistas.length);};
   // La misma fila sirve suelta o colgando de un grupo (con sangria).
   const fila=(o,dentro)=>'<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
     +'<td class="st-ga"'+(dentro?' style="padding-left:22px"':'')+(dentro?'':' data-tip="'+DATA.GA[o.r[1]]+'"')+'>'+(dentro?'':gaLbl(DATA.GA[o.r[1]]))
     +'</td><td class="st-cod">'+o.r[2]
     +'</td><td class="st-ct">'+catPill(DATA.CAT[o.r[3]])
     +'</td><td class="num st-d">'+fmtIng(o.r[ING],DATA.CAT[o.r[3]])
-    +'</td><td class="num st-v st-b">'+fmtI(o.r[79])
+    +'</td><td class="num st-v st-b"'+(rotTxt(o.r)?' data-tip="Ritmo (col BV)" data-tip2="'+rotTxt(o.r)+'"':'')+'>'+fmtI(o.r[79])
     +'</td><td class="num st-v">'+(o.vend?fmtI(o.vend):D)
     +'</td><td class="num st-d">'+fmtI(o.minU)
     +'</td><td class="num st-d">'+fmtI(o.maxU)
@@ -1263,11 +1460,13 @@ function renderStock(){
     return '<button onclick="setStVista(&quot;'+v+'&quot;)" style="font:inherit;font-size:.7rem;font-weight:700;cursor:pointer;'
       +'border:1px solid '+(on?'#1a237e':'#c5cae9')+';background:'+(on?'#1a237e':'#f8f9ff')+';color:'+(on?'#fff':'#5f6690')+';'
       +'border-radius:20px;padding:3px 12px;margin-left:5px;min-width:104px;text-align:center;">'+lbl+'</button>';};
+  const ropt=[10,20,30].map(v=>'<option value="'+v+'"'+(((st.rotU||30)===v)?' selected':'')
+    +'>'+v+'%</option>').join('');
   const mopt=[[1,'Máximo'],[2,'Máximo × 2'],[3,'Máximo × 3'],[4,'Máximo × 4']]
     .map(o=>'<option value="'+o[0]+'"'+(((st.stMult||1)===o[0])?' selected':'')+'>'+o[1]+'</option>').join('');
   el.innerHTML=
     '<div class="liqbar"><span class="liqlbl">Indicador</span>'
-      +'<select onchange="setStMult(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select>'+'<span style="width:10px"></span><span class="liqlbl">Ver</span>'+vbtn('cod','Por código')+vbtn('ga','Por grupo')+'</div>'
+      +'<select onchange="setStMult(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select>'+'<span style="width:14px"></span><span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Cu\u00e1nto tiene que moverse el ritmo contra el mes anterior para contar">Rotaci\u00f3n</span>'+'<select onchange="setRotU(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'+'<span style="width:10px"></span><span class="liqlbl">Ver</span>'+vbtn('cod','Por código')+vbtn('ga','Por grupo')+'</div>'
     +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+CARDS.map(card).join('')
     +'</div>'
     +'<div class="sec-h" style="margin-top:16px">📦 Detalle <span style="font-weight:600;color:#8a90b0;font-size:.72rem">('+fmtI(rows.length)+' SKU)</span></div>'
@@ -1278,7 +1477,10 @@ function renderStock(){
   // siguiente, asi la pantalla aparece al instante.
   clearTimeout(window._stTmr);
   window._stTmr=setTimeout(()=>{const w=document.getElementById('stTbl');
-    if(w)w.innerHTML='<table class="prevt">'+cg+th+(VIS==='ga'?mkGrp():mkTb())+'</table>'
+    if(!w)return;
+    // los dos cruces de rotacion tienen tabla propia; Sin rotacion usa la de siempre
+    if(st.ROT){w.innerHTML=tablaRot(rows);return;}
+    w.innerHTML='<table class="prevt">'+cg+th+(VIS==='ga'?mkGrp():mkTb())+'</table>'
       +(VIS==='ga'?'':pieTope('st',rows.length,Math.min(tope,rows.length)));},0);
 }
 // ---- Calculos de Estado Stock ----

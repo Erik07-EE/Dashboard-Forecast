@@ -549,6 +549,115 @@ que tenga otro color"*, y enseguida *"seguramente pase lo mismo en riesgo"*. Ten
 - La tarjeta agrega **"N c/ing."** al lado del conteo. La pastilla mide 92px, igual que
   las otras: **la tabla no se ensanchó** (1.266px, los mismos que antes).
 
+## La tarjeta Rotación y los dos cruces (15/10)
+
+La sexta tarjeta de Estado Stock dejó de llamarse "Sin rotación" y pasó a ser
+**Rotación**, con un desplegable de tres sub-estados: **Sin rotación · En baja · En alza**.
+
+### De dónde sale el dato
+
+⚠️ **Compara la col BV "Venta ajustada" del Forecast de hoy contra la del Forecast
+congelado del mes anterior** (`Histórico\Forecast MM-AA.xlsm`). Es el ritmo mensual con
+el que el Excel calcula "Meses actual": la misma base del mínimo, el máximo y los 6
+estados. Si ese ritmo se mueve, se mueve todo el modelo.
+
+  Verificado con el ejemplo de Erik — **MA-0002: septiembre 180, octubre 122, −32%**.
+
+⚠️ **OJO CON EL NOMBRE.** Erik la llamó "VD", pero en el dashboard **VD es la col CJ**:
+son columnas distintas. Por eso en la interfaz esto se llama *rotación* y nunca VD.
+
+- Lo lee `rotacion_anterior()` en el generador, que cachea el ritmo anterior en
+  `scripts/rotacion_prev.json` y **solo relee el Excel cuando cambia el mes** (pesa 19 MB).
+- Viaja al HTML como `DATA.bvant`, **una lista alineada con `rows[]`**: 25 KB contra los
+  100 KB que costaría un `{código: valor}`.
+- Los dos nombres de columna (Septiembre / Octubre) **salen solos**: el izquierdo de
+  `DATA.bvant_mes` y el derecho de `DATA.months[0]`. En noviembre dicen Octubre y
+  Noviembre sin tocar nada.
+
+### Qué son y qué NO son los sub-estados
+
+- ⚠️ **"Sin rotación" sigue siendo uno de los 6 estados excluyentes.** Sacarlo del modelo
+  devolvería **683 de sus 709 códigos al Exceso** (sin ventas → ritmo 0 → máximo 0 →
+  Exceso por definición): es el problema de los $ 35 millones que se arregló el 16/09.
+- ⚠️ **"En baja" y "En alza" son CRUCES, no estados.** Con umbral 30%, los 92 que cayeron
+  están repartidos en Exceso, Quiebre, Riesgo y Lanzamientos. **Por eso la tarjeta no
+  muestra % sobre el total**: dejó de ser una porción. Lo pidió Erik por intuición y los
+  números le dieron la razón.
+- ⚠️ **Los tres son excluyentes entre sí** (un desplegable, no tres botones), pero **no
+  tocan el filtro de las otras cinco tarjetas**: cruzar "En baja" con "Exceso" es el uso
+  principal — *de mi sobrante, cuál encima se está cayendo*.
+- ⚠️ **Los Sin rotación quedan AFUERA de los dos cruces.** Erik encontró 2 en "En baja":
+  su caída ya está contada en el primer sub-estado.
+- Los que **arrancaron de cero** (ritmo anterior 0 y hoy > 0) cuentan como alza y la tabla
+  los muestra como "nuevo". ⚠️ Al ordenar por Rot. % van **al fondo**: no son un
+  porcentaje y arriba tapaban los aumentos reales.
+
+Medido el 15/10 con 5.384 códigos: **2.420 comparables**, 2.932 sin ritmo anterior.
+
+| Umbral | En baja | En alza |
+|---|---|---|
+| 10% | 426 | 468 |
+| 20% | 183 | 285 |
+| 30% | 92 | 213 |
+
+### La plata: solo en Sin rotación
+
+⚠️ **Los dos cruces NO muestran plata, y es una decisión cerrada.** Pasó por tres
+versiones antes de llegar acá, así que no volver a empezar:
+
+1. Primero era **stock × costo**. No servía: en una baja no importa el stock entero.
+2. Después **la caída × costo** (Dif. cant. × costo unitario), la cuenta que pidió Erik
+   con MA-0002: 58 unidades × USD 29,7697 = **USD 1.726,64**.
+3. Al final la sacó: *"en baja y en alza no quiero ver nada de costo y venta, es al pedo"*.
+   **Y tiene razón**: obligaba a inventar qué significaba —"inmovilizado" en una baja, "a
+   invertir" en una alza— y ninguna era una decisión de compra. Esa sale del estado del
+   código, que ya tiene su tarjeta con su plata. Acá importa *qué se movió y cuánto*.
+
+**Sin rotación sí la conserva** (`Costo inmovilizado` / `Venta mix inmovilizado`, stock ×
+costo y stock × mix): ahí no es un invento, es el stock entero parado. ⚠️ Ese nombre
+reemplaza al "Costo parado / Venta mix parado" que tenía cuando era tarjeta propia.
+
+### La tabla propia de los cruces
+
+Erik: *"no veo utilizable el diseño de tabla que tenemos para el resto de los estados en
+este caso"*. Los cruces tienen la suya, de **13 columnas y 941px**; Sin rotación usa la de
+siempre porque es un estado normal.
+
+```
+Producto: Grupo · Código · Cat · Fecha ing. · VD · VC
+Stock:    Stock h. · Meses h. · Estado
+Rotación: Septiembre · Octubre · Rot. % · Dif. cant.
+```
+
+- Ordena con la regla de siempre: un clic de mayor a menor, el segundo vuelve al orden de
+  arranque (por cuánto se movió el ritmo).
+- ⚠️ **La columna Cat necesita 46px**, igual que en la tabla principal: la pastilla mide
+  41 y con 33 recortaba. Es el mismo valor que ya estaba documentado y se volvió a pisar.
+
+### El encaje de las seis tarjetas, que costó
+
+⚠️ **Las cinco tarjetas de hoy ya ocupaban los 1.221px justos** (5 × 237 + 4 × 9). Meter
+una sexta obligó a tres cosas, todas medidas:
+
+1. El **ancho mínimo** bajó de 200 a **186px**: con 200, seis piden 1.245.
+2. El **subtítulo bajó a su propia línea** y el `c/ing.` a la de abajo, porque la línea del
+   título pedía 226px y quedan 172 útiles. Erik eligió ese reacomodo.
+3. El **renglón de `c/ing.` se reserva en las seis** (con un espacio cuando no hay), o
+   Quiebre y Riesgo quedan con una línea más y su separador cae 13px más abajo.
+   ⚠️ Se probó empujar la plata al pie con `margin-top:auto` y **es peor**: alinea el
+   fondo, no el separador, porque los importes ocupan una o dos líneas según el código
+   tenga una moneda o dos.
+
+Resultado: **las seis en un renglón, 172px de alto, separadores a la misma altura.**
+
+⚠️ **La tarjeta de Rotación usa el MISMO contenedor que las otras cinco** (no
+`class="card"`, que es otra cosa): mismo borde, radio, sombra y relleno `11px 12px`. Con
+otro contenedor las pastillas no arrancan a la misma altura. Lo único distinto es el
+fondo **#dde2f0**, elegido con distancia contra el blanco de las otras **y** contra el
+gris de la página (#eef0f8): con un tono más suave se perdía en algunos monitores.
+Su pastilla es la única sin `min-width:112px` — 112 + 6 + 84 del desplegable dan 202 y
+hay 172.
+
 ### El filtro Estado y los filtros cruzados (17/09)
 
 - Hay un **quinto filtro global, "Estado"**, con los 6. Filtra las cinco solapas.
