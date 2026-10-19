@@ -339,7 +339,7 @@ const PRIORITY=["Motores de arranque","Carcasas","Inducidos","Solenoides","Alter
 function prioName(name){const i=PRIORITY.indexOf(name);return i>=0?i:PRIORITY.length+(DATA.GA.indexOf(name));}
 function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."],["EST","5 · Estado","Estado","Buscar..."]];
-const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),ROT:null,rotU:20,presU:90,excCut:1.5,rotSub:'sinrot',rotSort:null,RMES:new Set([0]),hideCols:new Set(),dotGap:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
+const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),ROT:null,rotU:20,presU:50,excCut:1.5,rotSub:'sinrot',rotSort:null,RMES:new Set([0]),hideCols:new Set(),dotGap:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -374,7 +374,7 @@ function mEST(r){if(st.EST.size===0)return true;const o=stkOf(r);return !!o&&st.
 function mROT(r){return !st.ROT||rotClase(r)===st.ROT;}
 let _vrK='',_vrC=null;function visibleRows(){
   const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',')
-    +'|'+[...st.EST].join(',')+'|'+(st.excCut||1.5)+'|'+(st.ROT||'')+'|'+(st.rotU||20)+'|'+(st.presU||90);
+    +'|'+[...st.EST].join(',')+'|'+(st.excCut||1.5)+'|'+(st.ROT||'')+'|'+(st.rotU||20)+'|'+(st.presU||50);
   if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=rowsBase().filter(r=>mEST(r)&&mROT(r));return _vrC;}
 function countBy(rows,k){const m=new Map();rows.forEach(r=>m.set(r[k],(m.get(r[k])||0)+1));return m;}
 function resMonths(){return st.RMES.size?[...st.RMES].sort((a,b)=>a-b):[0];}
@@ -892,7 +892,7 @@ const stockCorto=()=>{const iso=DATA.stock_iso||'';
   return dia+' '+iso.slice(8,10)+'/'+iso.slice(5,7)+' '+iso.slice(11,16)+' hs';};
 // Por debajo del umbral elegido, la Variacion no es confiable: hubo faltante.
 function presFloja(r){const p=presOf(r);
-  return (p!=null)&&(p < (st.presU||90)/100);}
+  return (p!=null)&&(p < (st.presU||50)/100);}
 const _vrSerie=r=>(DATA.hist&&DATA.hist.real)?DATA.hist.real[r[2]]:null;
 const _vrProm=(a,i,j)=>{const u=a.slice(i,j);
   return u.length?u.reduce((t,x)=>t+(x||0),0)/u.length:0;};
@@ -1178,7 +1178,7 @@ function stkCalc(r){
 }
 function setRotU(el){st.rotU=parseInt(el.value,10)||20;renderAll();}
 // Desde que % de presencia en stock una Variacion deja de ser confiable.
-function setPresU(el){st.presU=parseInt(el.value,10)||90;st.dirty.st=true;renderStock();}
+function setPresU(el){st.presU=parseInt(el.value,10)||50;st.dirty.st=true;renderStock();}
 // ⚠️ Cambia el corte leve/grave: con eso cambian los dos estados, su plata, el filtro
 // de Estado y las pastillas de las cinco solapas. Por eso renderAll y no renderStock.
 function setExcCut(el){st.excCut=parseFloat(el.value)||1.5;renderAll();}
@@ -1498,7 +1498,7 @@ function renderStock(){
         // mueve 2 unidades que a uno que mueve 900.
         const pg=(e.vr6>0)?(e.vr3/e.vr6-1):null;
         const ag=(e.vd>0)?(e.vend/e.vd):null;
-        const _gFlojo=!!e.nPres&&(e.pres/e.nPres)<((st.presU||90)/100);
+        const _gFlojo=!!e.nPres&&(e.pres/e.nPres)<((st.presU||50)/100);
         bg+='<tr onclick="tglGA(&quot;'+e.ga.replace(/"/g,'')+'&quot;)" style="cursor:pointer;'+(on?'background:#eef2ff;':'')+'">'
           +'<td class="st-ga" style="font-weight:800;color:#1a237e" data-tip="'+e.ga+'">'+(on?'\u25be ':'\u25b8 ')+gaLbl(e.ga)+'</td>'
           +'<td class="st-cod" style="color:#5f6690;font-weight:600">'+fmtI(e.n)+' SKU</td>'
@@ -1613,7 +1613,7 @@ function renderStock(){
   const eopt=[[1.5,'hasta x 1.5'],[2,'hasta x 2'],[3,'hasta x 3'],[4,'hasta x 4']]
     .map(o=>'<option value="'+o[0]+'"'+(((st.excCut||1.5)===o[0])?' selected':'')
       +'>'+o[1]+'</option>').join('');
-  const popt=[95,90,80,50].map(v=>'<option value="'+v+'"'+(((st.presU||90)===v)?' selected':'')
+  const popt=[95,90,80,50].map(v=>'<option value="'+v+'"'+(((st.presU||50)===v)?' selected':'')
     +'>'+v+'%</option>').join('');
   const ropt=[10,20,30,40,50].map(v=>'<option value="'+v+'"'+(((st.rotU||20)===v)?' selected':'')
     +'>'+v+'%</option>').join('');

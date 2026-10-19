@@ -180,8 +180,16 @@ con stock todo el semestre.
   marca 53 códigos de 5.438 y **5 de los 1.108 en baja**; a MA-1230006, con 47%, le da
   100%. Sirve para lo suyo —castigar el ritmo de un código que casi no existió— no como
   semáforo de faltante.
-- **El umbral lo elige Erik** (`st.presU`, 95/90/80/50, arranca en 90): por debajo, la
-  Variación se pinta **en gris**.
+- **El umbral lo elige Erik** (`st.presU`, 95/90/80/50): por debajo, la Variación se
+  pinta **en gris**.
+- ⚠️ **Arranca en 50%, no en 90** (Erik, 19/10: *"si su presencia % en stock fue menos de
+  50, avisame que la variación puede estar distorsionada, pero si no, ponelo como
+  válido"*). Con 90 se apagaban **182** de los 1.115 en baja y avisaba por un 87%, que no
+  distorsiona nada; con 50 se apagan **39**, que son los casos de verdad.
+- ⚠️ **El 50 se puso acá y no en el Excel: el dashboard NO lee BT**, lee BS directo.
+  Cambiar la fórmula de BT (`=SI(BS<20%;50%;100%)`) no movería nada en el dashboard.
+  La presencia de los 1.778 Importados, medida el 19/10: **100% en 1.113**, 90-99% en
+  185, 75-89% en 177, 50-74% en 138, 20-49% en 112 y menos de 20% en 53.
 - ⚠️ **Cada color significa UNA sola cosa** (Erik, 19/10: *"busquemos que el color
   represente lo mismo"*). El primer intento pintaba el % en stock de rojo cuando la
   presencia era baja, y el rojo ya quería decir otra cosa en la Variación de al lado —
