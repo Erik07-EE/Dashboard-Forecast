@@ -497,9 +497,13 @@ VRM = 6          # meses cerrados de la ventana de "sin rotacion"
 IDEAL = 78       # Meses por Cat. (col H)
 MAXE = 108       # stock maximo del Excel (col CP)
 
-# ⚠️ El corte leve/grave de la FOTO es fijo. En pantalla Erik lo mueve (hasta x2, x3,
-# x4), pero un mes congelado con x2 y el siguiente con x3 no se podrian comparar.
-EXC_CUT = 1.5
+# ⚠️ El corte leve/grave con el que arranca la pantalla (Erik, 19/10: *"que siempre el
+# exceso leve arranque x2"*). Tiene que ser el MISMO numero que `st.excCut` en la
+# plantilla: `probar_estados.py` compara las dos reglas y con cortes distintos cantaria
+# diferencias que no existen.
+# ⚠️ La FOTO mensual ya no depende de este numero: guarda los cinco baldes de `balde_exc`
+# y la pantalla arma leve/grave sumandolos segun el corte elegido.
+EXC_CUT = 2
 
 def estado_de(r, data):
     """Los 7 estados, con la misma regla y el mismo orden que stkCalc."""
@@ -524,9 +528,33 @@ def estado_de(r, data):
     return "ideal"
 
 
+# ⚠️ LOS CINCO BALDES DEL EXCESO (19/10). La foto NO guarda "leve" y "grave" ya
+# partidos: guarda por **cuanto se pasa del maximo**, que no depende del corte. La
+# pantalla arma leve y grave sumando baldes segun donde Erik ponga el corte.
+#
+#     exc1  hasta x1,5   exc2  x1,5 a x2   exc3  x2 a x3   exc4  x3 a x4   exc5  mas
+#
+# ⚠️ Antes se guardaba ya partido con el corte en x1,5, y mover el corte dejaba las dos
+# filas de Exceso sin grafico: un mes congelado con x1,5 y el de hoy con x2 no son
+# comparables. Y no hay forma de recortar un mes viejo, porque la foto guarda el conteo
+# por estado, no el stock ni el maximo de cada codigo.
+EXC_TOPES = [(1.5, "exc1"), (2, "exc2"), (3, "exc3"), (4, "exc4")]
+
+
+def balde_exc(r):
+    """En que balde cae un codigo en exceso. Fuera de escala (maximo 0) va al ultimo."""
+    stock = r[4] or 0
+    maxU = r[MAXE] or 0
+    for t, b in EXC_TOPES:
+        if stock <= maxU * t: return b
+    return "exc5"
+
+
 # Una letra por estado, para guardar el detalle por codigo sin que pese.
 LETRA = {"cero": "q", "riesgo": "r", "ideal": "i", "exceso": "e",
          "sinrot": "s", "lanz": "l"}
+# el exceso guarda el numero de balde, que dice mas que una "L" o una "G"
+LETRA_B = {"exc1": "1", "exc2": "2", "exc3": "3", "exc4": "4", "exc5": "5"}
 
 # ⚠️ La foto guarda LOS SIETE ESTADOS, los dos excesos por separado (Erik, 19/10:
 # "en la vista historico tiene que tener los estados actuales, leve, grave, etc").
@@ -606,9 +634,12 @@ def foto_de(data):
     ga, cod = {}, {}
     for r in data["rows"]:
         k = estado_de(r, data)
-        cod[r[2]] = LETRA[k]
+        # ⚠️ El exceso se guarda por BALDE, no como leve/grave: asi el corte de la barra
+        # se puede mover sin que los meses congelados dejen de ser comparables.
+        kf = balde_exc(r) if k in ("exceso", "excleve", "excgrave") else k
+        cod[r[2]] = LETRA_B.get(kf) or LETRA[k]
         g = ga.setdefault(data["GA"][r[1]], {}).setdefault(
-            k, {"n": 0, "u": 0, "c": {}, "m": {}})
+            kf, {"n": 0, "u": 0, "c": {}, "m": {}})
         g["n"] += 1
         g["u"] += r[4] or 0
         cur, c, m = plata_de(r, data, k)

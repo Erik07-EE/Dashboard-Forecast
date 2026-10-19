@@ -101,10 +101,15 @@ gráfico a la derecha**, y el detalle se abre debajo tocando la tarjeta.
 
 ```
 cruce de Rotación o Sin rotación  →  la tabla
-Categoría o Código filtrados      →  las seis filas, con el aviso en lugar de la línea
+Categoría o Código filtrados      →  las seis tarjetas y la tabla (la pantalla vieja)
 filtro de Estado                  →  SOLO esas filas, con su tabla abierta debajo
 sin nada                          →  las seis filas
 ```
+
+⚠️ **Categoría y Código caen a la tabla y no a seis avisos.** El histórico no se puede
+dibujar con ellos —la foto guarda el total por grupo, no el detalle por código— y antes
+la pantalla quedaba con seis carteles y **ninguna tabla**. Erik: *"filtro categoría AB,
+me rompe los gráficos"*. Es el mismo agujero que tenía Lanzamientos, por el otro lado.
 
 ⚠️ **«Sin rotación» es la excepción del filtro de Estado y va a la tabla.** Vive en
 `st.EST` pero **no es una de las seis tarjetas** —Rotación se mudó a la barra—, así que
@@ -184,25 +189,49 @@ cubierto. Los dos importes van **uno al lado del otro**, no apilados.
 - Con muchos meses **las etiquetas se saltean, los puntos no**: desde 7 meses se numeran
   el primero, el último y los extremos.
 
-### La foto mensual guarda los 7 estados
+### La foto mensual guarda el exceso en CINCO BALDES, no en leve/grave
 
-⚠️ Se **rearmaron septiembre y octubre con el Exceso abierto** (`congelar_mes.py` sobre
-los dashboards de esos días, que están en git), así los tres meses hablan el mismo idioma:
+⚠️ **Es el cambio de fondo del 19/10 y pisa todo lo anterior sobre la foto.** Antes
+guardaba `excleve` y `excgrave` **ya partidos con el corte en x1,5**, así que mover el
+corte dejaba las dos filas de Exceso sin gráfico: un mes congelado con x1,5 y el de hoy
+con x2 no son comparables. Con el arranque en **x2** eso pasaría siempre. Erik:
+*"exceso x2 me rompe los estados de exceso, arreglar"*.
 
-| | Exceso antes | ahora |
-|---|---|---|
-| septiembre | 1.770 | 185 leve + 1.585 grave |
-| octubre | 1.797 | 144 leve + 1.653 grave |
+Ahora guarda por **cuánto se pasa del máximo**, que no depende del corte:
 
-Verificado antes de aceptarlo: los otros cinco estados dan **idéntico** en SKU y unidades,
-y leve + grave reproduce el Exceso viejo en SKU, unidades y las cuatro cifras de plata.
-⚠️ **Para octubre sirve el commit de las 08:59, no el de las 10:14**: los dos tienen el
-mismo stock pero el Excel se recalculó en el medio y con el segundo se movían 4 códigos.
-La foto se saca en la PRIMERA corrida del mes.
+| | |
+|---|---|
+| `exc1` | hasta x1,5 |
+| `exc2` | x1,5 a x2 |
+| `exc3` | x2 a x3 |
+| `exc4` | x3 a x4 |
+| `exc5` | más de x4 |
 
-⚠️ **Las fotos están congeladas con el corte de Exceso en x1,5.** Con otro corte, los dos
-gráficos de Exceso avisan en vez de dibujar un salto que sería el cambio de corte, no
-movimiento real.
+**Leve y grave se arman sumando baldes** según dónde esté el corte (`fotoKs` en la
+plantilla, `balde_exc` en el generador). El corte se mueve y la serie sigue siendo
+comparable; el aviso desapareció para siempre.
+
+- ⚠️ **La plata no depende del corte**: `plata_de` calcula el exceso como
+  `stock − máximo`, el mismo número esté el código en el balde que esté. Por eso los
+  baldes se pueden sumar sin recalcular nada.
+- ⚠️ **Un mes congelado no se puede recortar**: la foto guarda el conteo por estado, no
+  el stock ni el máximo de cada código. Por eso hubo que rearmar los meses, no
+  reinterpretarlos.
+- Septiembre y octubre se rearmaron con `congelar_mes.py` desde los dashboards de esos
+  días (`caeae9e` y `7bbf7f0`). **Verificado**: con el corte en x1,5 los cinco estados no
+  exceso dan idénticos, `exc1` reproduce el leve viejo (185 y 144) y `exc2..5` el grave
+  (1.585 y 1.653) en SKU y unidades; en plata las únicas diferencias son **7 de uno a
+  cuatro centavos**, por redondear cada balde por separado.
+- ⚠️ **Para octubre sirve el commit de las 08:59, no el de las 10:14**: los dos tienen el
+  mismo stock pero el Excel se recalculó en el medio y con el segundo se movían 4 códigos.
+  La foto se saca en la PRIMERA corrida del mes.
+- El detalle por código (`cod`) guarda el **número de balde** (`1`…`5`) en vez de la `L` y
+  la `G` viejas. Dice más y no pesa más.
+
+⚠️ **El corte arranca en x2** (Erik, 19/10: *"que siempre el exceso leve arranque x2"*).
+Ese número está en **tres** lugares y los tres tienen que decir lo mismo o
+`probar_estados.py` canta diferencias que no existen: `st.excCut` en la plantilla,
+`EXC_CUT` en el generador y la transcripción de la prueba.
 
 ### Errores encontrados en el camino (los cinco valen por el patrón)
 
@@ -258,11 +287,40 @@ movimiento real.
   con estilo en línea y eso le gana a la hoja. Es el único lugar del tablero donde hace
   falta.
 
-### Dos funciones con cuerpo y sin botón
+### La limpieza del 19/10
 
-`exportCSV` (el CSV del Forecast) y `renderLegend` (la leyenda de compra y venta) están
-enteras y andan, pero **nada las llama**. No son código muerto: perdieron su botón en
-alguna limpieza anterior. **No borrarlas sin preguntarle a Erik.**
+Erik: *"todo lo que no sirva, sacalo"*. Se borró **solo lo que no llama nadie**, contando
+los usos en toda la plantilla con los comentarios afuera (definición + llamadas = 1
+significa que la única aparición es la propia definición), **y en cascada**, porque borrar
+una función deja huérfana a la que solo ella usaba. Se fueron en tres vueltas:
+
+| | |
+|---|---|
+| `renderHistStock` | dibujaba la foto mensual en Histórico Ventas; esa vista se mudó a Estado Stock el 19/10 y allá se rehízo |
+| `panelesHistStock`, `MFIELDS` | solo las usaba la anterior |
+| `setRot`, `rotActivo` | prendían la rotación desde la tarjeta vieja; hoy lo hacen las tres pastillas |
+| `exportCSV`, `renderLegend`, `resetSeasonSim` | perdieron su botón en limpiezas anteriores |
+| `stBadge` | una segunda forma de dibujar la pastilla de estado; la tabla usa la suya |
+| `VAJ` | el índice 106, que se escribe a mano |
+| `.grafnota`, `.grafsel` y `sel` | el cartel del aviso y el selector de moneda por gráfico, que subió a la barra |
+
+Son **2.926 + 400 caracteres** menos. Las cinco solapas, los dos Excel y los 19 controles
+se probaron después, sin un solo error en consola.
+
+⚠️ **Se borra por LLAVES BALANCEADAS, no por patrón**, y después se vuelve a contar hasta
+que no quede ninguna huérfana. Un patrón terminado en `}` a principio de renglón ya se
+llevó puestos 2.190 caracteres el 19/10 a la mañana —`rowsExcept` y `optionsFor` entre
+ellos— y los filtros dejaron de andar. **`node --check` NO lo agarra**: el archivo queda
+sintácticamente válido, solo le faltan funciones.
+
+⚠️ **El CSS no se tocó, a propósito.** Más de la mitad de las clases se arman por
+concatenación (`'st-p-'+k`, `'cat-'+c`, `'idcp'+i`), así que un detector de «clases sin
+uso» las marca todas como huérfanas y no lo son. Las dos que se sacaron se verificaron
+una por una.
+
+⚠️ **Histórico Ventas no tiene botón de Excel y nunca lo tuvo** (verificado contra el
+dashboard publicado). La sección vieja de más abajo dice que Proyección *e Histórico* lo
+llevan: es solo Proyección.
 
 ## Reestructuración del 16/10/2026 — lo que cambió de fondo
 

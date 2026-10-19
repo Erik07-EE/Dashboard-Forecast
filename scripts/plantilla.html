@@ -200,7 +200,6 @@ td.empty,div.empty{padding:28px;text-align:center;color:#7986cb;font-weight:700;
   border-radius:14px;box-shadow:0 1px 2px rgba(26,35,126,.04),0 6px 18px rgba(26,35,126,.06);
   padding:6px 10px;display:flex;align-items:center;}
 .grafbox svg{display:block;width:100%;height:188px;}
-.grafnota{font-size:.72rem;color:#8a90b0;padding:12px;line-height:1.4;}
 /* La fila de totales: tres cajas con el numero grande y su variacion. */
 /* ⚠️ Fondo propio: las cinco cajas son blancas pero el espacio entre ellas es
    transparente, y al quedar pegada se veria pasar la tabla por el medio. */
@@ -220,7 +219,6 @@ td.empty,div.empty{padding:28px;text-align:center;color:#7986cb;font-weight:700;
 .grafila.abierta .grafcard>div{border-color:var(--bc,#1a237e)!important;}
 .grafcard{cursor:pointer;}
 .grafbox{position:relative;}
-.grafsel{position:absolute;top:7px;right:10px;display:inline-flex;gap:4px;z-index:2;}
 .hstkmini{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:4px;}
 .hstkp{flex:1 1 48%;min-width:420px;background:#fff;border:1px solid #d7dbe8;
   border-radius:10px;padding:10px 12px 6px;}
@@ -351,7 +349,6 @@ box-shadow:0 5px 16px rgba(0,0,0,.3);max-width:280px;white-space:normal;}
 </div>
 <script>
 const DATA = /*__DATA__*/;
-const MFIELDS=["Stock inicio","Meses inicio","Compra","Venta proy.","Stock final","Meses fin"];
 // Abreviaturas de grupo, SOLO para mostrar. Los nombres largos obligaban a
 // ensanchar la columna Grupo y se cortaban en Proyeccion. DATA.GA conserva el
 // nombre completo: el orden, los filtros, las claves de agrupacion y lo que sale
@@ -390,7 +387,7 @@ function gaPrio(gi){return prioName(DATA.GA[gi]);}
 const DIMS=[["UN","1 · Unidad de negocio","Unidad de negocio","Buscar..."],["GA","2 · Grupo de artículos","Grupo de artículos","Buscar GA..."],["CAT","3 · Categoría","Categoría","Buscar..."],["COD","4 · Código","Código","Buscar código..."],["EST","5 · Estado","Estado","Buscar..."]];
 const st={UN:new Set(),GA:new Set(),CAT:new Set(),COD:new Set(),EST:new Set(),ROT:null,rotU:20,/* ⚠️ El umbral de presencia ya no tiene desplegable (Erik, 19/10: "sacalo al
    boton de presencia, yo te aviso si lo quiero cambiar"). Se cambia ACA. */
-  presU:50,excCut:1.5,rotSub:'sinrot',rotSort:null,RMES:new Set([0]),hideCols:new Set(),dotGap:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
+  presU:50,excCut:2,rotSub:'sinrot',rotSort:null,RMES:new Set([0]),hideCols:new Set(),dotGap:1,stSort:'ga',stDir:1,smBasis:{},liq:null,liqMode:'all',acMode:'liq',dtoOf:0.1,ofQty:'all',minCM:0.10,dtoGap:0.05,tab:'fc',sort:null,dir:1,liqCM:false,mstart:{fc:0,vp:0,hist:0},simEstac:{},simEvento:{},histTC:{},liqSort:null,liqSortDir:-1,dirty:{fc:true,st:true,liq:true,vp:true,hist:true}};
 function setLiq(){const v=document.getElementById("liqSel").value;if(!v){st.liqMode=null;st.liq=null;}else if(v==='qr'||v==='q0'||v==='all'){st.liqMode=v;st.liq=1;}else{st.liqMode='fac';st.liq=parseFloat(v);}renderTab('liq');}
 function toggleMB(m){const el=document.getElementById("mb_"+m),b=document.getElementById("mtog_"+m);if(!el)return;const hid=el.style.display==="none";el.style.display=hid?"":"none";b.textContent=hid?"Ocultar":"Mostrar";}
 const donutCharts={};
@@ -423,7 +420,7 @@ function mEST(r){if(st.EST.size===0)return true;const o=stkOf(r);return !!o&&st.
 function mROT(r){return !st.ROT||rotClase(r)===st.ROT;}
 let _vrK='',_vrC=null;function visibleRows(){
   const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',')
-    +'|'+[...st.EST].join(',')+'|'+(st.excCut||1.5)+'|'+(st.ROT||'')+'|'+(st.rotU||20)+'|'+(st.presU||50);
+    +'|'+[...st.EST].join(',')+'|'+(st.excCut||2)+'|'+(st.ROT||'')+'|'+(st.rotU||20)+'|'+(st.presU||50);
   if(_vrC&&k===_vrK)return _vrC;_vrK=k;_vrC=rowsBase().filter(r=>mEST(r)&&mROT(r));return _vrC;}
 function countBy(rows,k){const m=new Map();rows.forEach(r=>m.set(r[k],(m.get(r[k])||0)+1));return m;}
 function resMonths(){return st.RMES.size?[...st.RMES].sort((a,b)=>a-b):[0];}
@@ -503,13 +500,6 @@ function updBtns(){DIMS.forEach(([d,cap,def])=>{const s=st[d];
   let txt="Todos";if(s.size){const ns=[...s].map(k=>nameOf(d,k));txt=ns.slice(0,2).join(', ')+(ns.length>2?' +'+(ns.length-2):'');}
   document.getElementById('cnt-'+d).textContent=txt;const btn=document.getElementById('cnt-'+d).closest('.dd-btn');btn.classList.toggle('empty',s.size===0);
   document.getElementById('qty-'+d).textContent=s.size>1?s.size:'';});}
-
-function renderLegend(rows){let compra=0,venta=0;rows.forEach(r=>ALLM.forEach(m=>{compra+=mval(r,m,2)||0;venta+=mval(r,m,3)||0;}));const dif=compra-venta;
-  document.getElementById('legend').innerHTML=
-    `<div><span class="k">Códigos</span><b>${rows.length.toLocaleString("es-AR")}</b> / ${DATA.rows.length.toLocaleString("es-AR")}</div><div class="sep"></div>`+
-    `<div><span class="k">Compra confirm. (${ALLM.length}m)</span><b style="color:var(--azul3)">${fmtI(compra)}</b> u</div><div class="sep"></div>`+
-    `<div><span class="k">Venta proy. (${ALLM.length}m)</span><b style="color:var(--verde)">${fmtI(venta)}</b> u</div><div class="sep"></div>`+
-    `<div><span class="k">Balance</span><b style="color:${dif>=0?'var(--verde)':'var(--rojo)'}">${dif>=0?'+':''}${fmtI(dif)}</b> u</div>`;}
 
 function coverage(gaName,m){let stk=0,vp=0;DATA.rows.forEach(r=>{if(DATA.GA[r[1]]!==gaName)return;if(!(mUN(r)&&mCAT(r)&&mCOD(r)))return;stk+=(mval(r,m,0)||0)+(mval(r,m,2)||0);vp+=mval(r,m,3)||0;});return {stk,vp,pct:stk>0?Math.round(vp/stk*1000)/10:null};}
 function renderResumen(){const rms=resMonths();const inner=document.getElementById('resumenInner');
@@ -628,7 +618,6 @@ function pageMonths(tab,dir){
 function showTab(t){st.tab=t;['fc','st','liq','vp','hist'].forEach(x=>{document.getElementById('view-'+x).style.display=x===t?'':'none';document.getElementById('tab-'+x).classList.toggle('on',x===t);});if(st.dirty[t])renderTab(t);}
 function recalcVP(m){const seg=window._vpSeg||{imp:[],dist:[]};const imp=(seg.imp&&seg.imp[m])||0;const dist=(seg.dist&&seg.dist[m])||0;const impc=(seg.impCmv&&seg.impCmv[m])||0;const distc=(seg.distCmv&&seg.distCmv[m])||0;const tcEl=document.getElementById('tc_'+m);const tc=tcEl?parseFloat(tcEl.value)||0:0;const el=document.getElementById('vptot_'+m);if(el)el.textContent='$ '+Math.round(imp*tc+dist).toLocaleString('es-AR');const ce=document.getElementById('vpcmv_'+m);if(ce)ce.textContent='$ '+Math.round(impc*tc+distc).toLocaleString('es-AR');const _tvp=imp*tc+dist,_cmv=impc*tc+distc;const re=document.getElementById('vprat_'+m);if(re)re.textContent=_tvp>0?((_cmv/_tvp*100).toFixed(1)+'%'):'–';}
 function setSeasonSim(i,which,el){let v=parseFloat(el.value);if(isNaN(v)){if(which===0)delete st.simEstac[i];else delete st.simEvento[i];}else{const f=v/100;if(which===0)st.simEstac[i]=f;else st.simEvento[i]=f;}renderVP();}
-function resetSeasonSim(){st.simEstac={};st.simEvento={};renderVP();}
 function resetSeasonSimMonth(i){delete st.simEstac[i];delete st.simEvento[i];renderVP();}
 function renderVP(){const el=document.getElementById('view-vp');const M=DATA.months;const S=DATA.season||[];const NF=n=>n==null?'–':Math.round(n).toLocaleString('es-AR');const est=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1;const _oe=m=>(S[m]&&S[m][0]!=null)?S[m][0]:1,_ov=m=>(S[m]&&S[m][1]!=null)?S[m][1]:1;const curE=m=>(st.simEstac[m]!=null)?st.simEstac[m]:_oe(m),curV=m=>(st.simEvento[m]!=null)?st.simEvento[m]:_ov(m);const MULT=[];for(let _m=0;_m<12;_m++){const _bb=_oe(_m)*_ov(_m);MULT[_m]=_bb?(curE(_m)*curV(_m)/_bb):1;}
   let _ms=st.mstart.vp||0;_ms=Math.max(0,Math.min(_ms,M.length-4));if(M.length<=4)_ms=0;const IW=[];for(let _i=_ms;_i<Math.min(_ms+4,M.length);_i++)IW.push(_i);
@@ -683,6 +672,27 @@ const STKH=[['cero','Quiebre','#e53935'],['riesgo','Riesgo','#ef6c00'],
   ['excgrave','Exceso grave','#b8860b'],
   ['sinrot','Sin rotación','#78839c'],['lanz','Lanzamientos','#1565c0']];
 
+// ⚠️ LOS CINCO BALDES DEL EXCESO. La foto mensual NO guarda "leve" y "grave" ya
+// partidos: guarda por cuanto se pasa del maximo, que no depende del corte. Leve y
+// grave se arman SUMANDO baldes segun donde Erik ponga el corte en la barra.
+//
+//     exc1 hasta x1,5 · exc2 x1,5 a x2 · exc3 x2 a x3 · exc4 x3 a x4 · exc5 mas
+//
+// ⚠️ Antes la foto venia ya partida en x1,5 y mover el corte dejaba las dos filas de
+// Exceso sin grafico: un mes congelado con x1,5 y el de hoy con x2 no son comparables.
+// Y un mes viejo no se puede recortar, porque la foto no guarda el stock ni el maximo
+// de cada codigo. Erik lo encontro: *"exceso x2 me rompe los estados de exceso"*.
+const EXCB=['exc1','exc2','exc3','exc4','exc5'];
+const EXCT=[1.5,2,3,4];
+// Que claves de la foto hay que sumar para un estado. Los que no son exceso, la suya.
+// ⚠️ El `x.exc1` del final es la compatibilidad con una foto vieja todavia sin baldes:
+// si no los tiene, se lee la clave de siempre y al menos no desaparece del grafico.
+function fotoKs(k,x){if(k!=='excleve'&&k!=='excgrave')return [k];
+  if(x&&!x.exc1&&!x.exc2&&!x.exc3&&!x.exc4&&!x.exc5&&x[k])return [k];
+  const c=st.excCut||2, i=EXCT.findIndex(t=>t>=c);
+  const corte=(i<0?EXCT.length:i+1);
+  return (k==='excleve')?EXCB.slice(0,corte):EXCB.slice(corte);}
+
 // ⚠️ Vista de Estado Stock: 'hoy' son las tarjetas y el detalle; 'hist' es la foto
 // mensual de los estados, que hasta el 19/10 vivia en Historico Ventas.
 // Que mide el grafico de un estado: 'n' los SKU, o el costo en la moneda elegida.
@@ -734,115 +744,6 @@ function setGrafVerG(v){st.grafVerG=v;st.dirty.st=true;renderStock();}
 function setGrafMesG(el){const v=el.value;
   st.grafMesG=(v==='')?null:parseInt(v,10);st.dirty.st=true;renderStock();}
 
-function renderHistStock(el){
-  const H=DATA.hstk||{};
-  const meses=Object.keys(H).sort();
-  if(!meses.length){el.innerHTML='<div class="empty">Todav\u00eda no hay ninguna foto guardada. '
-    +'Se guarda una por mes, en la primera corrida del mes.</div>';return;}
-  // ⚠️ Esta vista responde a Unidad de negocio y Grupo solamente: la foto guarda el
-  // total por grupo, no el detalle por codigo, asi que Categoria, Codigo y Estado no
-  // tienen con que filtrar.
-  const gaVis={};
-  DATA.rows.forEach(r=>{if(!mUN(r)||!mGA(r))return;gaVis[DATA.GA[r[1]]]=1;});
-  const vis=Object.keys(gaVis);
-  if(!vis.length){el.innerHTML='<div class="empty">Sin datos con los filtros actuales.</div>';return;}
-  el.innerHTML=panelesHistStock(meses,vis,H);
-}
-
-// ⚠️ SEIS GRAFICOS, UNO POR ESTADO, CADA UNO CON SU ESCALA (Erik, 19/10). Antes eran dos
-// graficos grandes con un eje compartido, y ahi Quiebre (2.477) aplastaba a Lanzamientos
-// (58): 43 veces de diferencia, los chicos pegados al piso. Con un eje por grafico el
-// problema desaparece y no hay que apagar series para poder mirar.
-// ⚠️ Van 3 y 3, en el MISMO orden que las tarjetas de la vista Actual y con la misma
-// pastilla, para que al alternar entre vistas cada estado este donde uno lo busca.
-// ⚠️ Sin rotacion no tiene grafico: es stock quieto, no una alarma para mirar mes a mes.
-function panelesHistStock(meses, vis, H){
-  const nf=v=>Math.round(v).toLocaleString('es-AR');
-  const suma=(m,k)=>{let t=0;vis.forEach(g=>{const x=((H[m]||{}).ga||{})[g];
-    if(x&&x[k])t+=x[k].n;});return t;};
-  // ⚠️ Las marcas del eje Y se CALCULAN, no se reparten a ojo: un paso de 1, 2, 2,5 o 5
-  // por la potencia de diez que corresponda, asi el eje dice 2.200 / 2.400 / 2.600 y no
-  // 2.393 / 2.435 / 2.477. El paso nunca baja de 1: son SKU, no hay medios.
-  const escalaLinda=(mn,mx)=>{
-    if(mx===mn){const d=Math.max(1,Math.abs(mx)*0.1);mn-=d;mx+=d;}
-    const p0=(mx-mn)/3, mag=Math.pow(10,Math.floor(Math.log10(p0||1)));
-    let paso=[1,2,2.5,5,10].map(x=>x*mag).find(x=>x>=p0)||10*mag;
-    paso=Math.max(1,paso);
-    const lo=Math.floor(mn/paso)*paso, hi=Math.ceil(mx/paso)*paso, t=[];
-    for(let v=lo;v<=hi+1e-9;v+=paso)t.push(v);
-    return {lo:lo,hi:hi,ticks:t};};
-  // El grafico, en SVG: son seis de pocos puntos y un canvas por panel costaria mucho
-  // mas. viewBox fijo y escalado uniforme, asi el texto no se deforma.
-  const W=560,HH=200,ML=56,MR=16,MT=20,MB=28;
-  const grafico=(vals,color)=>{
-    const n=vals.length;
-    // ⚠️ El eje NO arranca en cero, a proposito: Quiebre se mueve entre 2.393 y 2.477 y
-    // con el cero adentro los dos puntos quedarian pegados. Lo que interesa es el
-    // movimiento mes a mes, y la escala lo dice en numeros.
-    const E=escalaLinda(Math.min(...vals),Math.max(...vals));
-    const d=(E.hi-E.lo)||1;
-    const X=i=>(n<2)?(ML+(W-ML-MR)/2):ML+(i/(n-1))*(W-ML-MR);
-    const Y=v=>HH-MB-((v-E.lo)/d)*(HH-MT-MB);
-    const todos=(n<=6);
-    const mx=Math.max(...vals), mn=Math.min(...vals);
-    const iMx=vals.indexOf(mx), iMn=vals.indexOf(mn);
-    const marca=i=>todos||i===0||i===n-1||i===iMx||i===iMn;
-    // ⚠️ Los meses tambien se saltean, con su propia cuenta: entran cinco sin pisarse, y
-    // el ultimo va siempre porque es el que se mira.
-    const paso=Math.max(1,Math.ceil(n/5));
-    const mesVisible=i=>(n<=5)||i===n-1||((n-1-i)%paso===0&&i!==n-2);
-    let g='<svg viewBox="0 0 '+W+' '+HH+'" preserveAspectRatio="xMidYMid meet">';
-    // lineas guia y escala vertical
-    E.ticks.forEach(v=>{const y=Y(v).toFixed(1);
-      g+='<line x1="'+ML+'" y1="'+y+'" x2="'+(W-MR)+'" y2="'+y
-        +'" stroke="#eceff6" stroke-width="1"/>'
-        +'<text x="'+(ML-8)+'" y="'+(+y+4).toFixed(1)+'" text-anchor="end" font-size="13"'
-        +' fill="#8a90b0">'+nf(v)+'</text>';});
-    // los dos ejes
-    g+='<line x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(HH-MB)+'" stroke="#c5cad8" stroke-width="1.2"/>'
-      +'<line x1="'+ML+'" y1="'+(HH-MB)+'" x2="'+(W-MR)+'" y2="'+(HH-MB)+'" stroke="#c5cad8" stroke-width="1.2"/>';
-    if(n>1){
-      // Relleno suave bajo la linea: le da cuerpo sin tapar la grilla. Es lo unico que
-      // se tomo de los tableros "modernos" que le gustan a Erik y que funciona igual
-      // sobre fondo blanco.
-      const id='gr'+Math.random().toString(36).slice(2,8);
-      g+='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'
-        +'<stop offset="0%" stop-color="'+color+'" stop-opacity=".22"/>'
-        +'<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs>'
-        +'<path d="M'+vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' L')
-        +' L'+X(n-1).toFixed(1)+','+(HH-MB)+' L'+X(0).toFixed(1)+','+(HH-MB)+' Z"'
-        +' fill="url(#'+id+')"/>'
-        +'<polyline points="'+vals.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')
-        +'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';}
-    vals.forEach((v,i)=>{const x=X(i),y=Y(v);
-      // el ultimo punto va con aro blanco: es el que se busca primero
-      const ult=(i===n-1&&n>1);
-      g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(ult?6:4.5)+'" fill="'+color+'"'
-        +(ult?' stroke="#fff" stroke-width="2.5"':'')+'/>';
-      if(marca(i))g+='<text x="'+x.toFixed(1)+'" y="'+(y-11).toFixed(1)+'" text-anchor="'
-        +((i===0&&n>1)?'start':(i===n-1&&n>1)?'end':'middle')
-        +'" font-size="15" font-weight="800" fill="#1a237e">'+nf(v)+'</text>';
-      if(mesVisible(i))g+='<text x="'+x.toFixed(1)+'" y="'+(HH-8)+'" text-anchor="'
-        +((i===0&&n>1)?'start':(i===n-1&&n>1)?'end':'middle')
-        +'" font-size="13" fill="#8a90b0">'+mesCorto(meses[i])+'</text>';});
-    return g+'</svg>';};
-  const previo=meses[meses.length-2];
-  let out='';
-  STKH.filter(e=>e[0]!=='sinrot').forEach(e=>{
-    const k=e[0], color=e[2];
-    const serie=meses.map(m=>suma(m,k));
-    const dif=(previo!=null)?(serie[serie.length-1]-suma(previo,k)):null;
-    // ⚠️ La flecha dice CUANTO se movio, no si esta bien: un Quiebre que baja es bueno y
-    // un Ideal que baja es malo, y pintar eso chocaria con la regla del tablero
-    // (rojo = cayo, verde = subio). El juicio lo pone Erik.
-    const fl=(dif==null)?'':(dif===0?'<span class="dif">sin cambio</span>'
-      :'<span class="dif">'+(dif>0?'\u25b2 ':'\u25bc ')+nf(Math.abs(dif))
-        +' SKU vs '+mesCorto(previo)+'</span>');
-    // el valor de hoy no va en grande: ya esta en el ultimo punto de la linea
-    out+='<div class="hstkp"><div>'+stBadge(k)+'</div>'+fl
-      +grafico(serie,color)+'</div>';});
-  return '<div class="hstkmini">'+out+'</div>';
-}
 // El nombre del mes, de "2026-09" a "Septiembre 2026"
 function mesLargo(m){const N=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio',
   'Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -874,9 +775,10 @@ function esquinaHist(){
   return h;}
 
 function renderHist(){const el=document.getElementById('view-hist');
-  // ⚠️ Una sola historia: VP contra VR. La foto mensual de los 6 estados se mudo a
+  // ⚠️ Una sola historia: VP contra VR. La foto mensual de los estados se mudo a
   // Estado Stock el 19/10 -- Erik: "que quede como en un principio, solo la
-  // proyeccion ahi". `renderHistStock` sigue existiendo, la llama renderStock.
+  // proyeccion ahi" -- y alla se rehizo entera, asi que la vieja `renderHistStock`
+  // se borro.
   const H=DATA.hist||{months:[],vp:{},real:{},mix:{}};const M=H.months||[];
   if(!M.length){el.innerHTML='<div class="empty">Sin histórico disponible todavía (falta cachear los archivos "Forecast MM-AA").</div>';return;}
   const rows=visibleRows();
@@ -912,7 +814,6 @@ function renderHist(){const el=document.getElementById('view-hist');
 function renderForecast(){const _sy=window.scrollY;renderMesSel();renderTable(visibleRows(),'tabla',false);setTimeout(renderResumen,0);requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 const LIQDS=[0.05,0.1,0.15,0.2,0.25,0.3];
 const fmt1=v=>(v==null?'':Number(v).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}));
-const VAJ=106;  // venta ajustada mensual (col BV del Forecast)
 // ---------------------------------------------------------------- rotacion
 // ⚠️ LA VARIACION COMPARA VENTA REAL CONTRA VENTA REAL (Erik, 16/10). Son dos
 // trimestres consecutivos de la venta real del Forecast:
@@ -1164,7 +1065,7 @@ const STROJO='#c0392b', STVERDE='#1e7e34';
 let _skC=new Map(),_skM=null;
 // ⚠️ La cache se tira sola cuando cambia el corte leve/grave. Sin esto se mueve el
 // desplegable y la tabla sigue mostrando los estados viejos.
-function stkOf(r){const m=st.excCut||1.5;
+function stkOf(r){const m=st.excCut||2;
   if(_skM!==m){_skC=new Map();_skM=m;}
   let v=_skC.get(r);if(v===undefined){v=stkCalc(r);_skC.set(r,v);}return v;}
 function stkCalc(r){
@@ -1217,7 +1118,7 @@ function stkCalc(r){
   else if(stock<minU)k='riesgo';
   // El Exceso va en dos tramos (Erik, 16/10): hasta 50% sobre el maximo es leve y
   // de ahi para arriba grave. Con maximo 4: leve 5 y 6, grave de 7 en adelante.
-  else if(stock>maxU*(st.excCut||1.5))k='excgrave';
+  else if(stock>maxU*(st.excCut||2))k='excgrave';
   else if(stock>maxU)k='excleve';
   else k='ideal';
   const cc=DATA.costos&&DATA.costos[r[2]];
@@ -1239,11 +1140,7 @@ function stkCalc(r){
 function setRotU(el){st.rotU=parseInt(el.value,10)||20;renderAll();}
 // ⚠️ Cambia el corte leve/grave: con eso cambian los dos estados, su plata, el filtro
 // de Estado y las pastillas de las cinco solapas. Por eso renderAll y no renderStock.
-function setExcCut(el){st.excCut=parseFloat(el.value)||1.5;renderAll();}
-// Cual de los tres sub-estados muestra la tarjeta. El filtro se pone tocandola,
-// igual que en las otras cinco.
-function rotActivo(){const v=st.rotSub||'sinrot';
-  return (v==='sinrot')?st.EST.has('sinrot'):(st.ROT===v);}
+function setExcCut(el){st.excCut=parseFloat(el.value)||2;renderAll();}
 function rotPoner(v,on){st.EST.delete('sinrot');st.ROT=null;
   // ⚠️ "Sin rotacion" es un ESTADO, no un cruce: no puede convivir con otra
   // pastilla porque los estados son excluyentes. Elegirlo apaga las seis; si
@@ -1253,7 +1150,6 @@ function rotPoner(v,on){st.EST.delete('sinrot');st.ROT=null;
 // ⚠️ Cambiar el desplegable ARRASTRA el filtro si estaba puesto, en vez de apagarlo:
 // pasar de 'En baja' a 'En alza' filtra directo, sin tener que tocar de nuevo.
 function setRotSub(v){st.rotSub=v||'sinrot';rotPoner(v,!!v);renderAll();}
-function setRot(){const v=st.rotSub||'sinrot';rotPoner(v,!rotActivo());renderAll();}
 // La tabla de rotacion ordena con la misma regla que el resto del dashboard: un clic
 // de mayor a menor, el segundo vuelve al orden de arranque (por cuanto se movio).
 function setRotSort(f){if(st.rotSort===f){st.rotSort=null;}else{st.rotSort=f;}
@@ -1282,11 +1178,6 @@ function setStSort(f){
   if(st.stSort===f&&f!=='cod'){st.stSort='cod';st.stDir=1;}
   else{st.stSort=f;st.stDir=(f==='cod')?1:-1;}renderStock();}
 const STLBL={};STK.forEach(s=>{STLBL[s[0]]=s[1];});
-// La pastilla de la tabla usa clases (.st-p) y no estilos en linea: se repite una vez
-// por fila y con 5.500 filas el HTML se iba a 4,6 MB, que era lo que hacia lenta la pestana.
-function stBadge(k,chico){const s=STK.find(x=>x[0]===k);
-  if(chico)return '<span class="st-p st-p-'+k+'">'+s[1]+'</span>';
-  return '<span style="display:inline-block;min-width:112px;text-align:center;padding:4px 10px;border-radius:10px;font-size:.78rem;font-weight:800;background:'+s[2]+';color:'+s[3]+';">'+s[1]+'</span>';}
 // ⚠️ EL GRAFICO DE UN ESTADO, con ejes. Vive suelto porque lo usan las seis filas de la
 // vista Grafico. Las marcas del eje Y se CALCULAN: un paso de 1, 2, 2,5 o 5 por la
 // potencia de diez que corresponda, asi el eje dice 2.200 / 2.400 y no 2.393 / 2.435.
@@ -1416,7 +1307,7 @@ function renderStock(){
   // Tocar una filtra la tabla y, si tiene detalle, abre su panel debajo.
   // ⚠️ Los dos subtitulos del Exceso se arman con el corte elegido: escritos a mano
   // mentirian en cuanto se mueva el desplegable.
-  const _ecP=Math.round(((st.excCut||1.5)-1)*100);
+  const _ecP=Math.round(((st.excCut||2)-1)*100);
   const CARDS=[['cero','Quiebre','#e53935','#fff','Sin stock o negativo','Costo a invertir (máximo)','falC_cero','Venta mix perdida','perd_cero'],
     ['riesgo','Riesgo','#ef6c00','#fff','Bajo el mínimo','Costo a invertir (máximo)','falC_riesgo','Venta mix perdida','perd_riesgo'],
     ['ideal','Ideal','#2e7d32','#fff','Entre mín. y máx.','Costo a invertir (máximo)','falC_ideal','',''],
@@ -1797,9 +1688,10 @@ function renderStock(){
     +rotPill('baja','En baja',ROTG.baja.n)
     +rotPill('alza','En alza',ROTG.alza.n)+'</span>';
     // Hasta cuantas veces el maximo un exceso es leve; de ahi para arriba es grave.
-  // x1.5 (50% mas) es el arranque, el que eligio Erik.
+  // ⚠️ x2 (el doble del maximo) es el arranque, elegido por Erik el 19/10. Se puede
+  // mover sin perder los graficos: la foto guarda los cinco baldes de `fotoKs`.
   const eopt=[[1.5,'hasta x 1.5'],[2,'hasta x 2'],[3,'hasta x 3'],[4,'hasta x 4']]
-    .map(o=>'<option value="'+o[0]+'"'+(((st.excCut||1.5)===o[0])?' selected':'')
+    .map(o=>'<option value="'+o[0]+'"'+(((st.excCut||2)===o[0])?' selected':'')
       +'>'+o[1]+'</option>').join('');
   const ropt=[10,20,30,40,50].map(v=>'<option value="'+v+'"'+(((st.rotU||20)===v)?' selected':'')
     +'>'+v+'%</option>').join('');
@@ -1824,29 +1716,30 @@ function renderStock(){
   // ⚠️ "Sin rotacion" es la EXCEPCION y va a la tabla: vive en `st.EST` pero NO es una
   // de las seis tarjetas --Rotacion se mudo a la barra-- asi que filtrar por el dejaba
   // la pantalla sin ninguna fila que dibujar.
-  if(!st.ROT&&!st.EST.has('sinrot')){
-    const HM=Object.keys(DATA.hstk||{}).sort();
+  // ⚠️ Y con CATEGORIA o CODIGO filtrados tambien cae a la tabla: la foto guarda el
+  // total por grupo, no el detalle por codigo, asi que la serie no se puede dibujar y
+  // la pantalla quedaba con seis avisos y nada que mirar. Erik: *"filtro categoria AB,
+  // me rompe los graficos"*. Es el mismo agujero que tenia Lanzamientos, por el otro lado.
+  const HM=Object.keys(DATA.hstk||{}).sort();
+  const puede=(st.CAT.size===0&&st.COD.size===0&&HM.length>0);
+  if(!st.ROT&&!st.EST.has('sinrot')&&puede){
     // ⚠️ El historico responde a Unidad de negocio, Grupo y ESTADO: la foto guarda el
-    // total por grupo abierto por estado. Lo que no guarda es la categoria ni el codigo,
-    // asi que con esos dos filtrados no se dibuja: una linea que ignora la mitad de los
-    // filtros miente.
-    const puede=(st.CAT.size===0&&st.COD.size===0&&HM.length>0);
-    const gaOk={};if(puede)DATA.rows.forEach(r=>{if(mUN(r)&&mGA(r))gaOk[DATA.GA[r[1]]]=1;});
+    // total por grupo abierto por estado. La Categoria y el Codigo no los guarda, y por
+    // eso esos dos ya quedaron afuera de esta rama (arriba).
+    const gaOk={};DATA.rows.forEach(r=>{if(mUN(r)&&mGA(r))gaOk[DATA.GA[r[1]]]=1;});
     // `f` es 'n' (SKU), 'c' (costo) o 'm' (venta mix); con plata hace falta ademas la
     // moneda, porque el dashboard nunca suma pesos con dolares.
     const foto=(m,k,f,cur)=>{let t=0;for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
-      if(x&&x[k])t+=((f==='n')?x[k].n:((x[k][f]||{})[cur]||0));}return t;};
+      if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])t+=((f==='n')?x[kk].n:((x[kk][f]||{})[cur]||0));});}
+      return t;};
     const fotoPlata=(m,k,f)=>{const d={};for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
-      if(x&&x[k])for(const cu in (x[k][f]||{}))d[cu]=(d[cu]||0)+x[k][f][cu];}return d;};
+      if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])for(const cu in (x[kk][f]||{}))
+        d[cu]=(d[cu]||0)+x[kk][f][cu];});}return d;};
     // El costo de hoy sale del MISMO bucket que muestra la tarjeta: `plata_de` en el
     // generador se copio de CARDS, asi que la foto y la pantalla cuentan lo mismo.
     const hoyPlata=(c,cur)=>((P[c[6]]||{})[cur]||0);
     const hayPlata=(c,cur)=>{if(hoyPlata(c,cur))return true;
       return HM.some(m=>foto(m,c[0],'c',cur)>0);};
-    // ⚠️ Las fotos se congelaron con el corte de Exceso en x1,5. Con otro corte, el "hoy"
-    // de los dos excesos no es comparable con ellas: se avisa en vez de dibujar un salto
-    // que no seria movimiento real.
-    const corteRaro=((st.excCut||1.5)!==1.5);
     const _grafRedibujo=[];
     // ---------------------------------------------------------------- los totales
     // ⚠️ NO se suma "la plata" de los seis estados en un numero: en Quiebre y Riesgo el
@@ -1897,19 +1790,16 @@ function renderStock(){
     // se filtran nunca --si lo hicieran, al elegir Quiebre las otras cinco darian cero--
     // pero aca abajo el filtro es justamente lo que se pide mirar.
     CARDS.filter(c=>st.EST.size===0||st.EST.has(c[0])).forEach(c=>{const k=c[0];
-      const esExc=(k==='excleve'||k==='excgrave');
-      const dibuja=(puede&&!(esExc&&corteRaro));
       // ⚠️ Que mes muestra la tarjeta. `null` o el ultimo indice = hoy.
       const mi=(st.grafMesG!=null)?st.grafMesG:null;
-      const enFoto=(dibuja&&mi!=null&&mi<HM.length);
+      // ⚠️ `enFoto` mira SOLO el mes. Dependia ademas de si la fila se podia dibujar, y
+      // como el corte apagaba las dos filas de Exceso, en un mes pasado esas dos se
+      // creian "de hoy" y abrian su tabla. Erik: *"mes septiembre, exceso x2, me genera
+      // tabla en exceso leve; no tiene que generar tabla el pasado"*.
+      const enFoto=(mi!=null&&mi<HM.length);
       const ft=enFoto?{n:foto(HM[mi],k,'n'),c:fotoPlata(HM[mi],k,'c'),m:fotoPlata(HM[mi],k,'m')}:null;
       let gr;
-      if(!puede)gr='<div class="grafnota">El histórico responde a <b>Unidad de negocio</b>, '
-        +'<b>Grupo</b> y <b>Estado</b>. Sacá los filtros de Categoría o Código para verlo.</div>';
-      else if(esExc&&corteRaro)gr='<div class="grafnota">Las fotos de los meses anteriores '
-        +'se guardaron con el corte en <b>x1,5</b>. Volvé el Exceso leve a <b>hasta x 1.5</b> '
-        +'para comparar contra ellas.</div>';
-      else{const ver=st.grafVerG||'n';
+      {const ver=st.grafVerG||'n';
         const cur=(ver==='n')?null:ver;
         const serie=HM.map(m=>foto(m,k,(ver==='n')?'n':'c',cur))
           .concat([(ver==='n')?G[k].n:hoyPlata(c,cur)]);
@@ -1922,7 +1812,6 @@ function renderStock(){
         gr=svgLinea(serie,lbl,col,0,cur,clic,(mi==null?serie.length-1:mi));
         _grafRedibujo.push({k:k,serie:serie,lbl:lbl,color:col,cur:cur,clic:clic,
           sel:(mi==null?serie.length-1:mi)});}
-      const sel='';
       // ⚠️ El detalle se abre DEBAJO de la fila, sin cambiar de vista. Reusa la tabla de
       // siempre: `rows` es `let`, asi que se la cambia por la de este estado, se arma y
       // se la devuelve. Duplicar la tabla serian 200 lineas que despues se desincronizan.
@@ -1944,7 +1833,7 @@ function renderStock(){
       // ⚠️ El "vs" en NUMEROS, que es lo que Erik echaba de menos: con el mes elegido
       // compara ese mes contra el anterior, y en Hoy compara contra la ultima foto.
       let vsTxt='';
-      if(dibuja){const iHoy=HM.length;
+      {const iHoy=HM.length;
         const iAct=(mi==null)?iHoy:mi, iAnt=iAct-1;
         if(iAnt>=0){const vAct=(iAct>=iHoy)?G[k].n:foto(HM[iAct],k,'n');
           const vAnt=foto(HM[iAnt],k,'n'), dd=vAct-vAnt;
@@ -1959,7 +1848,7 @@ function renderStock(){
             +' data-tip2="La foto del mes guarda totales por grupo, no el detalle por código"')
           :(' title="'+(abierto?'Tocá para cerrar el detalle':'Tocá para ver el detalle')+'"'))+'>'
         +card(c,ft,enFoto?mesLargo(HM[mi]):null,vsTxt)+'</div>'
-        +'<div class="grafbox" data-k="'+k+'">'+sel+gr+'</div></div>'+detalle;});
+        +'<div class="grafbox" data-k="'+k+'">'+gr+'</div></div>'+detalle;});
     // ⚠️ Los controles de los seis graficos viven ACA (Erik, 19/10): uno por grafico
     // era mas trabajo para decir lo mismo.
 
@@ -2022,10 +1911,7 @@ function renderStock(){
         if(!box)return;
         const w=Math.round(box.clientWidth-20);
         if(w<=360)return;
-        // el selector no se redibuja: se conserva tal cual estaba
-        const viejo=box.querySelector('.grafsel');
-        box.innerHTML=(viejo?viejo.outerHTML:'')
-          +svgLinea(g.serie,g.lbl,g.color,w,g.cur,g.clic,g.sel);});},0);
+        box.innerHTML=svgLinea(g.serie,g.lbl,g.color,w,g.cur,g.clic,g.sel);});},0);
     return;}
   el.innerHTML=
     // ⚠️ La misma barra que la pantalla de graficos, menos Mes y Ver, que solo tienen
@@ -2077,9 +1963,6 @@ function perdU(r){
 function renderTab(t){fijarTabs();const _sy=window.scrollY;if(t==='fc')renderForecast();else if(t==='st')renderStock();else if(t==='liq')renderLiq();else if(t==='vp')renderVP();else renderHist();st.dirty[t]=false;requestAnimationFrame(()=>window.scrollTo(0,_sy));}
 let _rt=null;
 function renderAll(){updBtns();st.tope={};st.dirty.fc=st.dirty.st=st.dirty.liq=st.dirty.vp=st.dirty.hist=true;clearTimeout(_rt);_rt=setTimeout(()=>renderTab(st.tab),80);}
-function exportCSV(){const rows=sortRows(visibleRows());let head=["UN","GA","Codigo","Categoria","Meses/Cat","Stock actual","Meses actual"];ALLM.forEach(m=>MFIELDS.forEach(f=>head.push(DATA.months[m]+" - "+f)));
-  let lines=[head.join(";")];rows.forEach(r=>{let l=[DATA.UN[r[0]],DATA.GA[r[1]],r[2],DATA.CAT[r[3]],r[IDEAL],r[4],r[5]];ALLM.forEach(m=>{for(let f=0;f<6;f++)l.push(mval(r,m,f));});lines.push(l.join(";"));});
-  const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="forecast_dashboard.csv";a.click();}
 document.getElementById('gen').textContent="Actualizado: "+DATA.gen;
 // Tooltip propio. El `title` nativo lo pinta el sistema operativo y no admite estilos,
 // y hacia falta que el nombre de la columna y la ayuda de uso fueran de distinto color.

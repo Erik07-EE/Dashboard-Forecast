@@ -54,8 +54,12 @@ def como_en_pantalla(r):
     if not vendio6 and not movio: return "sinrot"
     if stock < minU: return "riesgo"
     # ⚠️ El Exceso va en dos tramos desde el 16/10. El corte es el que trae la
-    # plantilla por defecto (st.excCut) y el que usa la foto mensual (EXC_CUT).
-    if stock > maxU * 1.5: return "excgrave"
+    # plantilla por defecto (st.excCut) y el que usa estado_de (EXC_CUT): los tres
+    # numeros tienen que ser EL MISMO o esta prueba canta diferencias que no existen.
+    # Desde el 19/10 arranca en x2 (Erik).
+    # ⚠️ La FOTO mensual ya no depende de este corte: guarda los cinco baldes de
+    # `balde_exc` y la pantalla arma leve/grave sumandolos.
+    if stock > maxU * 2: return "excgrave"
     if stock > maxU: return "excleve"
     return "ideal"
 
