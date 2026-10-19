@@ -721,8 +721,13 @@ function _fijarTabsYa(){
     window._fbObs.observe(fb);}}
 window.addEventListener('resize',fijarTabs);
 // Abre o cierra el detalle de un estado debajo de su grafico.
+// ⚠️ Guarda la EXCEPCION al valor por defecto, no el valor: con filtro de Estado el
+// detalle arranca abierto y sin filtro arranca cerrado, asi que un booleano suelto
+// invertia el sentido del clic segun donde se estuviera parado.
 function tglGrafDet(k){st.grafAbre=st.grafAbre||{};
-  st.grafAbre[k]=!st.grafAbre[k];st.dirty.st=true;renderStock();}
+  const def=(st.EST&&st.EST.size>0);
+  const act=(k in st.grafAbre)?!!st.grafAbre[k]:def;
+  st.grafAbre[k]=!act;st.dirty.st=true;renderStock();}
 // ⚠️ Los dos valen para LOS SEIS: Erik los saco de cada grafico y los subio a la
 // barra. Tocar un punto de la linea sigue andando y mueve este mismo selector.
 function setGrafVerG(v){st.grafVerG=v;st.dirty.st=true;renderStock();}
@@ -1261,6 +1266,9 @@ function setStFil(k){if(k==='all')st.EST.clear();
        // solo a "sin filtro" sin tener que tocarlo.
        st.EST.delete('sinrot');
        if(st.EST.has(k))st.EST.delete(k);else st.EST.add(k);}
+  // ⚠️ Se tira lo abierto a mano: si no, una fila que se cerro en un estado seguia
+  // cerrada al elegir otro y el filtro no mostraba la tabla.
+  st.grafAbre={};
   renderAll();}
 // La tabla se puede mirar por codigo o por grupo. Por grupo se ven los GA sumados
 // y se abre el que interese para ver sus codigos: es lo que antes hacian los
@@ -1477,8 +1485,9 @@ function renderStock(){
         // en Lanzamientos no hay A ni B: ahi las dos que importan son N y P
         +(()=>{if(foto)return '';
           const d=(k==='lanz')?[['N',g.cN],['P',g.cP],['s/C',g.cS]]:[['A',g.cA],['B',g.cB]];
-          let t='<span style="font-size:.52rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
-            +d.map(x=>x[0]+' '+fmtI(x[1])).join(' · ')+'</span>';
+          let t='<span style="font-size:.56rem;color:#8a90b0;margin-left:auto;white-space:nowrap;">'
+            +d.map(x=>x[0]+' <b style="color:'+cNum+';font-weight:800;">'+fmtI(x[1])+'</b>')
+              .join(' · ')+'</span>';
           return t;})()
       +'</div>'
       +'<div style="font-size:.58rem;font-weight:800;margin-top:1px;line-height:1.2;color:'
@@ -1769,9 +1778,24 @@ function renderStock(){
   // ⚠️ El desplegable ES el filtro: elegir un sub-estado filtra, y "\u2014" lo saca.
   // Antes el filtro se ponia tocando la tarjeta, que ya no existe.
   const _subAct=st.EST.has('sinrot')?'sinrot':(st.ROT||'');
-  const sopt=[['','\u2014 sin filtro'],['sinrot','Sin rotaci\u00f3n ('+fmtI(ROTG.sinrot.n)+')'],
-    ['baja','En baja ('+fmtI(ROTG.baja.n)+')'],['alza','En alza ('+fmtI(ROTG.alza.n)+')']]
-    .map(o=>'<option value="'+o[0]+'"'+((o[0]===_subAct)?' selected':'')+'>'+o[1]+'</option>').join('');
+  // ⚠️ Los tres sub-estados son PASTILLAS, con el mismo diseno que SKU / Plata de "Ver"
+  // (Erik, 19/10). Tocar la activa la apaga, que es lo que hacia el "sin filtro" del
+  // desplegable: una cuarta pastilla para eso seria un boton que no muestra nada.
+  // ⚠️ El conteo se va al globo: en una pastilla de 10px, "En baja (1.115)" la haria el
+  // doble de ancha que las de Ver y se perderia el "mismo diseno" que pidio.
+  // ⚠️ Vive ACA, fuera de las dos ramas de render, porque la barra se arma en los dos
+  // lados y escrita dos veces se desincroniza.
+  const rotPill=(v,txt,nn)=>{const on=(_subAct===v);
+    return '<button onclick="setRotSub(&quot;'+(on?'':v)+'&quot;)"'
+      +' data-tip="'+txt+'" data-tip2="'+fmtI(nn)+' c\u00f3digos'
+      +(on?' \u00b7 toc\u00e1 de nuevo para quitar el filtro':'')+'"'
+      +' style="font:inherit;font-size:10px;font-weight:700;border-radius:20px;padding:3px 10px;'
+      +'border:1px solid '+(on?'#1a237e':'#c5cad8')+';background:'+(on?'#1a237e':'#fff')+';'
+      +'color:'+(on?'#fff':'#5a6178')+';cursor:pointer;">'+txt+'</button>';};
+  const rotPills='<span style="display:inline-flex;gap:4px;">'
+    +rotPill('sinrot','Sin rotaci\u00f3n',ROTG.sinrot.n)
+    +rotPill('baja','En baja',ROTG.baja.n)
+    +rotPill('alza','En alza',ROTG.alza.n)+'</span>';
     // Hasta cuantas veces el maximo un exceso es leve; de ahi para arriba es grave.
   // x1.5 (50% mas) es el arranque, el que eligio Erik.
   const eopt=[[1.5,'hasta x 1.5'],[2,'hasta x 2'],[3,'hasta x 3'],[4,'hasta x 4']]
@@ -1788,18 +1812,25 @@ function renderStock(){
   // Tabla del selector"). La tabla de un estado se abre tocando su tarjeta. La
   // excepcion son los dos cruces de Rotacion, que siguen teniendo su tabla propia:
   // es el unico lugar donde podian vivir sin inventar otra vista.
-  // ⚠️ LA REGLA DE LA PANTALLA, en una linea: sin filtro de estado y sin cruce de
-  // rotacion se ven los seis graficos; con cualquiera de los dos, la tabla.
-  // Con un filtro de estado los graficos no se pueden dibujar --el historico
-  // responde a Unidad de negocio y Grupo-- y las tarjetas no se filtran a proposito
-  // (si lo hicieran, al elegir Quiebre las otras cinco darian cero), asi que la
-  // pantalla quedaba sin nada que mirar. Erik lo encontro filtrando Lanzamientos.
-  if(!st.ROT&&st.EST.size===0){
+  // ⚠️ LA REGLA DE LA PANTALLA:
+  //   cruce de Rotacion            -> la tabla de los cruces
+  //   Categoria o Codigo filtrados -> las filas, con el aviso en lugar de la linea
+  //   filtro de Estado             -> SOLO esas filas, con su tabla abierta debajo
+  //   sin nada                     -> las seis filas
+  // ⚠️ Un filtro de Estado NO impide dibujar: la foto mensual guarda el conteo POR
+  // ESTADO, asi que elegir Riesgo elige que fila mirar, no invalida la serie. Los que
+  // si la invalidan son Categoria y Codigo, que la foto no guarda. Erik lo encontro:
+  // *"si desde el filtro general toco Riesgo, me saca el grafico"*.
+  // ⚠️ "Sin rotacion" es la EXCEPCION y va a la tabla: vive en `st.EST` pero NO es una
+  // de las seis tarjetas --Rotacion se mudo a la barra-- asi que filtrar por el dejaba
+  // la pantalla sin ninguna fila que dibujar.
+  if(!st.ROT&&!st.EST.has('sinrot')){
     const HM=Object.keys(DATA.hstk||{}).sort();
-    // ⚠️ El historico responde a Unidad de negocio y Grupo SOLAMENTE: las fotos guardan
-    // el total por grupo, no el detalle por codigo. Con Categoria, Codigo o Estado
-    // filtrados no se dibuja, porque una linea que ignora la mitad de los filtros miente.
-    const puede=(st.CAT.size===0&&st.COD.size===0&&st.EST.size===0&&HM.length>0);
+    // ⚠️ El historico responde a Unidad de negocio, Grupo y ESTADO: la foto guarda el
+    // total por grupo abierto por estado. Lo que no guarda es la categoria ni el codigo,
+    // asi que con esos dos filtrados no se dibuja: una linea que ignora la mitad de los
+    // filtros miente.
+    const puede=(st.CAT.size===0&&st.COD.size===0&&HM.length>0);
     const gaOk={};if(puede)DATA.rows.forEach(r=>{if(mUN(r)&&mGA(r))gaOk[DATA.GA[r[1]]]=1;});
     // `f` es 'n' (SKU), 'c' (costo) o 'm' (venta mix); con plata hace falta ademas la
     // moneda, porque el dashboard nunca suma pesos con dolares.
@@ -1862,7 +1893,10 @@ function renderStock(){
       +tilePlata('Venta mix inmovilizado',GEX,8,STVERDE)+'</div>';
     // ---------------------------------------------------------------- las seis filas
     let filas='';
-    CARDS.forEach(c=>{const k=c[0];
+    // ⚠️ Con un filtro de Estado se dibujan SOLO esas filas. Las tarjetas de arriba no
+    // se filtran nunca --si lo hicieran, al elegir Quiebre las otras cinco darian cero--
+    // pero aca abajo el filtro es justamente lo que se pide mirar.
+    CARDS.filter(c=>st.EST.size===0||st.EST.has(c[0])).forEach(c=>{const k=c[0];
       const esExc=(k==='excleve'||k==='excgrave');
       const dibuja=(puede&&!(esExc&&corteRaro));
       // ⚠️ Que mes muestra la tarjeta. `null` o el ultimo indice = hoy.
@@ -1870,8 +1904,8 @@ function renderStock(){
       const enFoto=(dibuja&&mi!=null&&mi<HM.length);
       const ft=enFoto?{n:foto(HM[mi],k,'n'),c:fotoPlata(HM[mi],k,'c'),m:fotoPlata(HM[mi],k,'m')}:null;
       let gr;
-      if(!puede)gr='<div class="grafnota">El histórico responde a <b>Unidad de negocio</b> '
-        +'y <b>Grupo</b>. Sacá los filtros de Categoría, Código o Estado para verlo.</div>';
+      if(!puede)gr='<div class="grafnota">El histórico responde a <b>Unidad de negocio</b>, '
+        +'<b>Grupo</b> y <b>Estado</b>. Sacá los filtros de Categoría o Código para verlo.</div>';
       else if(esExc&&corteRaro)gr='<div class="grafnota">Las fotos de los meses anteriores '
         +'se guardaron con el corte en <b>x1,5</b>. Volvé el Exceso leve a <b>hasta x 1.5</b> '
         +'para comparar contra ellas.</div>';
@@ -1892,7 +1926,11 @@ function renderStock(){
       // ⚠️ El detalle se abre DEBAJO de la fila, sin cambiar de vista. Reusa la tabla de
       // siempre: `rows` es `let`, asi que se la cambia por la de este estado, se arma y
       // se la devuelve. Duplicar la tabla serian 200 lineas que despues se desincronizan.
-      const abierto=!!(st.grafAbre&&st.grafAbre[k])&&!enFoto;
+      // ⚠️ Con filtro de Estado el detalle arranca ABIERTO: es lo que se esta pidiendo
+      // al filtrar, y es lo que Erik ya veia antes (tarjetas arriba, tabla abajo).
+      // `st.grafAbre` guarda la EXCEPCION, no el valor, porque el defecto cambia.
+      const abDef=(st.EST.size>0);
+      const abierto=((st.grafAbre&&(k in st.grafAbre))?!!st.grafAbre[k]:abDef)&&!enFoto;
       let detalle='';
       if(abierto){const _todas=rows;
         rows=_todas.filter(o=>o.k===k);
@@ -1910,8 +1948,10 @@ function renderStock(){
         const iAct=(mi==null)?iHoy:mi, iAnt=iAct-1;
         if(iAnt>=0){const vAct=(iAct>=iHoy)?G[k].n:foto(HM[iAct],k,'n');
           const vAnt=foto(HM[iAnt],k,'n'), dd=vAct-vAnt;
+          const fl='<span style="color:'+(dd>0?'#2e7d32':'#c62828')+'">'
+            +(dd>0?'\u25b2':'\u25bc')+'</span> ';
           vsTxt=(dd===0?'igual que '+mesCorto(HM[iAnt])
-            :((dd>0?'\u25b2 ':'\u25bc ')+fmtI(Math.abs(dd))+' SKU vs '+mesCorto(HM[iAnt])));}}
+            :(fl+fmtI(Math.abs(dd))+' SKU vs '+mesCorto(HM[iAnt])));}}
       filas+='<div class="grafila'+(abierto?' abierta':'')+'">'
         +'<div class="grafcard"'+(enFoto?'':(' onclick="tglGrafDet(&quot;'+k+'&quot;)"'))
         +' style="--bc:'+c[2]+'"'
@@ -1952,22 +1992,24 @@ function renderStock(){
     const mopt=HM.map((m,i)=>'<option value="'+i+'"'+((st.grafMesG===i)?' selected':'')
         +'>'+mesLargo(m)+'</option>').join('')
       +'<option value=""'+((st.grafMesG==null)?' selected':'')+'>Hoy</option>';
+    // ⚠️ EL ORDEN DE LA BARRA lo eligio Erik (19/10): Mes, Exceso, Ver, Rotacion.
+    // Va de lo que cambia toda la pantalla a lo que elige un recorte.
     el.innerHTML='<div class="liqbar">'
-      +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cuántas veces el máximo un exceso es leve; de ahí para arriba es grave">Exceso leve</span>'
+      +'<span class="liqlbl" data-tip="Mes" data-tip2="Qu\u00e9 mes muestran las tarjetas">Mes</span>'
+      +'<select onchange="setGrafMesG(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select>'
+      +'<span style="width:12px"></span>'
+      +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'
       +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
-      +'<span style="width:12px"></span><span class="liqlbl" data-tip="Qu\u00e9 miden los gr\u00e1ficos">Ver</span>'
+      +'<span style="width:12px"></span>'
+      +'<span class="liqlbl" data-tip="Qu\u00e9 miden los gr\u00e1ficos">Ver</span>'
       +'<span style="display:inline-flex;gap:4px;">'+bg('n','SKU',_vg==='n',true)
       +bg(curMejor()||'$',(_vg==='n'?'Plata':('Plata \u00b7 '+(_vg==='$'?'$':'USD'))),
           _vg!=='n',!!curMejor(),
           (hayCur('$')&&hayCur('USD'))?'Toc\u00e1 de nuevo para cambiar de moneda':'')+'</span>'
-      +'<span style="width:12px"></span><span class="liqlbl" data-tip="Mes" data-tip2="Qu\u00e9 mes muestran las tarjetas">Mes</span>'
-      +'<select onchange="setGrafMesG(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select>'
-      // ⚠️ Rotacion se habia ido con el selector Vista, y con ella los dos cruces: no
-      // habia forma de llegar a "En baja" ni a "En alza".
       +'<span style="width:12px"></span>'
       +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
-      +'<select onchange="setRotSub(this.value)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;margin-right:5px;">'+sopt+'</select>'
       +'<select onchange="setRotU(this)" data-tip="Umbral" data-tip2="Desde cu\u00e1nto cuenta como baja o alza" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'
+      +rotPills
       +'</div>'+totales
       +'<div class="grafwrap">'+filas+'</div>';
     // ⚠️ Recien ahora se puede medir: el ancho de la caja depende del monitor. En
@@ -1986,7 +2028,16 @@ function renderStock(){
           +svgLinea(g.serie,g.lbl,g.color,w,g.cur,g.clic,g.sel);});},0);
     return;}
   el.innerHTML=
-    '<div class="liqbar">'+'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'+'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'+'<span style="width:14px"></span><span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el ultimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'+'<select onchange="setRotSub(this.value)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;margin-right:5px;">'+sopt+'</select>'+'<select onchange="setRotU(this)" data-tip="Umbral" data-tip2="Desde cu\u00e1nto cuenta como baja o alza" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'+'</div>'
+    // ⚠️ La misma barra que la pantalla de graficos, menos Mes y Ver, que solo tienen
+    // sentido con una linea delante. El orden y las pastillas son los mismos.
+    '<div class="liqbar">'
+      +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'
+      +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
+      +'<span style="width:12px"></span>'
+      +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
+      +'<select onchange="setRotU(this)" data-tip="Umbral" data-tip2="Desde cu\u00e1nto cuenta como baja o alza" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'
+      +rotPills
+      +'</div>'
     +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+CARDS.map(c=>card(c)).join('')
     +'</div>'
     +'<div class="sec-h" style="margin-top:16px">📦 Detalle <span style="font-weight:600;color:#8a90b0;font-size:.72rem">('+fmtI(rows.length)+' SKU)</span></div>'

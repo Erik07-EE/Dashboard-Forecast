@@ -100,19 +100,52 @@ gráfico a la derecha**, y el detalle se abre debajo tocando la tarjeta.
 ### La regla de la pantalla, en una línea
 
 ```
-sin filtro de Estado y sin cruce de Rotación  →  los seis gráficos
-con cualquiera de los dos                     →  la tabla
+cruce de Rotación o Sin rotación  →  la tabla
+Categoría o Código filtrados      →  las seis filas, con el aviso en lugar de la línea
+filtro de Estado                  →  SOLO esas filas, con su tabla abierta debajo
+sin nada                          →  las seis filas
 ```
 
-⚠️ Esa regla no es estética: **con un filtro de Estado el histórico no se puede dibujar**
-—las fotos guardan el total por grupo, no el detalle por código— y las tarjetas **no se
-filtran por estado a propósito** (si lo hicieran, al elegir Quiebre las otras cinco darían
-cero y no se podrían comparar). Sin la regla, filtrar «Lanzamientos» dejaba la pantalla
-con seis avisos y nada que mirar. Erik lo encontró.
+⚠️ **«Sin rotación» es la excepción del filtro de Estado y va a la tabla.** Vive en
+`st.EST` pero **no es una de las seis tarjetas** —Rotación se mudó a la barra—, así que
+filtrar por él dejaba la pantalla sin ninguna fila que dibujar.
+
+⚠️ **Un filtro de Estado NO impide dibujar**, y el 19/10 estuvo un rato diciendo que sí.
+La foto mensual guarda el conteo **por estado**, así que elegir Riesgo elige qué fila
+mirar: la serie sigue siendo la misma. Los que sí la invalidan son **Categoría y Código**,
+que la foto no guarda. Erik: *"si desde el filtro general toco Riesgo, me saca el
+gráfico"*.
+
+- ⚠️ **Con filtro de Estado el detalle arranca abierto**: es lo que se está pidiendo al
+  filtrar. Se puede cerrar tocando la tarjeta. `st.grafAbre` guarda **la excepción** al
+  valor por defecto, no el valor, porque el defecto cambia según haya filtro o no; con un
+  booleano suelto el clic invertía su sentido según dónde se estuviera parado. Y
+  `setStFil` **tira `st.grafAbre`**, o una fila cerrada a mano se quedaba cerrada al
+  elegir otro estado.
+- Las tarjetas de arriba (las cinco de totales) **no se filtran por estado nunca**: si lo
+  hicieran, al elegir Quiebre las otras darían cero y no se podrían comparar.
+- ⚠️ Queda abierto un caso: con **Categoría o Código** filtrados se ven las seis filas con
+  el aviso y **ninguna tabla**. Es lo mismo que pasaba con Lanzamientos antes del 19/10.
+  No lo levantó todavía.
 
 ### La barra
 
-`EXCESO LEVE · VER [SKU][Plata] · MES · ROTACIÓN [sub][umbral]`
+`MES [▾] · EXCESO LEVE [▾] · VER (SKU)(Plata) · ROTACIÓN [%] (Sin rotación)(En baja)(En alza)`
+
+⚠️ **Ese orden lo eligió Erik** (19/10): va de lo que cambia toda la pantalla a lo que
+elige un recorte. Entra en un renglón de 37px.
+
+- ⚠️ **Los tres sub-estados son PASTILLAS**, con el mismo diseño que SKU / Plata de «Ver»
+  (Erik: *"mismo diseño que SKU y Plata de Ver, que sean clickeables"*). **Tocar la activa
+  la apaga**, que es lo que hacía el «— sin filtro» del desplegable: una cuarta pastilla
+  para eso sería un botón que no muestra nada.
+- ⚠️ **El conteo se fue al globo.** El desplegable decía «En baja (1.115)»; en una
+  pastilla de 10px eso la hace el doble de ancha que las de Ver y se pierde el mismo
+  diseño que pidió.
+- ⚠️ **La barra se arma en DOS lugares** —la pantalla de gráficos y la de los cruces— y
+  el helper `rotPills` vive **fuera de las dos ramas**. Escrito dos veces se desincroniza,
+  como ya pasó con los `top` pegajosos y el vocabulario de Proyección. La barra de los
+  cruces no lleva Mes ni Ver: solo tienen sentido con una línea delante.
 
 - ⚠️ **Rotación tiene que estar en la barra.** Se fue una vez junto con el selector Vista
   y con ella los dos cruces: no había forma de llegar a «En baja» ni «En alza».
@@ -197,8 +230,14 @@ movimiento real.
 - **Cada color significa una sola cosa**: rojo cayó/cuesta, verde subió/vende, **gris sin
   señal confiable**. El % en stock va **siempre neutro, mismo tono y mismo peso** — la
   negrita para los flojos se leía como un segundo gris.
-- La flecha de variación **no dice si está bien o mal**: un Quiebre que baja es bueno y un
-  Ideal que baja es malo, y pintarlo chocaría con la regla de arriba.
+- **La flecha del «vs» va en color** (Erik, 19/10: *"solo la flechita, si sube es verde y
+  si baja rojo"*): ▲ verde, ▼ rojo. ⚠️ **Solo la flecha** — el texto queda en el gris de
+  siempre, o la línea compite con los importes de abajo. Y no contradice la regla de
+  arriba: la flecha dice **para dónde se movió**, no si está bien o mal. Eso último sigue
+  sin pintarse, porque un Quiebre que baja es bueno y un Ideal que baja es malo.
+- El **A · B** de la tarjeta lleva el número en **azul oscuro y negrita** (`cNum`, el
+  mismo del conteo de SKU) y la letra en gris. ⚠️ El peso se lo da el azul del tablero,
+  **no un color nuevo**: rojo y verde ya significan «cayó» y «subió».
 - **Cuatro barras quedan congeladas** al scrollear, una abajo de la otra: encabezado 56 ·
   filtros 64 · solapas 47 · controles 37 · totales 59 = **263px**. Si alguna vez es mucho,
   lo primero que conviene soltar es la fila de totales.
