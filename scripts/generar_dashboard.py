@@ -528,11 +528,15 @@ def estado_de(r, data):
 LETRA = {"cero": "q", "riesgo": "r", "ideal": "i", "exceso": "e",
          "sinrot": "s", "lanz": "l"}
 
-# ⚠️ La foto mensual guarda SEIS estados: los dos excesos van juntos. Septiembre y
-# octubre ya estan congelados con el Exceso entero, asi que partirlo ahora dibujaria
-# en Historico un salto de 0 a 1.600 en "grave" que no es movimiento real. La
-# plantilla tiene su contraparte en STKH.
-FOTO_K = {"excleve": "exceso", "excgrave": "exceso"}
+# ⚠️ La foto guarda LOS SIETE ESTADOS, los dos excesos por separado (Erik, 19/10:
+# "en la vista historico tiene que tener los estados actuales, leve, grave, etc").
+# Entre el 16 y el 19/10 estuvo colapsado en uno para no dibujar un salto de 0 a
+# 1.600 en "grave" el mes que se partiera. La solucion no fue colapsar sino
+# **rearmar septiembre y octubre con la division** (congelar_mes.py sobre los
+# dashboards de esos dias, que estan en git): asi los tres meses hablan el mismo
+# idioma y no hay salto.
+LETRA["excleve"] = "L"
+LETRA["excgrave"] = "G"
 
 MIX = 104        # precio Mix (col AS)
 DEM = 79         # demanda, col CJ "V.Ajust. c/stock"
@@ -601,8 +605,7 @@ def foto_de(data):
     """
     ga, cod = {}, {}
     for r in data["rows"]:
-        # los siete estados de pantalla, colapsados a los seis de la foto
-        k = FOTO_K.get(estado_de(r, data), estado_de(r, data))
+        k = estado_de(r, data)
         cod[r[2]] = LETRA[k]
         g = ga.setdefault(data["GA"][r[1]], {}).setdefault(
             k, {"n": 0, "u": 0, "c": {}, "m": {}})

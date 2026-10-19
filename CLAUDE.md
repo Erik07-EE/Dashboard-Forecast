@@ -91,6 +91,140 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
+## Estado Stock, rehecha entera (19/10/2026)
+
+**Lo de esta sección pisa lo que digan las de abajo.** La solapa pasó de «tarjetas +
+tabla» a **una sola pantalla con una fila por estado: la tarjeta a la izquierda y su
+gráfico a la derecha**, y el detalle se abre debajo tocando la tarjeta.
+
+### La regla de la pantalla, en una línea
+
+```
+sin filtro de Estado y sin cruce de Rotación  →  los seis gráficos
+con cualquiera de los dos                     →  la tabla
+```
+
+⚠️ Esa regla no es estética: **con un filtro de Estado el histórico no se puede dibujar**
+—las fotos guardan el total por grupo, no el detalle por código— y las tarjetas **no se
+filtran por estado a propósito** (si lo hicieran, al elegir Quiebre las otras cinco darían
+cero y no se podrían comparar). Sin la regla, filtrar «Lanzamientos» dejaba la pantalla
+con seis avisos y nada que mirar. Erik lo encontró.
+
+### La barra
+
+`EXCESO LEVE · VER [SKU][Plata] · MES · ROTACIÓN [sub][umbral]`
+
+- ⚠️ **Rotación tiene que estar en la barra.** Se fue una vez junto con el selector Vista
+  y con ella los dos cruces: no había forma de llegar a «En baja» ni «En alza».
+- ⚠️ **El botón Plata ALTERNA de moneda** al tocarlo de nuevo. Antes elegía la del total
+  más grande y, sin filtro, los pesos siempre ganan —son millones contra miles—, así que
+  **a USD no se llegaba nunca**. La moneda sin datos se dibuja apagada, mirando **si hay
+  plata en esa moneda** y no la Unidad de negocio: así funciona igual filtrando por Grupo.
+- El **mes** cambia la tarjeta y los totales, **nunca la tabla**: con un mes pasado
+  elegido la tarjeta deja de abrir detalle. La foto guarda el total por grupo y la letra
+  del estado de cada código, pero no su stock, mínimo, máximo ni costos de ese mes;
+  reconstruir la tabla de septiembre pediría 20 columnas × 5.400 códigos por mes.
+  En un mes pasado la tarjeta **oculta el A·B y el «con compra en camino»**: la foto no
+  los tiene y repetir los de hoy sería mentir.
+
+### Los cinco totales de arriba
+
+`Códigos · Costo a invertir · Venta mix perdida · Costo inmovilizado · Venta mix inmovilizado`
+
+⚠️ **No se suma la plata de los seis estados en un número.** En Quiebre y Riesgo el costo
+es *lo que falta invertir* y en los dos Excesos *lo que está inmovilizado*: sumarlos daría
+un número sin significado. Van separados y **cada tarjeta dice de qué estados sale**.
+Ideal quedó afuera del «a invertir» (Erik): un código entre el mínimo y el máximo está
+cubierto. Los dos importes van **uno al lado del otro**, no apilados.
+
+### Los gráficos
+
+- Uno por estado, **cada uno con SU escala**: con un eje compartido Quiebre (2.477)
+  aplastaba a Lanzamientos (58), 43 veces de diferencia.
+- ⚠️ **El eje Y no arranca en cero**, a propósito: Quiebre se mueve entre 2.393 y 2.477 y
+  con el cero adentro los puntos quedarían pegados. Las marcas se **calculan** para caer
+  en números redondos (`escalaLinda`).
+- ⚠️ **El ancho se MIDE y el SVG se redibuja** (`setTimeout`, no rAF). Con viewBox fijo y
+  escala uniforme, en una pantalla ancha el dibujo se ajusta por el alto y deja media caja
+  vacía: a 1.920 se veía la línea en la mitad derecha.
+- El **último punto es HOY** y los anteriores son las fotos del 1ro de cada mes.
+- Con muchos meses **las etiquetas se saltean, los puntos no**: desde 7 meses se numeran
+  el primero, el último y los extremos.
+
+### La foto mensual guarda los 7 estados
+
+⚠️ Se **rearmaron septiembre y octubre con el Exceso abierto** (`congelar_mes.py` sobre
+los dashboards de esos días, que están en git), así los tres meses hablan el mismo idioma:
+
+| | Exceso antes | ahora |
+|---|---|---|
+| septiembre | 1.770 | 185 leve + 1.585 grave |
+| octubre | 1.797 | 144 leve + 1.653 grave |
+
+Verificado antes de aceptarlo: los otros cinco estados dan **idéntico** en SKU y unidades,
+y leve + grave reproduce el Exceso viejo en SKU, unidades y las cuatro cifras de plata.
+⚠️ **Para octubre sirve el commit de las 08:59, no el de las 10:14**: los dos tienen el
+mismo stock pero el Excel se recalculó en el medio y con el segundo se movían 4 códigos.
+La foto se saca en la PRIMERA corrida del mes.
+
+⚠️ **Las fotos están congeladas con el corte de Exceso en x1,5.** Con otro corte, los dos
+gráficos de Exceso avisan en vez de dibujar un salto que sería el cambio de corte, no
+movimiento real.
+
+### Errores encontrados en el camino (los cinco valen por el patrón)
+
+1. ⚠️ **`.empty{padding:28px}` inflaba los filtros.** Esa regla es el cartel de «no hay
+   datos» de las tablas, pero el botón de un filtro **sin selección** lleva
+   `class="dd-btn empty"` y se la comía entera: medía **58px en vez de 24** y la barra
+   **131 en vez de 64**. Acotada a `td.empty, div.empty`. El tablero ganó 76px de alto.
+2. ⚠️ **`CARDS.map(card)` daba NaN%.** `map` pasa `(elemento, ÍNDICE, array)`, y desde que
+   `card` acepta una foto de mes como segundo argumento, **el índice entraba como foto**.
+   La primera tarjeta zafaba (índice 0, falsy) y el resto leía `foto.n` de un número.
+3. ⚠️ **Las tarjetas ignoraban el cruce de Rotación.** Con «En baja» mostraban el total
+   sin cruzar y la tabla los 734. Ahora `dat` aplica el cruce; `ROTG` **no**, o el conteo
+   del desplegable se recalcularía sobre sí mismo.
+4. ⚠️ **Compra y VC tenían encabezado clickeable y no ordenaban**: faltaban en el mapa
+   `key`. Es el tercer caso igual — al agregar una columna ordenable hay que sumar el
+   campo en el mismo momento.
+5. ⚠️ **Borrar por patrón exige que el final del patrón sea exacto.** Limpiando código
+   muerto usé un patrón terminado en `}` a principio de renglón; `updateDots` cierra con
+   `}` en el mismo renglón, así que se llevó **2.190 caracteres** —`rowsExcept` y
+   `optionsFor` entre ellos— y los filtros dejaron de andar. **`node --check` no lo
+   agarra**: el archivo queda sintácticamente válido, solo le faltan funciones.
+
+### Reglas de interfaz que se cerraron acá
+
+- **Cada color significa una sola cosa**: rojo cayó/cuesta, verde subió/vende, **gris sin
+  señal confiable**. El % en stock va **siempre neutro, mismo tono y mismo peso** — la
+  negrita para los flojos se leía como un segundo gris.
+- La flecha de variación **no dice si está bien o mal**: un Quiebre que baja es bueno y un
+  Ideal que baja es malo, y pintarlo chocaría con la regla de arriba.
+- **Cuatro barras quedan congeladas** al scrollear, una abajo de la otra: encabezado 56 ·
+  filtros 64 · solapas 47 · controles 37 · totales 59 = **263px**. Si alguna vez es mucho,
+  lo primero que conviene soltar es la fila de totales.
+  - ⚠️ **Los cuatro `top` se MIDEN en cadena** (`_fijarTabsYa` → hoja `#tabpos`): cada
+    barra arranca donde termina la de arriba. Escritos a mano se desincronizan en cuanto
+    la barra de filtros pasa de un renglón a dos. Se mide **dos veces** (0 y 350ms) y
+    queda un `ResizeObserver` mirando la barra: la primera medición la agarra con un
+    renglón y después el filtro de Estado se va al segundo.
+  - ⚠️ **Un elemento pegajoso tapa lo que MIDE, no lo que ocupa con sus márgenes.** Entre
+    los filtros y las solapas quedaba una franja de **8px transparente** —el
+    `margin-bottom` de la barra— y por ahí pasaban las líneas de los gráficos al
+    scrollear. Erik lo vio. Esos 8px ahora son **relleno** de las solapas.
+  - ⚠️ **La fila de totales lleva fondo propio** (`#eef0f8`): sus cinco cajas son blancas
+    pero el espacio entre ellas es transparente, y sin fondo se vería pasar la tabla.
+- El **"Ver" (Por código / Por grupo)** vive dentro del encabezado PRODUCTO, con la
+  pastilla amarilla de Histórico. ⚠️ Lleva `text-transform:none` o dice "POR CÓDIGO".
+- ⚠️ El recuadro del estado abierto necesita **`!important`**: la tarjeta arma su borde
+  con estilo en línea y eso le gana a la hoja. Es el único lugar del tablero donde hace
+  falta.
+
+### Dos funciones con cuerpo y sin botón
+
+`exportCSV` (el CSV del Forecast) y `renderLegend` (la leyenda de compra y venta) están
+enteras y andan, pero **nada las llama**. No son código muerto: perdieron su botón en
+alguna limpieza anterior. **No borrarlas sin preguntarle a Erik.**
+
 ## Reestructuración del 16/10/2026 — lo que cambió de fondo
 
 Stock del **viernes 16/10 06:33**, 5.384 códigos. Esta vuelta no fue una actualización:
