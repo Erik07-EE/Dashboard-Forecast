@@ -884,6 +884,12 @@ function presOf(r){if(DATA.UN[r[0]]!==UN_IMPO)return 1;
 // El semestre tiene 129 dias habiles, asi que los dias salen del porcentaje y no
 // hace falta traer la col BR al HTML.
 const presDias=p=>Math.round(p*129);
+// La fecha del stock en corto, para el titulo del bloque Actual: el formato largo
+// de DATA.stock_ts (37 caracteres) no entra en los 202px que mide ese encabezado.
+const stockCorto=()=>{const iso=DATA.stock_iso||'';
+  if(!iso)return DATA.stock_ts||'';
+  const dia=(DATA.stock_ts||'').split(' ')[0];
+  return dia+' '+iso.slice(8,10)+'/'+iso.slice(5,7)+' '+iso.slice(11,16)+' hs';};
 // Por debajo del umbral elegido, la Variacion no es confiable: hubo faltante.
 function presFloja(r){const p=presOf(r);
   return (p!=null)&&(p < (st.presU||90)/100);}
@@ -1399,7 +1405,7 @@ function renderStock(){
     const thR='<thead><tr>'+GHV(4)
         +GH('Stock',3,'#1a237e','#fff')
         +GH('Hist\u00f3rico',4,'#546e7a','#fff')
-        +GH('Actual',3,'#37474f','#fff')+'</tr>'
+        +GH('Actual<span style="text-transform:none;font-weight:400;font-size:9px;opacity:.85;margin-left:6px;">'+stockCorto()+'</span>',3,'#37474f','#fff')+'</tr>'
       +'<tr>'+HP('Grupo')+HR('cod','C\u00f3digo')+HP('Cat','Categor\u00eda')
         +HP('Fecha ing.','Fecha del primer ingreso')
         +HR('stock','Stock h.','Stock hoy')+HR('meses','Meses h.','Meses hoy')+HP('Estado')
@@ -1432,15 +1438,25 @@ function renderStock(){
       return (p>=0?'+':'\u2212')+Math.abs(p*100).toFixed(0)+'%';};
     // El avance no es una variacion: sin signo y siempre en verde, es venta.
     const pa=a=>(a==null)?D:Math.round(a*100)+'%';
-    // El % en stock, con el globo que explica de donde sale y cuanto vendia
-    // cuando si tuvo. En rojo cuando esta por debajo del umbral elegido.
+    // El % en stock, con el globo que explica de donde sale y cuanto vendia cuando si
+    // tuvo.
+    // \u26a0\ufe0f CADA COLOR SIGNIFICA UNA SOLA COSA (Erik, 19/10). Antes esta columna se
+    // pintaba de rojo cuando la presencia era baja, y el rojo ya querian decir otra
+    // cosa en la Variacion de al lado: "cayo de verdad". El mismo codigo mostraba el
+    // % en rojo y la Variacion en gris, que se lee como una contradiccion.
+    // Ahora el reparto es:
+    //    rojo   = cayo        verde = subio      (la Variacion, como en todo el tablero)
+    //    gris   = sin senal confiable            (la Variacion apagada)
+    // y el % en stock queda SIEMPRE neutro: es el dato de contexto, no la alarma.
+    // Lo que destaca a los flojos es la negrita, que no gasta un color.
     const celdaPres=r=>{const p=presOf(r);
       if(p==null)return '<td class="num">'+D+'</td>';
       const flojo=presFloja(r), v=r[VCS];
       let t=presDias(p)+' de 129 d\u00edas h\u00e1biles con stock';
       if(v!=null&&v>0)t+=' \u00b7 vend\u00eda '+fmt1(v)+' por mes cuando tuvo';
+      if(flojo)t+=' \u00b7 por eso la Variaci\u00f3n va apagada';
       return '<td class="num" data-tip="'+t+'" style="font-weight:'+(flojo?'800':'600')
-        +';color:'+(flojo?'#c62828':'#5f6690')+'">'+Math.round(Math.min(p,1)*100)+'%</td>';};
+        +';color:#5f6690">'+Math.round(Math.min(p,1)*100)+'%</td>';};
     // la misma fila sirve suelta o colgando de un grupo, con sangria
     const filaRot=(o,dentro)=>{const p=rotPct(o.r);
       return '<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
@@ -1462,7 +1478,7 @@ function renderStock(){
         +'</td>'+celdaPres(o.r)
         +'<td class="num st-v">'+(o.vend?fmtI(o.vend):D)
         +'</td><td class="num st-v st-b">'+fmtI(o.r[DEM])
-        +'</td><td class="num st-v" style="font-weight:800;">'+pa(avancePct(o.r))
+        +'</td><td class="num" style="font-weight:800;color:#1a237e;">'+pa(avancePct(o.r))
         +'</td></tr>';};
     // ---- por grupo: una fila por GA con sus totales, que se abre a sus codigos
     if(VIS==='ga'){
@@ -1482,6 +1498,7 @@ function renderStock(){
         // mueve 2 unidades que a uno que mueve 900.
         const pg=(e.vr6>0)?(e.vr3/e.vr6-1):null;
         const ag=(e.vd>0)?(e.vend/e.vd):null;
+        const _gFlojo=!!e.nPres&&(e.pres/e.nPres)<((st.presU||90)/100);
         bg+='<tr onclick="tglGA(&quot;'+e.ga.replace(/"/g,'')+'&quot;)" style="cursor:pointer;'+(on?'background:#eef2ff;':'')+'">'
           +'<td class="st-ga" style="font-weight:800;color:#1a237e" data-tip="'+e.ga+'">'+(on?'\u25be ':'\u25b8 ')+gaLbl(e.ga)+'</td>'
           +'<td class="st-cod" style="color:#5f6690;font-weight:600">'+fmtI(e.n)+' SKU</td>'
@@ -1490,17 +1507,19 @@ function renderStock(){
           +'<td class="num">'+D+'</td><td class="st-ct">'+D+'</td>'
           +'<td class="num st-v">'+(e.vr6?fmt1(e.vr6):D)+'</td>'
           +'<td class="num st-v">'+(e.vr3?fmt1(e.vr3):D)+'</td>'
-          +'<td class="num" style="font-weight:800;color:'+((pg!==null&&pg<0)?'#c62828':'#1e7e34')+'">'
-            +(pg===null?D:((pg>=0?'+':'\u2212')+Math.abs(pg*100).toFixed(0)+'%'))+'</td>'
+          // ⚠️ El mismo reparto de colores que por codigo: la Variacion del grupo se
+          // apaga cuando su presencia promedio no llega al umbral.
+          +'<td class="num" style="font-weight:800;color:'
+            +(_gFlojo?'#9aa0bd':((pg!==null&&pg<0)?'#c62828':'#1e7e34'))+'">'
+            +(pg===null?D:((pg>=0?'+':'−')+Math.abs(pg*100).toFixed(0)+'%'))+'</td>'
           // ⚠️ El % en stock del grupo es el promedio simple de sus codigos, no
           // ponderado: lo que se quiere saber es cuantos de sus codigos estuvieron
-          // sin stock, no cuantas unidades.
-          +'<td class="num" style="font-weight:600;color:'
-            +((e.nPres&&(e.pres/e.nPres)<((st.presU||90)/100))?'#c62828':'#5f6690')+'">'
+          // sin stock, no cuantas unidades. Va siempre neutro, como por codigo.
+          +'<td class="num" style="font-weight:'+(_gFlojo?'800':'600')+';color:#5f6690">'
             +(e.nPres?(Math.round(Math.min(e.pres/e.nPres,1)*100)+'%'):D)+'</td>'
           +'<td class="num st-v">'+(e.vend?fmtI(e.vend):D)+'</td>'
           +'<td class="num st-v st-b">'+fmtI(e.vd)+'</td>'
-          +'<td class="num st-v" style="font-weight:800;">'+pa(ag)+'</td></tr>';
+          +'<td class="num" style="font-weight:800;color:#1a237e;">'+pa(ag)+'</td></tr>';
         if(on)e.items.forEach(o=>{bg+=filaRot(o,true);});});
       return '<table class="prevt">'+cgR+thR+'<tbody>'+bg+'</tbody></table>';}
     // ---- por codigo

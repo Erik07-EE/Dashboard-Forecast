@@ -181,7 +181,21 @@ con stock todo el semestre.
   100%. Sirve para lo suyo —castigar el ritmo de un código que casi no existió— no como
   semáforo de faltante.
 - **El umbral lo elige Erik** (`st.presU`, 95/90/80/50, arranca en 90): por debajo, la
-  Variación se pinta **en gris** y el % en rojo.
+  Variación se pinta **en gris**.
+- ⚠️ **Cada color significa UNA sola cosa** (Erik, 19/10: *"busquemos que el color
+  represente lo mismo"*). El primer intento pintaba el % en stock de rojo cuando la
+  presencia era baja, y el rojo ya quería decir otra cosa en la Variación de al lado —
+  *"cayó de verdad"*. El mismo código mostraba el % en rojo y la Variación en gris, que
+  se lee como una contradicción. El reparto quedó así:
+
+  | | |
+  |---|---|
+  | rojo | cayó · cuesta |
+  | verde | subió · vende |
+  | **gris** | **sin señal confiable** (la Variación apagada) |
+
+  El **% en stock va siempre neutro**: es el dato de contexto, no la alarma. A los flojos
+  los destaca la **negrita**, que no gasta un color. Rige igual por código y por grupo.
 - **BR no viaja al HTML**: se deriva, `BR = BS × 129`.
 
 ### Rotación y las 6 pastillas no se combinan
