@@ -672,18 +672,19 @@ def foto_mensual(data, ruta):
         print("  Foto mensual: no se pudo leer el historico (%s)" % e); return
     if mes in hist:
         print("  Foto mensual: %s ya estaba congelada (%s)" % (mes, hist[mes].get("fecha", "?")))
-        data["hstk"] = solo_ga(hist); return
+        publicar_fotos(data, hist); return
     # ⚠️ Si el Excel viene con un stock de un mes anterior al ultimo guardado, tampoco se
     # escribe: un mes cerrado no se vuelve a tocar ni por accidente.
     if hist and mes < max(hist):
         print("  Foto mensual: el stock es de %s y ya hay foto de %s. No se toca nada."
               % (mes, max(hist)))
-        data["hstk"] = solo_ga(hist); return
+        publicar_fotos(data, hist); return
     hist[mes] = foto_de(data)
     hist[mes]["fecha"] = data.get("stock_iso")
     ga = hist[mes]["ga"]
     with open(ruta, "w", encoding="utf-8") as f:
         json.dump(hist, f, ensure_ascii=False, separators=(",", ":"))
+    publicar_fotos(data, hist)
     tot = {}
     for g in ga.values():
         for k, v in g.items(): tot[k] = tot.get(k, 0) + v["n"]
@@ -692,16 +693,42 @@ def foto_mensual(data, ruta):
     otros = sorted(m for m in hist if m != mes)
     if otros:
         print("  Meses ya congelados (no se tocan): %s" % ", ".join(otros))
-    data["hstk"] = solo_ga(hist)
+    publicar_fotos(data, hist)
 
 
 def solo_ga(hist):
-    """Lo que viaja al dashboard: los totales por grupo, sin el detalle por codigo.
-
-    El detalle queda guardado en el JSON para el dia que se muestre, pero mandarlo al HTML
-    hoy serian 5,4 KB por mes que nadie lee.
-    """
+    """Los totales por grupo, que son los que dibujan la linea cuando no hay filtro de
+    Categoria ni de Codigo."""
     return {m: {"fecha": v.get("fecha"), "ga": v.get("ga", {})} for m, v in hist.items()}
+
+
+def letras_por_fila(hist, data):
+    """El estado de cada codigo, mes a mes, en una CADENA alineada con `rows[]`.
+
+    Una letra por codigo y `-` para los que ese mes no existian. Son **5,4 KB por mes**;
+    como diccionario {codigo: letra} serian 100 KB. Es el mismo truco de `bvant`.
+
+    ⚠️ POR QUE VIAJA (Erik, 19/10): con esto el grafico se cuenta codigo por codigo y
+    entonces **responde a Categoria y a Codigo**, usando la categoria de HOY. Un articulo
+    que en septiembre era B y hoy es A cuenta como A en toda la serie, asi la linea
+    compara lo mismo de punta a punta. Antes la foto solo tenia totales por grupo y con
+    esos dos filtros no habia nada que dibujar.
+
+    ⚠️ Solo sirve para los SKU: la letra dice en que estado estaba el codigo, no cuanto
+    costaba su stock ese mes. La plata se guarda sumada por grupo y no se puede abrir.
+    """
+    out = {}
+    for mes, v in hist.items():
+        cod = v.get("cod") or {}
+        out[mes] = "".join(cod.get(r[2], "-") for r in data["rows"])
+    return out
+
+
+def publicar_fotos(data, hist):
+    """Las dos formas en que la foto viaja al HTML. Van juntas siempre: si se manda una
+    sola, el grafico dice una cosa con filtro y otra sin filtro."""
+    data["hstk"] = solo_ga(hist)
+    data["hcod"] = letras_por_fila(hist, data)
 
 
 def build(data, out_html, tpl_path):

@@ -21,7 +21,12 @@ header{background:var(--azul);padding:0 22px;display:flex;align-items:center;gap
    (Erik, 19/10). Van APILADOS bajo el encabezado, que mide 56px. El `top` de las
    solapas no se escribe a mano: se MIDE, porque esta barra envuelve en dos renglones
    segun el ancho de la pantalla. */
-.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12);padding:2px 14px;margin-bottom:0;position:sticky;top:56px;z-index:31;}
+/* ⚠️ Las dos losas grises de los costados: la barra mide del 22 al 1.883 porque
+   la pagina tiene 22px de margen, y por esos 22px pasaba el contenido al
+   scrollear --Erik vio el borde rojo de Quiebre cruzando los filtros--. Va como
+   `box-shadow` y no como una caja absoluta: la sombra no ocupa lugar, asi que no
+   puede empujar el scroll horizontal. El radio no importa: es gris sobre gris. */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(26,35,126,.12),-22px 0 0 #eef0f8,22px 0 0 #eef0f8;padding:2px 14px;margin-bottom:0;position:sticky;top:56px;z-index:31;}
 .dd{position:relative;display:flex;align-items:center;gap:7px;}
 .dd .cap{display:inline-block;font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--azul3);margin-bottom:0;white-space:nowrap;}
 .dd-btn{display:flex;align-items:center;gap:7px;width:158px;height:24px;font:inherit;cursor:pointer;background:#f8f9ff;border:1px solid #c5cae9;border-radius:7px;padding:0 10px;color:var(--azul);text-align:left;}
@@ -29,6 +34,12 @@ header{background:var(--azul);padding:0 22px;display:flex;align-items:center;gap
 .dd-btn .cnt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem;font-weight:700;}
 .dd-btn.empty .cnt{color:#9aa0c9;font-weight:600;}
 .dd-btn .arw{color:var(--azul3);font-size:.62rem;} .dd-btn .dd-cnt{font-size:.6rem;font-weight:800;color:#fff;background:var(--azul3);border-radius:20px;padding:1px 6px;} .dd-btn.empty .dd-cnt{display:none;}
+/* ⚠️ Y tambien cuando el conteo va VACIO --una sola cosa elegida-- o la pastilla
+   ocupa sus 12px de padding, se dibuja como una rayita y corre el texto a la
+   izquierda: era lo que hacia ver al primer filtro descentrado contra los otros.
+   `:empty` es el elemento sin contenido; `.empty` de arriba es el boton sin
+   seleccion. Se escriben casi igual y son dos cosas distintas. */
+.dd-btn .dd-cnt:empty{display:none;}
 .dd-panel{display:none;position:absolute;top:100%;margin-top:4px;right:0;width:270px;max-width:88vw;background:#fff;border:1px solid #c5cae9;border-radius:10px;box-shadow:0 8px 24px rgba(26,35,126,.22);z-index:55;padding:8px;}
 .dd.open .dd-panel{display:block;}
 .dd-panel .mini{width:100%;padding:6px 9px;border:1px solid #c5cae9;border-radius:7px;font:inherit;font-size:.75rem;margin-bottom:6px;color:var(--azul);}
@@ -204,8 +215,8 @@ td.empty,div.empty{padding:28px;text-align:center;color:#7986cb;font-weight:700;
 /* ⚠️ Fondo propio: las cinco cajas son blancas pero el espacio entre ellas es
    transparente, y al quedar pegada se veria pasar la tabla por el medio. */
 #view-st .totrow{display:flex;gap:10px;margin-bottom:10px;position:sticky;z-index:28;
-  background:#eef0f8;padding:6px 0 4px;}
-#view-st .liqbar{position:sticky;z-index:29;}
+  background:#eef0f8;padding:6px 0 4px;box-shadow:-22px 0 0 #eef0f8,22px 0 0 #eef0f8;}
+#view-st .liqbar{position:sticky;z-index:29;box-shadow:0 1px 2px rgba(26,35,126,.04),0 6px 18px rgba(26,35,126,.06),-22px 0 0 #eef0f8,22px 0 0 #eef0f8;}
 .tot1{flex:1 1 0;min-width:0;background:#fff;border:1px solid #d7dbe8;border-radius:14px;
   box-shadow:0 1px 2px rgba(26,35,126,.04),0 6px 18px rgba(26,35,126,.06);padding:6px 12px;}
 .totl{font-size:.56rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
@@ -1721,18 +1732,44 @@ function renderStock(){
   // la pantalla quedaba con seis avisos y nada que mirar. Erik: *"filtro categoria AB,
   // me rompe los graficos"*. Es el mismo agujero que tenia Lanzamientos, por el otro lado.
   const HM=Object.keys(DATA.hstk||{}).sort();
-  const puede=(st.CAT.size===0&&st.COD.size===0&&HM.length>0);
+  // ⚠️ Con Categoria o Codigo filtrados la serie se cuenta CODIGO POR CODIGO, con la
+  // letra que guardo la foto de cada mes y la categoria de HOY (Erik, 19/10: *"quizas un
+  // articulo en sept era B y ahora es A"*). Asi la linea compara lo mismo de punta a
+  // punta. Sin esos dos filtros manda el total por grupo, que es mas fiel: incluye los
+  // codigos que ya no existen --los 154 *ESP-FC* dados de baja en septiembre estan en la
+  // foto de ese mes y no en `rows[]`-- y contando por codigo desaparecerian.
+  const porLetra=((st.CAT.size>0||st.COD.size>0)&&!!DATA.hcod);
+  const puede=(HM.length>0&&(st.CAT.size===0&&st.COD.size===0||porLetra));
   if(!st.ROT&&!st.EST.has('sinrot')&&puede){
     // ⚠️ El historico responde a Unidad de negocio, Grupo y ESTADO: la foto guarda el
     // total por grupo abierto por estado. La Categoria y el Codigo no los guarda, y por
     // eso esos dos ya quedaron afuera de esta rama (arriba).
     const gaOk={};DATA.rows.forEach(r=>{if(mUN(r)&&mGA(r))gaOk[DATA.GA[r[1]]]=1;});
+    // ⚠️ El recuento por codigo se hace UNA VEZ por render, no una por estado: son
+    // 5.384 filas x los meses guardados, y llamarlo seis veces era pasearlas de nuevo.
+    // Las letras: q cero · r riesgo · i ideal · s sinrot · l lanz · 1-5 los baldes del
+    // exceso (ver `fotoKs`). El `-` son los codigos que ese mes todavia no existian.
+    const LET={q:'cero',r:'riesgo',i:'ideal',s:'sinrot',l:'lanz'};
+    const cntLetra={};
+    if(porLetra){const corte=fotoKs('excleve',null).length;
+      HM.forEach(m=>{cntLetra[m]={};});
+      for(let i=0;i<DATA.rows.length;i++){const r=DATA.rows[i];
+        if(!mUN(r)||!mGA(r)||!mCAT(r)||!mCOD(r))continue;
+        HM.forEach(m=>{const ch=(DATA.hcod[m]||'')[i];if(!ch||ch==='-')return;
+          const k=LET[ch]||((ch>='1'&&ch<='5')
+            ?((+ch<=corte)?'excleve':'excgrave'):null);
+          if(k)cntLetra[m][k]=(cntLetra[m][k]||0)+1;});}}
     // `f` es 'n' (SKU), 'c' (costo) o 'm' (venta mix); con plata hace falta ademas la
     // moneda, porque el dashboard nunca suma pesos con dolares.
-    const foto=(m,k,f,cur)=>{let t=0;for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
+    const foto=(m,k,f,cur)=>{
+      // ⚠️ Por letra solo se pueden contar SKU: la letra dice en que estado estaba el
+      // codigo, no cuanto costaba su stock ese mes. La plata se guarda sumada por grupo.
+      if(porLetra)return (f==='n')?((cntLetra[m]||{})[k]||0):0;
+      let t=0;for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
       if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])t+=((f==='n')?x[kk].n:((x[kk][f]||{})[cur]||0));});}
       return t;};
-    const fotoPlata=(m,k,f)=>{const d={};for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
+    const fotoPlata=(m,k,f)=>{const d={};if(porLetra)return d;
+      for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
       if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])for(const cu in (x[kk][f]||{}))
         d[cu]=(d[cu]||0)+x[kk][f][cu];});}return d;};
     // El costo de hoy sale del MISMO bucket que muestra la tarjeta: `plata_de` en el
@@ -1854,7 +1891,10 @@ function renderStock(){
 
     // ⚠️ Se mira SI HAY PLATA en esa moneda, no la Unidad de negocio: asi funciona
     // igual filtrando por Grupo, que es como se llega al mismo lugar por otro camino.
-    const hayCur=cu=>CARDS.some(c=>hayPlata(c,cu));
+    // ⚠️ Con Categoria o Codigo filtrados no hay plata por mes que mostrar, asi que el
+    // boton se apaga en vez de dibujar una linea que ignora la mitad de los filtros.
+    const hayCur=cu=>!porLetra&&CARDS.some(c=>hayPlata(c,cu));
+    if(porLetra&&st.grafVerG&&st.grafVerG!=='n')st.grafVerG='n';
     // ⚠️ Un solo boton "Plata" (Erik, 19/10): el dashboard elige la moneda en vez de
     // hacerlo elegir. La que tiene datos con el filtro puesto, o la del total mas
     // grande si las dos tienen. Sigue sin sumar pesos con dolares: elige una.
@@ -1890,7 +1930,10 @@ function renderStock(){
       +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'
       +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
       +'<span style="width:12px"></span>'
-      +'<span class="liqlbl" data-tip="Qu\u00e9 miden los gr\u00e1ficos">Ver</span>'
+      +'<span class="liqlbl" data-tip="Qu\u00e9 miden los gr\u00e1ficos"'
+      +(porLetra?(' data-tip2="Con Categor\u00eda o C\u00f3digo filtrados la l\u00ednea se cuenta c\u00f3digo por '
+          +'c\u00f3digo, con la categor\u00eda de hoy. La plata no se puede abrir as\u00ed."'):'')
+      +'>Ver</span>'
       +'<span style="display:inline-flex;gap:4px;">'+bg('n','SKU',_vg==='n',true)
       +bg(curMejor()||'$',(_vg==='n'?'Plata':('Plata \u00b7 '+(_vg==='$'?'$':'USD'))),
           _vg!=='n',!!curMejor(),

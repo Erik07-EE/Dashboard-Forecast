@@ -101,15 +101,37 @@ gráfico a la derecha**, y el detalle se abre debajo tocando la tarjeta.
 
 ```
 cruce de Rotación o Sin rotación  →  la tabla
-Categoría o Código filtrados      →  las seis tarjetas y la tabla (la pantalla vieja)
 filtro de Estado                  →  SOLO esas filas, con su tabla abierta debajo
-sin nada                          →  las seis filas
+cualquier otra cosa               →  las seis filas
 ```
 
-⚠️ **Categoría y Código caen a la tabla y no a seis avisos.** El histórico no se puede
-dibujar con ellos —la foto guarda el total por grupo, no el detalle por código— y antes
-la pantalla quedaba con seis carteles y **ninguna tabla**. Erik: *"filtro categoría AB,
-me rompe los gráficos"*. Es el mismo agujero que tenía Lanzamientos, por el otro lado.
+### El gráfico responde a Categoría y a Código, con la categoría de HOY
+
+⚠️ **Cómo se cuenta la serie, que son dos caminos distintos:**
+
+| | |
+|---|---|
+| sin filtro de Categoría ni Código | el **total por grupo** de la foto (`DATA.hstk`) |
+| con alguno de los dos | **código por código**, desde la letra de cada uno (`DATA.hcod`) |
+
+La idea es de Erik (19/10): *"se puede armar el gráfico pero respetando la categoría
+actual? porque quizás un artículo en sept era B y ahora es A"*. Se puede, porque la foto
+**ya guardaba el estado de cada código en una letra** — solo faltaba mandarla al HTML. Y
+usar la categoría de hoy es lo correcto: así la línea compara lo mismo de punta a punta.
+
+- ⚠️ **Viaja como una CADENA alineada con `rows[]`**, una letra por código y `-` para los
+  que ese mes no existían: **5,3 KB por mes**. Como diccionario `{código: letra}` serían
+  100 KB. Es el mismo truco de `bvant`.
+- ⚠️ **Sin filtro manda el total por grupo, y no es lo mismo**: el total incluye **los
+  códigos que ya no existen**. Medido: en septiembre el total da Quiebre 2.477 y contando
+  por código da 2.327 — son los 154 `*ESP-FC*` que Erik dio de baja, que están en la foto
+  de ese mes y no en `rows[]`. En octubre los dos caminos dan **idéntico** en los siete
+  estados.
+- ⚠️ **La plata no se puede abrir por categoría**: la letra dice en qué estado estaba el
+  código, no cuánto costaba su stock ese mes. Con Categoría o Código filtrados el botón
+  **Plata se apaga** y el gráfico queda en SKU.
+- Verificado: con Importados + Categoría A,B el último punto de cada línea da exactamente
+  el número de su tarjeta (18 · 52 · 39 · 125 · 224).
 
 ⚠️ **«Sin rotación» es la excepción del filtro de Estado y va a la tabla.** Vive en
 `st.EST` pero **no es una de las seis tarjetas** —Rotación se mudó a la barra—, así que
@@ -286,6 +308,18 @@ Ese número está en **tres** lugares y los tres tienen que decir lo mismo o
 - ⚠️ El recuadro del estado abierto necesita **`!important`**: la tarjeta arma su borde
   con estilo en línea y eso le gana a la hoja. Es el único lugar del tablero donde hace
   falta.
+- ⚠️ **La pastilla del conteo se esconde con `:empty`, no solo con `.empty`.** Son dos
+  cosas distintas que se escriben casi igual: `.dd-btn.empty .dd-cnt` es el filtro **sin
+  selección** y `.dd-btn .dd-cnt:empty` es la pastilla **sin número**, que pasa cuando hay
+  **una sola** cosa elegida. Sin la segunda, la pastilla vacía ocupaba sus 12px de
+  padding, se dibujaba como una rayita y corría el texto: era lo que hacía ver al primer
+  filtro descentrado. Erik lo encontró.
+- ⚠️ **Las barras congeladas llevan dos losas grises a los costados**
+  (`box-shadow:-22px 0 0 #eef0f8, 22px 0 0 #eef0f8`). Miden del 22 al 1.883 porque la
+  página tiene 22px de margen, y por esos 22px **pasaba el contenido al scrollear** — Erik
+  vio el borde rojo de Quiebre cruzando los filtros. `.tabs` no lo necesita: va de borde a
+  borde. Va como sombra y no como una caja absoluta: **la sombra no ocupa lugar**, así que
+  no puede empujar el scroll horizontal.
 
 ### La limpieza del 19/10
 
