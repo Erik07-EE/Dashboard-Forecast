@@ -1448,15 +1448,18 @@ function renderStock(){
     //    rojo   = cayo        verde = subio      (la Variacion, como en todo el tablero)
     //    gris   = sin senal confiable            (la Variacion apagada)
     // y el % en stock queda SIEMPRE neutro: es el dato de contexto, no la alarma.
-    // Lo que destaca a los flojos es la negrita, que no gasta un color.
+    // \u26a0\ufe0f Y va TODA con el mismo peso. La negrita para los flojos, que estuvo un rato,
+    // se leia como un SEGUNDO TONO de gris -- justo lo que se queria evitar (Erik,
+    // 19/10: "no lo marques con 2 tonos de gris, dejalo con el mismo"). La senal de
+    // que el dato no es confiable es UNA SOLA: la Variacion apagada.
     const celdaPres=r=>{const p=presOf(r);
       if(p==null)return '<td class="num">'+D+'</td>';
       const flojo=presFloja(r), v=r[VCS];
       let t=presDias(p)+' de 129 d\u00edas h\u00e1biles con stock';
       if(v!=null&&v>0)t+=' \u00b7 vend\u00eda '+fmt1(v)+' por mes cuando tuvo';
       if(flojo)t+=' \u00b7 por eso la Variaci\u00f3n va apagada';
-      return '<td class="num" data-tip="'+t+'" style="font-weight:'+(flojo?'800':'600')
-        +';color:#5f6690">'+Math.round(Math.min(p,1)*100)+'%</td>';};
+      return '<td class="num" data-tip="'+t+'" style="font-weight:600;color:#5f6690">'
+        +Math.round(Math.min(p,1)*100)+'%</td>';};
     // la misma fila sirve suelta o colgando de un grupo, con sangria
     const filaRot=(o,dentro)=>{const p=rotPct(o.r);
       return '<tr'+(dentro?' style="background:#f7f8ff"':'')+'>'
@@ -1515,7 +1518,7 @@ function renderStock(){
           // ⚠️ El % en stock del grupo es el promedio simple de sus codigos, no
           // ponderado: lo que se quiere saber es cuantos de sus codigos estuvieron
           // sin stock, no cuantas unidades. Va siempre neutro, como por codigo.
-          +'<td class="num" style="font-weight:'+(_gFlojo?'800':'600')+';color:#5f6690">'
+          +'<td class="num" style="font-weight:600;color:#5f6690">'
             +(e.nPres?(Math.round(Math.min(e.pres/e.nPres,1)*100)+'%'):D)+'</td>'
           +'<td class="num st-v">'+(e.vend?fmtI(e.vend):D)+'</td>'
           +'<td class="num st-v st-b">'+fmtI(e.vd)+'</td>'

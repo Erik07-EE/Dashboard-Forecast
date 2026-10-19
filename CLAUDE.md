@@ -202,8 +202,12 @@ con stock todo el semestre.
   | verde | subió · vende |
   | **gris** | **sin señal confiable** (la Variación apagada) |
 
-  El **% en stock va siempre neutro**: es el dato de contexto, no la alarma. A los flojos
-  los destaca la **negrita**, que no gasta un color. Rige igual por código y por grupo.
+  El **% en stock va siempre neutro**: es el dato de contexto, no la alarma.
+  ⚠️ **Y toda la columna con el mismo tono y el mismo peso.** Un rato llevó los flojos
+  en negrita y Erik lo cortó: *"no lo marques con 2 tonos de gris, dejalo con el
+  mismo"*. La negrita se leía como un segundo gris, que es justo lo que se quería
+  evitar. **La señal de que el dato no es confiable es UNA SOLA: la Variación apagada.**
+
 - **BR no viaja al HTML**: se deriva, `BR = BS × 129`.
 
 ### Rotación y las 6 pastillas no se combinan
