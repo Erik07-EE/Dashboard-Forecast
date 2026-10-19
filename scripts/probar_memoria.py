@@ -75,7 +75,7 @@ print("   foto:", base["stock_iso"])
 # --- corrida 2: el MISMO Excel. No hay foto nueva, no debe sumar nada.
 d2 = copy.deepcopy(base)
 for x in d2["rows"]:
-    del x[G.VACU]
+    del x[G.VACU:]
 escribir(base, TMP, html)
 G.aplicar_memoria(d2, TMP)
 assert fila(d2, "REDB-111")[G.VACU] == (base["rows"] and [r for r in base["rows"] if r[2]=="REDB-111"][0][G.VACU]), "arrastro mal"
@@ -97,6 +97,11 @@ def sembrar(data, cod, stock, acumulado):
     return r
 
 
+# ⚠️ Abajo va `del x[G.VACU:]` y no `del x[G.VACU]`: desde el 16/10 la fila lleva DOS
+# campos mas despues de VACU (110 presencia en stock, 111 venta con stock). Borrando solo
+# uno, esos dos se corren un lugar, `aplicar_memoria` agrega el VACU nuevo al final y
+# `fila(...)[G.VACU]` termina leyendo la presencia. Es la cuarta vez que esta prueba se
+# rompe por depender de la FORMA de la fila y no de la logica que quiere medir.
 prev = copy.deepcopy(base)
 # ⚠️ La fecha del escenario se ancla al DIA 15 del mes real. Antes salia de la fecha
 # del stock del dia, y el 2/10 la corrida 4 (un dia menos que el 1/10) se iba a
@@ -112,7 +117,7 @@ escribir(prev, TMP, html)
 
 d3 = copy.deepcopy(prev)
 for x in d3["rows"]:
-    del x[G.VACU]
+    del x[G.VACU:]
 d3["stock_iso"] = correr(prev["stock_iso"], 1)
 fila(d3, "REDB-111")[4] = 0                      # 1 -> 0
 fila(d3, "VRI-1515")[4] = 100                    # 114 -> 100
@@ -134,7 +139,7 @@ print("   OK: la unidad que entro y salio quedo contada; la perdida da 30\n")
 escribir(d3, TMP, html)
 d4 = copy.deepcopy(d3)
 for x in d4["rows"]:
-    del x[G.VACU]
+    del x[G.VACU:]
 # un dia ANTES que la foto guardada, pero dentro del mismo mes
 d4["stock_iso"] = correr(d3["stock_iso"], -1)
 fila(d4, "REDB-111")[4] = 1
@@ -146,7 +151,7 @@ print("   OK: con un Excel mas viejo se arrastra lo acumulado, no se cuenta de n
 escribir(d3, TMP, html)
 d5 = copy.deepcopy(d3)
 for x in d5["rows"]:
-    del x[G.VACU]
+    del x[G.VACU:]
 d5["stock_iso"] = correr(prev["stock_iso"], 40)
 G.aplicar_memoria(d5, TMP)
 assert fila(d5, "REDB-111")[G.VACU] == 0

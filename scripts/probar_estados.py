@@ -53,7 +53,10 @@ def como_en_pantalla(r):
     movio = max(r[109] or 0, max(0, (r[6] or 0) - stock)) > 0
     if not vendio6 and not movio: return "sinrot"
     if stock < minU: return "riesgo"
-    if stock > maxU: return "exceso"
+    # ⚠️ El Exceso va en dos tramos desde el 16/10. El corte es el que trae la
+    # plantilla por defecto (st.excCut) y el que usa la foto mensual (EXC_CUT).
+    if stock > maxU * 1.5: return "excgrave"
+    if stock > maxU: return "excleve"
     return "ideal"
 
 
@@ -81,7 +84,7 @@ def plata_en_pantalla(r, k):
     stkM = stock * mix if (mix is not None and stock > 0) else None
     if k in ("cero", "riesgo"): return cur, falC, perdM
     if k == "ideal": return cur, falC, None
-    if k == "exceso": return cur, excC, excM
+    if k in ("exceso", "excleve", "excgrave"): return cur, excC, excM
     return cur, stkC, stkM                       # sinrot y lanz
 
 

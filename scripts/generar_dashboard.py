@@ -56,7 +56,7 @@ def extract(path):
         if v not in lst: lst.append(v)
         return lst.index(v)
     rows=[]
-    realmap={}
+    realmap={}; presmap={}
     for row in all_rows[3:]:
         cod=row[2]
         if not (cod and str(cod).strip()): continue
@@ -105,6 +105,10 @@ def extract(path):
         # fija en AU. Es la base del maximo de Estado Stock.
         try: maxe=float(row[ci("CP")-1] or 0)
         except (TypeError,ValueError): maxe=0.0
+        # Presencia en stock del semestre. BS = "% dias en stock" y BP = la venta
+        # por mes medida solo sobre los dias que hubo stock. ⚠️ Las dos existen
+        # SOLO para Importados; en el resto la celda esta vacia y viaja None.
+        presmap[str(cod).strip()] = (N(row[ci("BS")-1]), N(row[ci("BP")-1]))
         rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax]+[vaj]+[ing]+[maxe])
     # IMPO por GA
     def estado_of(H1,b):
@@ -196,7 +200,7 @@ def extract(path):
     stock_iso=(bn.strftime("%Y-%m-%d")+((" "+hora) if hora else "")) if hasattr(bn,"strftime") else ""
     return {"months":months,"UN":UN,"GA":GA,"CAT":CAT,"rows":rows,"impo":impo,"stock_ts":stock_ts,
             "stock_iso":stock_iso,"season":season,
-            "real":realmap,"real_labels":real_labels,
+            "real":realmap,"real_labels":real_labels,"pres":presmap,
             "src":os.path.basename(path),"gen":datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}
 
 COSTOS_LOCAL = 'costos_gestor.xlsx'   # copia del Google Sheet, al lado de este script
@@ -493,8 +497,12 @@ VRM = 6          # meses cerrados de la ventana de "sin rotacion"
 IDEAL = 78       # Meses por Cat. (col H)
 MAXE = 108       # stock maximo del Excel (col CP)
 
+# ⚠️ El corte leve/grave de la FOTO es fijo. En pantalla Erik lo mueve (hasta x2, x3,
+# x4), pero un mes congelado con x2 y el siguiente con x3 no se podrian comparar.
+EXC_CUT = 1.5
+
 def estado_de(r, data):
-    """Los 6 estados, con la misma regla y el mismo orden que stkCalc."""
+    """Los 7 estados, con la misma regla y el mismo orden que stkCalc."""
     cat = (data["CAT"][r[3]] or "").strip()
     # Sin Cat tambien es Lanzamiento. Erik, 24/09: *"los sku sin categoria entran en
     # Lanzamientos, ahi se guardan los N, P y sin CAT"*. Son codigos recien cargados,
@@ -511,13 +519,20 @@ def estado_de(r, data):
     movio = max(r[VACU] or 0, max(0, (r[6] or 0) - stock)) > 0
     if not vendio6 and not movio: return "sinrot"
     if stock < minU: return "riesgo"
-    if stock > maxU: return "exceso"
+    if stock > maxU * EXC_CUT: return "excgrave"
+    if stock > maxU: return "excleve"
     return "ideal"
 
 
 # Una letra por estado, para guardar el detalle por codigo sin que pese.
 LETRA = {"cero": "q", "riesgo": "r", "ideal": "i", "exceso": "e",
          "sinrot": "s", "lanz": "l"}
+
+# ⚠️ La foto mensual guarda SEIS estados: los dos excesos van juntos. Septiembre y
+# octubre ya estan congelados con el Exceso entero, asi que partirlo ahora dibujaria
+# en Historico un salto de 0 a 1.600 en "grave" que no es movimiento real. La
+# plantilla tiene su contraparte en STKH.
+FOTO_K = {"excleve": "exceso", "excgrave": "exceso"}
 
 MIX = 104        # precio Mix (col AS)
 DEM = 79         # demanda, col CJ "V.Ajust. c/stock"
@@ -558,7 +573,7 @@ def plata_de(r, data, k):
             v = max(mval(r, 0, 3) or 0, vend + stock)
             perd = max(0, (r[DEM] or 0) - v)
             m = perd * mix if mix is not None else None
-    elif k == "exceso":
+    elif k in ("exceso", "excleve", "excgrave"):
         c = exc * costo if costo is not None else None
         m = exc * mix if mix is not None else None
     else:                                   # sinrot y lanz: lo que esta parado
@@ -586,7 +601,8 @@ def foto_de(data):
     """
     ga, cod = {}, {}
     for r in data["rows"]:
-        k = estado_de(r, data)
+        # los siete estados de pantalla, colapsados a los seis de la foto
+        k = FOTO_K.get(estado_de(r, data), estado_de(r, data))
         cod[r[2]] = LETRA[k]
         g = ga.setdefault(data["GA"][r[1]], {}).setdefault(
             k, {"n": 0, "u": 0, "c": {}, "m": {}})
@@ -751,5 +767,18 @@ if __name__=="__main__":
     rotacion_anterior(os.path.dirname(os.path.abspath(src)), data,
                       os.path.join(folder, "rotacion_prev.json"))
     aplicar_memoria(data, out)
+    # ⚠️ Van DESPUES de aplicar_memoria, que es la que agrega VACU (indice 109).
+    # Metidos antes le correrian el indice, que esta escrito a mano en la
+    # plantilla, en este archivo y en las dos pruebas.
+    #   110 = presencia en stock del semestre (col BS)
+    #   111 = venta por mes medida solo sobre los dias con stock (col BP)
+    _pres = data.pop("pres", None) or {}
+    _np = 0
+    for _r in data["rows"]:
+        _p, _v = _pres.get(_r[2], (None, None))
+        _r.append(_p); _r.append(_v)
+        if _p is not None and _p < 1: _np += 1
+    print("  Presencia en stock: %d de %d con el dato (solo Importados), %d con faltantes"
+          % (sum(1 for _r in data["rows"] if _r[110] is not None), len(data["rows"]), _np))
     foto_mensual(data, os.path.join(folder, "historico_stock.json"))
     build(data, out, tpl)

@@ -152,12 +152,24 @@ def main():
     n_rows = {r[2]: r for r in (nuevo.get("rows") or [])}
     entraron = sorted(set(n_rows) - set(v_rows))
     salieron = sorted(set(v_rows) - set(n_rows))
-    cambiadas = sum(1 for c in (set(v_rows) & set(n_rows)) if v_rows[c] != n_rows[c])
+    # ⚠️ Y se comparan solo los campos que TIENEN LOS DOS. El dia que el generador suma
+    # un campo a la fila, todas las filas quedan distintas y el chequeo vuelve a cantar
+    # miles de cambios que no existen -- la misma trampa de las posiciones, por el otro
+    # lado. Paso el 16/10 al sumar la presencia en stock: decia "cambiaron 5.384" cuando
+    # en los datos de verdad habian cambiado 412.
+    comunes = set(v_rows) & set(n_rows)
+    nv = min([len(r) for r in v_rows.values()] + [len(r) for r in n_rows.values()]) if comunes else 0
+    cambiadas = sum(1 for c in comunes if v_rows[c][:nv] != n_rows[c][:nv])
+    campos_v = len(next(iter(v_rows.values()))) if v_rows else 0
+    campos_n = len(next(iter(n_rows.values()))) if n_rows else 0
 
     v_cos, n_cos = viejo.get("costos") or {}, nuevo.get("costos") or {}
     cambiados_cos = sum(1 for k in n_cos if v_cos.get(k) != n_cos[k])
 
     print("")
+    if campos_v and campos_n and campos_v != campos_n:
+        print("  La fila paso de %s a %s campos: el generador cambio, no los datos."
+              % (campos_v, campos_n))
     if cambiadas:
         print("  Cambiaron %s codigos (stock, compras, proyeccion)." % cambiadas)
     if cambiados_cos:

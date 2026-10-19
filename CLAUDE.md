@@ -91,6 +91,152 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
+## Reestructuración del 16/10/2026 — lo que cambió de fondo
+
+Stock del **viernes 16/10 06:33**, 5.384 códigos. Esta vuelta no fue una actualización:
+se rehizo buena parte de Estado Stock. **Lo de acá abajo pisa lo que digan las secciones
+anteriores.**
+
+### Las solapas se renombraron y se reordenaron
+
+`Forecast · Estado Stock · Histórico Ventas · Proyección Ventas · Acción comercial`.
+Acción comercial pasó al final. Los `id` internos (`fc`, `st`, `liq`, `vp`, `hist`) no
+cambiaron.
+
+### El Exceso se partió en dos, y el "Indicador Máximo × N" se fue
+
+| | Regla |
+|---|---|
+| **Exceso leve** | sobre el máximo, hasta el corte elegido |
+| **Exceso grave** | por encima de ese corte |
+
+- **El corte lo elige Erik en la barra** (`st.excCut`): *hasta x 1.5 · x 2 · x 3 · x 4*,
+  arranca en **1,5**. Mover el desplegable recalcula los estados, la plata de las dos
+  tarjetas, el filtro y las cinco solapas. ⚠️ `stkOf` **tira su cache** cuando cambia
+  (`_skM`), igual que hacía con el multiplicador viejo.
+- Con eso se sacó el indicador **"Máximo × N"**, que era lo que respondía esa pregunta.
+  `maxU` ya no lleva multiplicador. Acción comercial conserva el suyo (`st.liq`), que es
+  otro control.
+- **Los estados son 7, pero las tarjetas siguen siendo 6** porque Rotación se mudó a la
+  barra. Mismo encaje de 186px ya medido.
+- ⚠️ **La foto mensual sigue guardando 6 estados**, con los dos excesos sumados
+  (`FOTO_K` en el generador y `STKH` en la plantilla). Septiembre y octubre están
+  congelados con el Exceso entero: partirlo ahora dibujaría en Histórico un salto de 0 a
+  1.600 en "grave" que no es movimiento real. **El corte de la foto es fijo en 1,5**
+  (`EXC_CUT`): un mes congelado con x2 y el siguiente con x3 no se podrían comparar.
+- ⚠️ **El Histórico recorre `STKH`, no `STK`.** Es el bug que esto introdujo y que hubo
+  que arreglar: `STK` pasó a 7 estados, el Histórico buscaba la foto de "excleve" y
+  "excgrave", que no existen en el JSON, y **el Exceso desaparecía del gráfico y de la
+  tabla**.
+- Medido el 16/10: el corte no es el problema, el exceso real está muy arriba del máximo
+  — **1.034 de 1.875 están en 3× o más**, y 155 tienen máximo 0 (el Excel no les proyecta
+  demanda, así que les sobra todo el stock; casi todos reconstruidos).
+
+### La rotación ahora compara VENTA REAL contra VENTA REAL
+
+⚠️ **Este es el cambio más importante y reemplaza todo lo del 15/10.** La tabla de los
+cruces tiene 14 columnas en dos bloques:
+
+```
+Producto:   Grupo · Código · Cat · Fecha ing.
+Stock:      Stock h. · Meses h. · Estado
+Histórico:  VR 6 meses · VR 3 meses · Variación · % en stock
+Actual:     VR en curso · VD C/C · Avance %
+```
+
+- **VR 6 meses = prom(AH, AI, AJ)** y **VR 3 meses = prom(AK, AL, AM)**: dos trimestres
+  consecutivos. ⚠️ **"VR 6 meses" NO es el promedio de los últimos seis**, es la mitad de
+  atrás de esa ventana. Con los 6 contra los 3, los últimos tres meses estarían de los dos
+  lados de la cuenta y amortiguarían la caída.
+- **Variación = VR 3 meses / VR 6 meses − 1**, y el umbral arranca en **20%**.
+- ⚠️ **No volver a comparar la proyección contra la venta real.** Entre el 15 y el 16/10
+  pasó por dos versiones de eso (col BV contra BV del mes anterior, y después VD contra
+  el promedio real) y las dos medían si el forecast estaba desalineado, no si el código
+  rotaba. MA-0002, con venta real 192, 361, 263, 258, 105, 41, 76, 29, daba **+151% y se
+  mostraba "en alza"**; con real contra real da **−77%**, que es lo que muestra la serie.
+- **VD volvió a ser la col CJ** en toda la interfaz. Se terminó la excepción de la BV.
+- **Se borraron** `DATA.bvant`, `rotacion_prev.json`, `rotVD`, `_BVA`, `rotDelta`,
+  `panelRot` y `vbtn`: todo lo que sostenía la cuenta vieja.
+
+### "% en stock": el aviso de que una caída puede ser por faltante
+
+Erik: *"si en mes 6.5.4 tenemos venta prom de 100 y en meses 3.2.1 nos quedamos sin
+stock, el promedio va a ser 0, la venta bajó 100%, pero en realidad bajó por falta de
+stock"*. Tiene razón y pesa: de 1.108 en baja, **237 tuvieron faltantes** y 498 bajaron
+con stock todo el semestre.
+
+- Sale de **la col BS "% días en stock"** (índice **110**), y **BP "Venta con stock"**
+  (índice **111**) alimenta el globo: *"61 de 129 días hábiles con stock · vendía 18,6 por
+  mes cuando tuvo"*. El caso testigo es **MA-1230006**: −100% con **47% de presencia**.
+- ⚠️ **No se puede CORREGIR el número, solo avisar.** BS y BP son un único valor del
+  semestre, no hay versión por trimestre, así que no existe "VR 3 meses como si hubiera
+  tenido stock". La columna es un semáforo.
+- ⚠️ **BS y BP existen SOLO para Importados** (medido: las tienen los 1.778 y ninguno de
+  los 3.660 de Distribución y Fabricación). Erik: *"Distribución y Fabricación siempre
+  tendrían que tener 100%, porque los fabricamos nosotros o los pedimos y el proveedor
+  local te entrega en pocos días"*. Eso vive en `presOf`, que es **regla de interfaz, no
+  del dato**.
+- ⚠️ **NO usar BT, la "tasa de incertidumbre"** (`=SI(BS<20%;50%;100%)`). Con ese corte
+  marca 53 códigos de 5.438 y **5 de los 1.108 en baja**; a MA-1230006, con 47%, le da
+  100%. Sirve para lo suyo —castigar el ritmo de un código que casi no existió— no como
+  semáforo de faltante.
+- **El umbral lo elige Erik** (`st.presU`, 95/90/80/50, arranca en 90): por debajo, la
+  Variación se pinta **en gris** y el % en rojo.
+- **BR no viaja al HTML**: se deriva, `BR = BS × 129`.
+
+### Rotación y las 6 pastillas no se combinan
+
+⚠️ **"Sin rotación" apaga las pastillas y una pastilla apaga "Sin rotación".** Los dos
+vivían en `st.EST`, que filtra por **O**, así que Riesgo + Sin rotación mostraba 173 + 700
+= 873 filas como si el cruce hubiera encontrado algo — y es imposible, los estados son
+excluyentes. **"En baja" y "En alza" sí se cruzan con las pastillas**: esos son cruces, no
+estados, y cruzarlos con Exceso grave es el uso principal.
+
+**"Sin rotación" salió del filtro general de Estado**: se filtra desde el desplegable de
+Rotación, que es donde vive.
+
+### Interfaz
+
+- **El "Ver" (Por código / Por grupo) vive dentro del encabezado PRODUCTO**, con la misma
+  pastilla amarilla que el par "Proyección / Estado stock" de Histórico, a 16px del
+  título. ⚠️ Lleva `text-transform:none` o dice "POR CÓDIGO".
+- **Acción comercial congela Grupo, Código y Cat.** (`.acid0/1/2` + la hoja `#acpos`).
+  Era la única tabla con scroll lateral que no lo hacía; mide 1.911px contra 1.292.
+  ⚠️ Los `left` **no se miden** como en Forecast: `.prevt` es `table-layout:fixed` y el
+  colgroup se respeta. Pero tampoco se escriben a mano, porque el ancho del Código es
+  dinámico. ⚠️ El título "Producto" se **partió en dos** (colspan 3 fijo + colspan 5 que
+  scrollea): una celda con colspan 8 no se congela a medias. ⚠️ El `z-index` de las celdas
+  fijas del encabezado necesita **más especificidad** que `.prevt thead tr.h th`, o las
+  columnas que scrollean se pintan encima.
+- **Fecha ing. 75 → 68px.** Lo que fijaba el ancho no eran las fechas sino
+  **"Próximamente"** (73px, 33 códigos Cat P), ahora abreviado a **"Próx."** con el nombre
+  completo en el globo. El título "FECHA ING." pide 66, así que 68 es el piso sin tocarlo.
+
+### Las pruebas, otra vez rotas por la forma de la fila
+
+- `probar_estados.py` aprendió los 7 estados y el corte 1,5. **Coincide en los 5.384
+  códigos y en los 24 buckets de plata.**
+- ⚠️ `probar_memoria.py` usa **`del x[G.VACU:]`, no `del x[G.VACU]`**. Con dos campos
+  nuevos después de VACU, borrar uno solo los corre un lugar y `fila(...)[G.VACU]` termina
+  leyendo la presencia. **Es la cuarta vez que esta prueba se rompe por depender de la
+  forma de la fila y no de la lógica que mide.**
+- ⚠️ `chequear_actualizacion.py` **compara solo los campos que tienen las dos versiones**.
+  El día que el generador suma un campo, todas las filas quedan distintas y el chequeo
+  canta miles de cambios inexistentes: el 16/10 decía *"cambiaron 5.384"* cuando en los
+  datos habían cambiado **412**. Es la misma trampa del 24/09, por el otro lado. Ahora
+  avisa aparte *"la fila pasó de 110 a 112 campos: el generador cambió, no los datos"*.
+
+### Índices nuevos de `rows[]`
+
+| | |
+|---|---|
+| 110 | presencia en stock del semestre (col BS) |
+| 111 | venta por mes medida solo sobre los días con stock (col BP) |
+
+⚠️ Se agregan **después de `aplicar_memoria`**, que es la que pone VACU (109). Metidos en
+`extract` le correrían el índice, que está escrito a mano en la plantilla, el generador y
+las dos pruebas.
+
 ## Última actualización (14/10/2026)
 
 Stock del **martes 13/10 12:37** (era del 02/10). **5.384 códigos**: salió `BI0906.60N`,
