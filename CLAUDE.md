@@ -91,6 +91,142 @@ regenera, y después él publica con el `.bat`. Se evaluaron dos formas de que e
 bajara el Sheet solo — un Apps Script que exporte a Drive, o una credencial de Google en
 la PC — y las descartó: prefiere el paso manual.
 
+## La fila General y el resto del 20/10/2026
+
+**Lo de esta sección pisa lo que digan las de abajo.**
+
+### La fila General: todo el stock, arriba de Quiebre
+
+Una séptima fila, con la misma forma que las seis de estado pero **marco azul y fondo
+amarillo claro** (`#fff6cc`) y el badge con letra amarilla sobre azul — los colores de
+Estrada. ⚠️ **No es un estado**: no entra en `CARDS`, no filtra y no cuenta para el 100%
+de las otras seis.
+
+```
+General                                    HOY
+Stock global
+5.420 SKU              822.546 unidades
+▲ 44 vs Oct '26        ▲ 48.285 vs Oct '26
+Costo stock total      Venta mix stock total
+USD 4.505.633          USD 8.056.141
+```
+
+- **SKU y unidades van al mismo tamaño** (Erik: *"ambos son importantes"*), cada uno con
+  su variación debajo, en dos columnas. ⚠️ Cada flecha lleva **su** color: pueden ir para
+  lados distintos — entran códigos nuevos sin stock y los SKU suben mientras las unidades
+  bajan.
+- La caja blanca va **adentro** de `.grafcard`, igual que lo que devuelve `card()`:
+  `.grafcard` es flex y sin ese envoltorio sus hijos se reparten como columnas.
+- ⚠️ **`.grafcard` necesita `min-width:0`.** Un item de flex no baja de su `min-content`
+  aunque tenga `flex:0 0 340px`, así que el renglón largo de los porcentajes —que va con
+  `nowrap`— estiraba la General a 400px mientras las otras seis quedaban en 340.
+
+### El costo del stock no estaba en la foto: el balde `gral`
+
+La foto guardaba, por estado, los dos montos de **su** tarjeta —lo que falta invertir, lo
+que está inmovilizado— y eso **no es `stock × costo`**. Se agregó un balde aparte,
+**por grupo y por categoría**: `{n, u, c, m}`.
+
+- ⚠️ **Por grupo Y categoría, con la categoría de ESE MES** (Erik eligió esa opción el
+  20/10): son **10 KB por mes** contra los 67 que costaría guardarlo código por código y
+  poder usar la categoría de hoy. Medido: **305 de 5.371 códigos cambiaron de categoría**
+  entre el 17/09 y hoy.
+- Septiembre y octubre se rearmaron con `congelar_mes.py` desde los dashboards de esos
+  días. **Cada punto usa el stock y los costos de ese día**, no los de hoy: medido, con
+  precios de hoy septiembre daría 18% más caro y el mix 10% más bajo.
+- Al HTML viajan ahora **tres** cosas: `hstk` (totales por grupo y estado, 31 KB),
+  `hcod` (la letra de cada código, 11 KB) y `gral` (20 KB).
+
+### Los porcentajes de la tarjeta General
+
+Debajo de cada importe, **un renglón por escalón**, del más amplio al más angosto:
+
+```
+USD 61.772
+1,4% del total
+7,3% de MA
+13% de Cat A
+```
+
+- ⚠️ **Los escalones son siempre tres: total · grupo · categoría.** La Unidad de negocio
+  no es uno —filtra, pero queda adentro de los otros dos— y el Código es la hoja.
+- ⚠️ **Un escalón que es el recorte entero no se muestra**: daría 100%. Con Grupo +
+  Categoría puestos los renglones son «del total» y «de MA»; recién al agregar un Código
+  aparece el tercero.
+- ⚠️ **Tampoco se muestra un 100% suelto ni un escalón que repite el número anterior.**
+  Con Importados puesto, «100% del total» es cierto para los dólares pero se lee como si
+  Importados fuera todo el stock — y los pesos son otro renglón que ahí ni aparece.
+- ⚠️ **Van por moneda.** El tablero nunca suma pesos con dólares, así que un solo
+  porcentaje «del total» no existe.
+- ⚠️ **Los grupos se nombran con una sigla** (`GASIG`/`gaSig`): MA, ALT, IND, SOL… Con
+  uno o dos elegidos se nombran, de tres para arriba dice «de los 3 grupos». Erik vio
+  «46% de 2 grupos» y no se entendía contra qué medía. **Solo acá**: en las tablas el
+  Grupo va con el nombre entero, porque esa columna está medida para dos líneas y poner
+  «MA» obligaría a aprenderse 37 siglas para leer una fila.
+
+### Sin VD no hay venta mix
+
+Erik: *"tienen VD venta demanda en 0, por ende la venta mix tendría que ser 0, ya que no
+sé cuánto podría vender. Costo está bien, porque es inmovilizado"*. El mix es una venta
+**potencial**: con el Excel proyectando cero demanda, multiplicar stock por precio inventa
+una venta que nadie espera.
+
+- Medido: apaga **29 códigos en Exceso grave** ($ 3,4M + USD 8.985 de $ 101,9M) y **los
+  692 sin rotación** —tienen demanda 0 por definición—. Exceso leve y Lanzamientos:
+  ninguno, ésos sí tienen demanda proyectada.
+- ⚠️ La regla está en **tres** lados: `stkCalc` (plantilla), `plata_de` (generador) y la
+  transcripción de `probar_estados.py`.
+
+### Las tres ventanas de «Sin rotación»
+
+El desplegable de Rotación volvió a ser **uno solo**, con cinco opciones:
+`Sin rotación (6M) · (3M) · (mes actual) · En baja · En alza`.
+
+| | |
+|---|---|
+| 6M | **692** (el estado de siempre) |
+| 3M | **837** |
+| mes actual | **1.484** |
+
+- ⚠️ **Las tres piden stock > 0 y no ser lanzamiento.** «Sin stock» no es «parado»: un
+  código en Quiebre no vendió porque no tenía qué vender. Con esa condición la de 6M da
+  exactamente los 692 del estado, así que la primera opción no cambia nada.
+- **Son nidadas** y las dos nuevas son **cruces**, no estados: se superponen con Exceso,
+  Ideal y Riesgo.
+- ⚠️ **Las tres usan la tabla de siempre.** La de los cruces tiene las columnas de la
+  rotación —VR 6 meses, Variación, Avance %— y a un código parado no le dicen nada.
+- ⚠️ **`mROT` pasa por `cruceOk`, no por `rotClase`.** Ésa solo devuelve 'baja' o 'alza',
+  así que con una ventana nueva puesta Forecast, Proyección y Acción comercial quedaban
+  **vacías**.
+
+### La barra: cuatro desplegables iguales
+
+`MES · EXCESO LEVE · VISTA · ROTACIÓN`, y nada de botones sueltos.
+
+- **Vista** reemplaza a «Ver»: `SKU · Stock · Plata $ · Plata USD`. Las unidades ya
+  estaban en la foto (`u` de cada estado), solo que ningún botón las pedía.
+- ⚠️ **`.barsel` es un solo estilo para los cuatro**, con `min-width:128px` — medido:
+  «Septiembre 2026» pide 126. El de Rotación se deja crecer: forzarlo recortaría «Sin
+  rotación (mes actual)» y un `select` **recorta sin puntos suspensivos**.
+- ⚠️ Los huecos entre grupos **no son separadores vacíos**: dentro de un flex con `gap`,
+  un separador suma su ancho **al** gap en vez de reemplazarlo, y daba 22px de un lado y
+  10 del otro. Ahora `.barg` agrupa etiqueta+desplegable y la barra separa los grupos.
+- ⚠️ **Las cuatro vistas están SIEMPRE disponibles** (Erik: *"la vista tendría que estar
+  disponible para cualquier filtro"*). Lo que no se puede dibujar **avisa en una línea**
+  (`.grafsin`) en vez de bloquear el control: apagarlo dejaba sin saber por qué, y la
+  tarjeta —que tiene el dato de hoy y responde a todos los filtros— se lee igual.
+  - Con **Categoría**: la fila General dibuja las cuatro (su balde va por grupo y
+    categoría); las seis de abajo avisan, porque su plata se guarda por estado y grupo.
+  - Con **Código**: avisan las siete. La foto no guarda el código, así que el stock y la
+    plata de los meses pasados no existen para un código suelto.
+  - Lo único que sí se apaga es **una moneda sin plata en la selección** — eso es un hecho
+    del dato, no una limitación del filtro.
+
+### El punto del mes elegido
+
+Lleva **un punto amarillo adentro**. El anillo que tenía antes era azul, del mismo color
+que el punto y que la línea, así que no se veía cuál estaba elegido.
+
 ## Estado Stock, rehecha entera (19/10/2026)
 
 **Lo de esta sección pisa lo que digan las de abajo.** La solapa pasó de «tarjetas +

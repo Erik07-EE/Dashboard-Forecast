@@ -126,6 +126,16 @@ td.code{font-weight:800;color:var(--azul);}
 .liqbar{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(26,35,126,.04),0 6px 18px rgba(26,35,126,.06);padding:6px 14px;margin-bottom:8px;flex-wrap:wrap;}
 .acmode{display:inline-flex;border:1px solid var(--azul);border-radius:6px;overflow:hidden;}.acbtn{border:0;padding:4px 12px;font-size:.72rem;cursor:pointer;background:#fff;color:var(--azul);}.acbtn.on{background:var(--azul);color:#fff;font-weight:700;}
 .liqbar .liqlbl{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--azul3);}
+/* ⚠️ UN SOLO estilo para los desplegables de la barra (Erik, 20/10). Antes cada uno
+   traia el suyo en linea y quedaban de alto y relleno distintos. `.barg` agrupa
+   etiqueta + desplegable: adentro gap chico, entre grupos el gap grande de la
+   barra, asi los espacios son dos numeros y no seis. */
+.liqbar{gap:18px;}
+.liqbar .barg{display:flex;align-items:center;gap:7px;}
+.liqbar select.barsel{font:inherit;font-size:.75rem;font-weight:600;color:var(--azul);
+  background:#fff;height:26px;padding:0 6px;border:1px solid #c5cae9;border-radius:6px;
+  min-width:128px;cursor:pointer;}
+.liqbar select.barsel:disabled{color:#b0b5cf;background:#f2f3f8;cursor:default;}
 .liqbar select{font:inherit;font-size:.78rem;font-weight:700;color:var(--azul);border:1px solid #c5cae9;border-radius:7px;padding:5px 9px;background:#f8f9ff;cursor:pointer;}
 .liqbar .liqinfo{font-size:.66rem;color:#7986cb;}
 .mtog{font:inherit;font-size:.62rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:2px 10px;cursor:pointer;}
@@ -205,8 +215,24 @@ td.empty,div.empty{padding:28px;text-align:center;color:#7986cb;font-weight:700;
    tarjeta arma todo con estilos EN LINEA --para que la fila de seis entre justa en
    la notebook-- y pisarlos desde el CSS pedia !important en ocho lugares. Si un
    navegador ignora `zoom`, se ve como antes: no se rompe nada. */
-.grafcard{flex:0 0 300px;display:flex;}
+/* ⚠️ 340 y no 300 (Erik, 20/10: *"nunca quiero 2 renglones... podes agrandar en ancho
+   las pastillas y achicar un poco los graficos"*). El ancho se MIDIO como los COLS:
+   se suelta el ancho fijo, se deja que el navegador resuelva el natural y se lee el
+   mayor de los siete, probando sin filtros, con Importados y con un mes pasado. Da
+   **261px** (la General, que es la mas cargada) y 241 la de Quiebre. Con 340 quedan
+   79px de aire: entran un stock de siete cifras y una etiqueta mas larga sin partir
+   nada. El grafico se queda con el resto, asi que se achica solo. */
+/* ⚠️ `min-width:0` NO es decorativo: sin el, un item de flex no baja de su
+   `min-content` aunque tenga `flex:0 0 340px`, y el renglon "9,0% de Motores de
+   arranque y Alternadores" --que va con `nowrap`-- estiraba la tarjeta General a
+   400px mientras las otras seis quedaban en 340. Recien con esto el
+   `text-overflow:ellipsis` del renglon hace su trabajo. */
+.grafcard{flex:0 0 340px;display:flex;min-width:0;}
 .grafcard>div{zoom:1.15;}
+/* una sola linea, centrada en la caja del grafico, para cuando no hay serie */
+.grafsin{display:flex;align-items:center;justify-content:center;height:100%;
+  font-size:.72rem;color:#8a90b0;padding:12px;text-align:center;line-height:1.4;}
+.grafsin b{color:#1a237e;}
 .grafbox{flex:1 1 auto;min-width:0;background:#fff;border:1px solid #d7dbe8;
   border-radius:14px;box-shadow:0 1px 2px rgba(26,35,126,.04),0 6px 18px rgba(26,35,126,.06);
   padding:6px 10px;display:flex;align-items:center;}
@@ -428,7 +454,10 @@ let _vbK='',_vbC=null;function rowsBase(){
 function mEST(r){if(st.EST.size===0)return true;const o=stkOf(r);return !!o&&st.EST.has(o.k);}
 // ⚠️ La rotacion es un CRUCE, no un estado: se combina con el filtro de estado en
 // vez de reemplazarlo. Por eso va aparte de st.EST y fuera de rowsBase().
-function mROT(r){return !st.ROT||rotClase(r)===st.ROT;}
+// ⚠️ Pasa por `cruceOk` y no por `rotClase`: esa solo devuelve 'baja' o 'alza', asi
+// que con una de las ventanas nuevas de Sin rotacion las otras solapas quedaban
+// vacias. Es el filtro que comparten Forecast, Proyeccion y Accion comercial.
+function mROT(r){return !st.ROT||cruceOk(r,st.ROT);}
 let _vrK='',_vrC=null;function visibleRows(){
   const k=[...st.UN].join(',')+'|'+[...st.GA].join(',')+'|'+[...st.CAT].join(',')+'|'+[...st.COD].join(',')
     +'|'+[...st.EST].join(',')+'|'+(st.excCut||2)+'|'+(st.ROT||'')+'|'+(st.rotU||20)+'|'+(st.presU||50);
@@ -693,6 +722,62 @@ const STKH=[['cero','Quiebre','#e53935'],['riesgo','Riesgo','#ef6c00'],
 // Exceso sin grafico: un mes congelado con x1,5 y el de hoy con x2 no son comparables.
 // Y un mes viejo no se puede recortar, porque la foto no guarda el stock ni el maximo
 // de cada codigo. Erik lo encontro: *"exceso x2 me rompe los estados de exceso"*.
+// El stock global mes a mes, por grupo y categoria: lo que dibuja la fila General.
+// Lo guarda la foto mensual (`gral` en el generador, 10 KB por mes).
+// ⚠️ La categoria es la que tenia el codigo ESE MES, no la de hoy: fue la opcion
+// que eligio Erik el 20/10 --10 KB contra 67 que costaria guardarlo por codigo--.
+const GRALH=DATA.gral||{};
+// ⚠️ UN CODIGO CORTO POR GRUPO, con la regla que planteo Erik (20/10): iniciales si el
+// nombre tiene varias palabras, tres letras si es una sola. Estan escritos a mano porque
+// la regla automatica choca en siete casos --"Escobillas de alternador" y "de arranque"
+// dan las mismas iniciales-- y "EA2" no se entiende.
+// ⚠️ **Solo para los renglones de porcentaje de la tarjeta General.** En las tablas el
+// Grupo va con el nombre entero: esa columna esta medida en 150px para que entre en dos
+// lineas, y poner "MA" obligaria a aprenderse 37 siglas para leer una fila.
+// ⚠️ Un grupo nuevo cae en la regla automatica; conviene agregarlo a esta lista.
+const GASIG={
+  'Alternadores':'ALT',
+  'Bujes BYC':'BB',
+  'Bujes de pl\u00e1stico':'BP',
+  'Campos':'CAM',
+  'Campos reconstru\u00eddos':'CAMR',
+  'Carcasas':'CAR',
+  'Colectores de alternador':'CA',
+  'Diodos':'DIO',
+  'Escobillas de alternador':'EALT',
+  'Escobillas de arranque':'EARR',
+  'Estatores':'EST',
+  'Estatores reconstru\u00eddos':'ESTR',
+  'Esta\u00f1o Eximetal':'EE',
+  'Extractores de polea':'EP',
+  'Faros y barras':'FB',
+  'Impulsores':'IMP',
+  'Impulsores reconstru\u00eddos':'IMPR',
+  'Inducidos':'IND',
+  'Inducidos reconstru\u00eddos':'INDR',
+  'L\u00e1mparas auxiliares':'LA',
+  'L\u00e1mparas principales':'LP',
+  'Moher':'MOH',
+  'Motores de arranque':'MA',
+  'Motores reconstru\u00eddos':'MOTR',
+  'Planetarios':'PLA',
+  'Plaquetas rectificadoras':'PR',
+  'Poleas de alternador':'PA',
+  'Portaescobillas de alternador':'PEALT',
+  'Portaescobillas de arranque':'PEARR',
+  'Reductores':'RED',
+  'Reguladores de voltaje':'RV',
+  'Rodamientos':'ROD',
+  'Rodamientos y retenes':'RYR',
+  'Rotores':'ROT',
+  'Rotores reconstru\u00eddos':'ROTR',
+  'Solenoides':'SOL',
+  'Solenoides reconstru\u00eddos':'SOLR'};
+function gaSig(n){if(GASIG[n])return GASIG[n];
+  const p=n.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .split(/[\s\/\-]+/).filter(w=>w&&!/^(de|del|la|las|los|y|e|con|para|a)$/i.test(w));
+  return (p.length===1)?p[0].slice(0,3).toUpperCase()
+    :p.slice(0,3).map(w=>w[0]).join('').toUpperCase();}
 const EXCB=['exc1','exc2','exc3','exc4','exc5'];
 const EXCT=[1.5,2,3,4];
 // Que claves de la foto hay que sumar para un estado. Los que no son exceso, la suya.
@@ -877,6 +962,26 @@ function rotPct(r){const b=vr6m(r),h=vr3m(r);
 // se pinta de rojo.
 function avancePct(r){const vd=r[DEM]||0;if(vd<=0)return null;
   const o=stkOf(r);return o?(o.vend||0)/vd:null;}
+// ⚠️ LAS TRES VENTANAS DE "SIN ROTACION" (Erik, 20/10). Es la misma idea con distinto
+// plazo: con stock, sin ser lanzamiento y sin ventas en esos meses.
+// ⚠️ "Sin stock" NO es "parado": un codigo en Quiebre no vendio porque no tenia que
+// vender. Por eso las tres piden stock > 0, y con eso la de 6M da exactamente los 692
+// del estado de siempre.
+// ⚠️ Son nidadas --el que no vendio en 6 meses tampoco vendio en 3-- y las dos nuevas
+// son CRUCES, no estados: se superponen con Exceso, Ideal y Riesgo.
+function sinVenta(r,meses){const o=stkOf(r);
+  if(!o||o.stock<=0||o.k==='lanz')return false;
+  if(o.movio)return false;                       // vendio este mes: no esta parado
+  if(meses===0)return true;                      // "mes actual" mira solo eso
+  const a=_vrSerie(r)||[];
+  let t=0;for(let i=Math.max(0,a.length-meses);i<a.length;i++)t+=a[i]||0;
+  return t===0;}
+// A que cruce pertenece un codigo, para el sub-estado elegido.
+function cruceOk(r,v){
+  if(v==='baja'||v==='alza')return rotClase(r)===v;
+  if(v==='sinrot3')return sinVenta(r,3);
+  if(v==='sinrotm')return sinVenta(r,0);
+  return false;}
 function rotClase(r){const p=rotPct(r);if(p===null)return null;
   // ⚠️ Los Sin rotacion quedan afuera de los dos cruces: ya tienen su propio
   // sub-estado y los tres son excluyentes.
@@ -1134,18 +1239,22 @@ function stkCalc(r){
   else k='ideal';
   const cc=DATA.costos&&DATA.costos[r[2]];
   const costo=(cc&&cc[0]!=null)?cc[0]:null,cur=(cc&&cc[3])?cc[3]:'$',mix=r[104];
+  // ⚠️ El costo va siempre; el mix solo si el Excel proyecta ALGO de demanda.
+  const hayVenta=((r[DEM]||0)>0);
   // ⚠️ Marca, no estado: el codigo sigue siendo 'cero' o 'riesgo' para la tarjeta, el
   // filtro y la foto mensual. Solo cambia la pastilla, para no confundir un faltante
   // que ya tiene el pedido viajando con uno que no tiene nada en camino.
   const ing=((k==='cero'||k==='riesgo')&&compraMes>0);
   return {k:k,ing:ing,costo:costo,movio:movio,vend:vend,minU:minU,maxU:maxU,stock:stock,exc:exc,falta:falta,
     faltaBruto:faltaBruto,compraMes:compraMes,cur:cur,
-    excC:(costo!=null)?exc*costo:null, excM:(mix!=null)?exc*mix:null,
+    // ⚠️ Sin VD no hay venta mix (ver `hayVenta`): el mix es una venta potencial y, sin
+    // demanda proyectada, multiplicar por el precio inventa una venta que nadie espera.
+    excC:(costo!=null)?exc*costo:null, excM:(mix!=null&&hayVenta)?exc*mix:null,
     falC:(costo!=null)?falta*costo:null,
     perd:(k==='cero'||k==='riesgo')?perdU(r):0,
     perdM:((k==='cero'||k==='riesgo')&&mix!=null)?perdU(r)*mix:null,
     stkC:(costo!=null&&stock>0)?stock*costo:null,
-    stkM:(mix!=null&&stock>0)?stock*mix:null,
+    stkM:(mix!=null&&stock>0&&hayVenta)?stock*mix:null,
     meses:r[5], r:r};
 }
 function setRotU(el){st.rotU=parseInt(el.value,10)||20;renderAll();}
@@ -1246,9 +1355,12 @@ function svgLinea(vals,labels,color,ancho,cur,clic,sel){
     // imposible de acertar con el mouse.
     if(clic)g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="16" fill="transparent"'
       +' style="cursor:pointer" onclick="'+clic+'('+i+')"><title>'+labels[i]+'</title></circle>';
-    g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(ult?6:4.5)+'" fill="'+color+'"'
-      +(ult?' stroke="#fff" stroke-width="2.5"':'')
-      +(sel===i?' stroke="#1a237e" stroke-width="3"':'')+' style="pointer-events:none"/>';
+    const elegido=(sel===i);
+    g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(elegido?(ult?6.5:5.5):(ult?6:4.5))
+      +'" fill="'+color+'"'
+      +((ult||elegido)?' stroke="#fff" stroke-width="2.5"':'')+' style="pointer-events:none"/>';
+    if(elegido)g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6"'
+      +' fill="#ffd600" style="pointer-events:none"/>';
     const an=(i===0&&n>1)?'start':(ult?'end':'middle');
     if(marca(i))g+='<text x="'+x.toFixed(1)+'" y="'+(y-11).toFixed(1)+'" text-anchor="'+an
       +'" font-size="14" font-weight="800" fill="#1a237e">'+nf(v)+'</text>';
@@ -1265,7 +1377,7 @@ function renderStock(){
   // las tarjetas tienen que contar como se reparten esos codigos entre los seis
   // estados, no seguir mostrando el total sin cruzar.
   let dat=rowsBase().map(stkOf).filter(Boolean);
-  if(st.ROT)dat=dat.filter(o=>rotClase(o.r)===st.ROT);
+  if(st.ROT)dat=dat.filter(o=>cruceOk(o.r,st.ROT));
   const M=(c,n)=>c+' '+Math.round(n||0).toLocaleString('es-AR');
   const G={};STK.forEach(s=>{G[s[0]]={n:0,u:0,exc:0,falta:0,cA:0,cB:0,cN:0,cP:0,cS:0,cIng:0};});
   const P={};
@@ -1290,12 +1402,15 @@ function renderStock(){
   // Los tres sub-estados, con la MISMA cuenta de plata: stock x costo y stock x mix.
   // ⚠️ No se usa el bucket de la tarjeta de cada codigo: en un cruce mezclaria
   // 'costo inmovilizado' con 'costo a invertir' y el total no significaria nada.
-  const ROTG={sinrot:null,baja:null,alza:null};
+  const ROTG={sinrot:null,sinrot3:null,sinrotm:null,baja:null,alza:null};
   for(const kk in ROTG)ROTG[kk]={n:0,u:0,cA:0,cB:0,c:{},m:{}};
   rowsBase().forEach(r=>{
     const o=stkOf(r);if(!o)return;
     const cl=rotClase(r),dest=[];
     if(o.k==='sinrot')dest.push('sinrot');
+    // ⚠️ Las dos ventanas nuevas CONTIENEN a la de 6M: son nidadas, no excluyentes.
+    if(sinVenta(r,3))dest.push('sinrot3');
+    if(sinVenta(r,0))dest.push('sinrotm');
     if(cl)dest.push(cl);
     if(!dest.length)return;
     const cc=DATA.costos&&DATA.costos[r[2]],cur=(cc&&cc[3])?cc[3]:'$';
@@ -1305,7 +1420,7 @@ function renderStock(){
       // ⚠️ Sin rotacion va por el stock entero (esta parado); los dos cruces por la
       // CAIDA o la suba del ritmo, que es lo que se quiere medir.
       // solo Sin rotacion muestra plata, asi que es la unica que la acumula
-      const q=(d==='sinrot')?stq:0;
+      const q=(d==='sinrot'||d==='sinrot3'||d==='sinrotm')?stq:0;
       if(q&&cc&&cc[0]!=null)g.c[cur]=(g.c[cur]||0)+q*cc[0];
       if(q&&mix!=null)g.m[cur]=(g.m[cur]||0)+q*mix;});});
   const tot=dat.length||1;
@@ -1687,17 +1802,17 @@ function renderStock(){
   // doble de ancha que las de Ver y se perderia el "mismo diseno" que pidio.
   // ⚠️ Vive ACA, fuera de las dos ramas de render, porque la barra se arma en los dos
   // lados y escrita dos veces se desincroniza.
-  const rotPill=(v,txt,nn)=>{const on=(_subAct===v);
-    return '<button onclick="setRotSub(&quot;'+(on?'':v)+'&quot;)"'
-      +' data-tip="'+txt+'" data-tip2="'+fmtI(nn)+' c\u00f3digos'
-      +(on?' \u00b7 toc\u00e1 de nuevo para quitar el filtro':'')+'"'
-      +' style="font:inherit;font-size:10px;font-weight:700;border-radius:20px;padding:3px 10px;'
-      +'border:1px solid '+(on?'#1a237e':'#c5cad8')+';background:'+(on?'#1a237e':'#fff')+';'
-      +'color:'+(on?'#fff':'#5a6178')+';cursor:pointer;">'+txt+'</button>';};
-  const rotPills='<span style="display:inline-flex;gap:4px;">'
-    +rotPill('sinrot','Sin rotaci\u00f3n',ROTG.sinrot.n)
-    +rotPill('baja','En baja',ROTG.baja.n)
-    +rotPill('alza','En alza',ROTG.alza.n)+'</span>';
+  // ⚠️ Vuelve a ser UN desplegable (Erik, 20/10): con cinco opciones las pastillas
+  // pedian 420px de barra y "Sin rotacion (mes actual)" no entra en una de 10px.
+  const rotPills='<select onchange="setRotSub(this.value)" class="barsel">'
+    +[['','\u2014 sin filtro'],
+      ['sinrot','Sin rotaci\u00f3n (6M) ('+fmtI(ROTG.sinrot.n)+')'],
+      ['sinrot3','Sin rotaci\u00f3n (3M) ('+fmtI(ROTG.sinrot3.n)+')'],
+      ['sinrotm','Sin rotaci\u00f3n (mes actual) ('+fmtI(ROTG.sinrotm.n)+')'],
+      ['baja','Rotaci\u00f3n en baja ('+fmtI(ROTG.baja.n)+')'],
+      ['alza','Rotaci\u00f3n en alza ('+fmtI(ROTG.alza.n)+')']]
+     .map(o=>'<option value="'+o[0]+'"'+((o[0]===_subAct)?' selected':'')
+        +'>'+o[1]+'</option>').join('')+'</select>';
     // Hasta cuantas veces el maximo un exceso es leve; de ahi para arriba es grave.
   // ⚠️ x2 (el doble del maximo) es el arranque, elegido por Erik el 19/10. Se puede
   // mover sin perder los graficos: la foto guarda los cinco baldes de `fotoKs`.
@@ -1716,10 +1831,9 @@ function renderStock(){
   // \u26a0\ufe0f Va DESPUES de las pastillas: delante, aparecer y desaparecer les corria el lugar
   // cada vez que se prendia o apagaba un cruce.
   const rotUSel=(_subAct==='baja'||_subAct==='alza')
-    ?('<span style="width:6px;display:inline-block"></span>'
-      +'<select onchange="setRotU(this)" data-tip="Umbral"'
+    ?('<select onchange="setRotU(this)" data-tip="Umbral"'
       +' data-tip2="Desde cu\u00e1nto cuenta como baja o alza"'
-      +' style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'
+      +' class="barsel" style="min-width:78px">'
       +ropt+'</select>'):'';
   // ⚠️ VISTA GRAFICO: una fila por estado, la tarjeta a la izquierda y su linea a la
   // derecha. La foto del 1ro de cada mes y el dato de hoy son la MISMA serie, y tenerlas
@@ -1781,7 +1895,10 @@ function renderStock(){
       // codigo, no cuanto costaba su stock ese mes. La plata se guarda sumada por grupo.
       if(porLetra)return (f==='n')?((cntLetra[m]||{})[k]||0):0;
       let t=0;for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
-      if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])t+=((f==='n')?x[kk].n:((x[kk][f]||{})[cur]||0));});}
+      // 'n' cuenta codigos, 'u' unidades de stock y 'c'/'m' plata, que va por moneda.
+      // ⚠️ Las unidades ya estaban guardadas: lo unico que faltaba era pedirlas.
+      if(x)fotoKs(k,x).forEach(kk=>{if(x[kk])t+=((f==='n')?x[kk].n
+        :(f==='u')?(x[kk].u||0):((x[kk][f]||{})[cur]||0));});}
       return t;};
     const fotoPlata=(m,k,f)=>{const d={};if(porLetra)return d;
       for(const gg in gaOk){const x=((DATA.hstk[m]||{}).ga||{})[gg];
@@ -1827,17 +1944,218 @@ function renderStock(){
       +' <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#aab0c8;">\u00b7 '
       +deQuien(ks)+'</span></div>'
       +impLin(_mg?sumaMes(ks,i):sumaHoy(ks,i),col)+'</div>';
+    // \u26a0\ufe0f Sin la caja de "Codigos" (Erik, 20/10: *"esto podriamos sacarlo, ya me lo da la
+    // pastilla General"*). Es la misma regla de siempre: no duplicar info. La tarjeta
+    // General de abajo lo dice, y ademas con las unidades y su variacion al lado.
     const totales='<div class="totrow">'
-      +'<div class="tot1"><div class="totl">C\u00f3digos'
-        +(_mg?(' <span style="font-weight:600;text-transform:none;letter-spacing:0;">al 1\u00ba de '+mesCorto(_mg)+'</span>'):'')
-        +'</div><div class="totv">'
-        +fmtI(_mg?STKH.reduce((t,e)=>t+foto(_mg,e[0],'n'),0):tot)+'</div></div>'
       +tilePlata('Costo a invertir',GQR,6,STROJO)
       +tilePlata('Venta mix perdida',GQR,8,STVERDE)
       +tilePlata('Costo inmovilizado',GEX,6,STROJO)
       +tilePlata('Venta mix inmovilizado',GEX,8,STVERDE)+'</div>';
     // ---------------------------------------------------------------- las seis filas
     let filas='';
+    // ================================================================ LA FILA GENERAL
+    // ⚠️ Todo el stock, arriba de Quiebre (Erik, 20/10). NO es un estado: no entra en
+    // CARDS, no filtra y no cuenta para el 100% de las otras seis.
+    // ⚠️ El costo del stock no estaba en la foto: la foto guarda, por estado, los dos
+    // montos de SU tarjeta --lo que falta invertir, lo que esta inmovilizado-- y eso no
+    // es `stock x costo`. Se guarda aparte, por grupo, para que responda a Unidad de
+    // negocio y Grupo como el resto del historico.
+    {
+      // ⚠️ La foto del General va por GRUPO y CATEGORIA (Erik, 20/10), asi que la
+      // linea responde tambien al filtro de Categoria. La categoria es **la que tenia
+      // ese mes**: la opcion que eligio, 10 KB por mes contra 67 que costaria guardar
+      // codigo por codigo. Medido: 305 de 5.371 cambiaron de categoria desde el 17/09.
+      // ⚠️ Lo que la foto NO tiene es el codigo, asi que con el filtro de Codigo puesto
+      // solo se puede contar con las letras: ahi el stock y la plata quedan en cero.
+      const catOk=st.CAT.size?new Set([...st.CAT].map(i=>DATA.CAT[i]||'s/C')):null;
+      const gralFoto=(st.COD.size===0);
+      const gH=(m)=>{const d={n:0,u:0,c:{},m:{}};
+        if(!gralFoto){const c=cntLetra[m]||{};for(const k in c)d.n+=c[k];return d;}
+        const X=(GRALH[m]||{});
+        for(const gg in gaOk){const G=X[gg];if(!G)continue;
+          for(const ct in G){if(catOk&&!catOk.has(ct))continue;
+            const x=G[ct];d.n+=x.n;d.u+=x.u;
+            for(const cu in (x.c||{}))d.c[cu]=(d.c[cu]||0)+x.c[cu];
+            for(const cu in (x.m||{}))d.m[cu]=(d.m[cu]||0)+x.m[cu];}}
+        return d;};
+      // lo de hoy sale de `dat`, que ya trae todos los filtros puestos
+      const gHoy={n:dat.length,u:0,c:{},m:{}};
+      dat.forEach(o=>{gHoy.u+=o.stock;
+        if(o.stock>0){if(o.stkC)gHoy.c[o.cur]=(gHoy.c[o.cur]||0)+o.stkC;
+                      if(o.stkM)gHoy.m[o.cur]=(gHoy.m[o.cur]||0)+o.stkM;}});
+      const miG=(st.grafMesG!=null&&st.grafMesG<HM.length)?st.grafMesG:null;
+      const act=(miG==null)?gHoy:gH(HM[miG]);
+      const verG=st.grafVerG||'n';
+      const curG=(verG==='$'||verG==='USD')?verG:null;
+      const valG=d=>(verG==='n')?d.n:(verG==='u')?d.u:(d.c[curG]||0);
+      const serieG=HM.map(m=>valG(gH(m))).concat([valG(gHoy)]);
+      const lblG=HM.map(mesCorto).concat(['Hoy']);
+      window._gmGRAL=(i)=>{st.grafMesG=(i>=HM.length)?null:i;st.dirty.st=true;renderStock();};
+      // ⚠️ Con filtro de CODIGO la foto no puede responder --guarda grupo y categoria,
+      // no el codigo-- asi que el stock y la plata de los meses pasados no existen y la
+      // linea daria cero hasta "Hoy". Se avisa en vez de dibujar eso.
+      let grG;
+      if(!gralFoto&&verG!=='n'){
+        grG='<div class="grafsin">Con un código elegido, el stock y la plata de los '
+          +'meses pasados no se guardan. Mirá la vista <b>SKU</b>.</div>';}
+      else{grG=svgLinea(serieG,lblG,'#1a237e',0,curG,'_gmGRAL',
+          (miG==null?serieG.length-1:miG));
+        _grafRedibujo.push({k:'GRAL',serie:serieG,lbl:lblG,color:'#1a237e',cur:curG,
+          clic:'_gmGRAL',sel:(miG==null?serieG.length-1:miG)});}
+      // \u26a0\ufe0f El "vs" va SEPARADO, uno debajo de cada numero (Erik, 20/10: *"el detalle de
+      // abajo ponelo debajo de cada indicador, esta todo pegado"*): el de los codigos
+      // bajo los SKU y el de las unidades bajo las unidades.
+      // \u26a0\ufe0f Cada flecha lleva SU color, porque pueden ir para lados distintos: entran
+      // codigos nuevos sin stock y los SKU suben mientras las unidades bajan.
+      let vsN='&nbsp;', vsU='&nbsp;';
+      {const iHoy=HM.length,iAct=(miG==null)?iHoy:miG,iAnt=iAct-1;
+        if(iAnt>=0){const A=(iAct>=iHoy)?gHoy:gH(HM[iAct]), B=gH(HM[iAnt]);
+          const mesAnt=mesCorto(HM[iAnt]);
+          const tro=d=>(d===0)?('igual que '+mesAnt)
+            :('<span style="color:'+(d>0?'#2e7d32':'#c62828')+'">'+(d>0?'\u25b2':'\u25bc')
+              +'</span> '+fmtI(Math.abs(d))+' vs '+mesAnt);
+          vsN=tro(A.n-B.n);
+          // ⚠️ Con Categoria o Codigo filtrados no hay unidades del mes pasado con que
+          // comparar: se deja el renglon vacio en vez de decir "igual que", que seria
+          // falso --no es que no se movio, es que no se puede saber--.
+          // ⚠️ Solo el filtro de Codigo deja sin unidades del mes pasado; la
+          // Categoria ya esta en la foto.
+          vsU=gralFoto?tro(A.u-B.u):'&nbsp;';}}
+      // \u26a0\ufe0f EL TOTAL SIN NINGUN FILTRO, que es contra lo que se mide el porcentaje que
+      // pidio Erik (*"que % representa el filtro sobre el stock total"*). Recorre
+      // `DATA.rows` entero, no `rowsBase()`. Cuesta poco: `stkOf` esta memorizado.
+      // \u26a0\ufe0f El % va POR MONEDA. El tablero nunca suma pesos con dolares, asi que un solo
+      // porcentaje "del total" no existe: con Importados puesto es el 100% de los
+      // dolares y el 0% de los pesos, y un numero solo tendria que mentir en un lado.
+      // ⚠️ `stkOf` esta memorizado, asi que recorrer las 5.400 filas de nuevo es barato.
+      const plataDe=pred=>{const d={c:{},m:{}};
+        DATA.rows.forEach(r=>{const o=stkOf(r);if(!o||o.stock<=0||!pred(r))return;
+          if(o.stkC)d.c[o.cur]=(d.c[o.cur]||0)+o.stkC;
+          if(o.stkM)d.m[o.cur]=(d.m[o.cur]||0)+o.stkM;});return d;};
+      const gAll=plataDe(()=>true);
+      // ⚠️ EL FILTRO "DE ARRIBA" (Erik, 20/10): el mismo recorte pero sin el ultimo filtro
+      // puesto. El orden de especificidad es Unidad de negocio -> Grupo -> Categoria ->
+      // Codigo, asi que con Importados + Motores + A el de arriba es Importados + Motores
+      // y el renglon dice "57,4% de Motores de arranque". Con un solo filtro no hay nadie
+      // arriba y queda un renglon solo.
+      const _fil=[];
+      if(st.UN.size)_fil.push('UN'); if(st.GA.size)_fil.push('GA');
+      if(st.CAT.size)_fil.push('CAT'); if(st.COD.size)_fil.push('COD');
+      // ⚠️ LOS ESCALONES SON SIEMPRE LOS MISMOS TRES (Erik, 20/10): el total, el
+      // GRUPO y la CATEGORIA. La Unidad de negocio no es un escalon --queda adentro de
+      // los otros dos, porque filtra igual-- y el Codigo es la hoja, no una referencia.
+      // ⚠️ Se saca el escalon que sea el recorte entero: daria 100% y no dice nada. Con
+      // Grupo + Categoria puestos y nada mas, los renglones son "del total" y "de
+      // Motores"; recien al agregar un Codigo aparece el tercero, "de Cat A".
+      const _conUN=ks=>(st.UN.size?['UN']:[]).concat(ks);
+      const _escal=[[]]
+        .concat(st.GA.size?[_conUN(['GA'])]:[])
+        .concat(st.CAT.size?[_conUN(['GA','CAT']).filter(k=>k!=='GA'||st.GA.size)]:[])
+        .filter(ks=>ks.length<_fil.length||!ks.length);
+      const _pasa=(r,ks)=>ks.every(k=>k==='UN'?mUN(r):k==='GA'?mGA(r):k==='CAT'?mCAT(r):mCOD(r));
+      // como se llama el recorte de arriba: el mas especifico que le queda
+      const _nombreDe=ks=>{if(!ks.length)return null;const k=ks[ks.length-1];
+        // \u26a0\ufe0f Con uno o dos elegidos se NOMBRAN. Erik vio "46% de 2 grupos" y no se
+        // entiende contra que se midio. De tres para arriba no entran en la tarjeta y
+        // ahi si se dice cuantos son.
+        // \u26a0\ufe0f Las categorias van juntas bajo un solo "Cat": "de Cat A y B", no
+        // "de Cat A y Cat B".
+        const lista=(set,f,pre,varios)=>{const a=[...set].map(f);
+          if(a.length===1)return pre+a[0];
+          if(a.length===2)return pre+a[0]+' y '+a[1];
+          return 'los '+a.length+' '+varios;};
+        if(k==='UN')return lista(st.UN,i=>DATA.UN[i],'','unidades de negocio');
+        if(k==='GA')return lista(st.GA,i=>gaSig(DATA.GA[i]),'','grupos');
+        if(k==='CAT')return lista(st.CAT,i=>DATA.CAT[i],'Cat ','categor\u00edas');
+        return lista(st.COD,c=>c,'','c\u00f3digos');};
+      // cada escalon, con su nombre y su plata de hoy
+      const escHoy=_escal.map(ks=>({ks:ks,nom:ks.length?('de '+_nombreDe(ks)):'del total',
+        p:plataDe(r=>_pasa(r,ks))}));
+      // el mismo total pero del mes elegido: TODOS los grupos, no solo los visibles
+      // El mismo recorte pero sobre la foto de un mes: `ks` dice que filtros aplicar.
+      // ⚠️ La Unidad de negocio no esta en la foto, asi que el conjunto de grupos se
+      // arma desde `rows` --que si la tiene-- y despues se suma sobre la foto.
+      const plataMes=(m,ks)=>{const d={c:{},m:{}};const X=(GRALH[m]||{});
+        const gs={};DATA.rows.forEach(r=>{
+          if(ks.includes('UN')&&!mUN(r))return;
+          if(ks.includes('GA')&&!mGA(r))return;
+          gs[DATA.GA[r[1]]]=1;});
+        const cs=ks.includes('CAT')?new Set([...st.CAT].map(i=>DATA.CAT[i]||'s/C')):null;
+        for(const gg in gs){const G=X[gg];if(!G)continue;
+          for(const ct in G){if(cs&&!cs.has(ct))continue;const x=G[ct];
+            for(const cu in (x.c||{}))d.c[cu]=(d.c[cu]||0)+x.c[cu];
+            for(const cu in (x.m||{}))d.m[cu]=(d.m[cu]||0)+x.m[cu];}}
+        return d;};
+      const gAllMes=m=>plataMes(m,[]);
+      const hayFiltro=!!(st.UN.size||st.GA.size||st.CAT.size||st.COD.size||st.ROT);
+      // ⚠️ Con filtro de Codigo y un mes pasado no hay con que medir: la foto guarda
+      // grupo y categoria, no el codigo. Ahi no se muestra ningun porcentaje.
+      const escal=(miG!=null&&!gralFoto)?[]
+        :escHoy.map(e=>({nom:e.nom,p:(miG==null)?e.p:plataMes(HM[miG],e.ks)}));
+      // \u26a0\ufe0f El % solo aparece CON filtro puesto: sin filtro siempre daria 100 y seria una
+      // linea de ruido. Va pegado al importe y en azul apagado, porque es contexto y no
+      // una alarma: el rojo y el verde ya significan otra cosa en el tablero.
+      // un renglon de porcentaje, o nada si no hay con que calcularlo
+      const _pcTxt=pc=>pc.toFixed(pc<10?1:0).replace('.',',');
+      const _pcLin=(pc,txt)=>(pc==null||!txt)?''
+        :('<div style="font-size:.58rem;font-weight:700;color:#1a237e;opacity:.7;'
+          +'line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+          +_pcTxt(pc)+'% '+txt+'</div>');
+      // ⚠️ Un escalon que da el MISMO numero que el anterior no se repite: Importados
+      // tiene el 100% de los dolares, asi que "de Importados" diria lo mismo que "del
+      // total" y se lee como un error.
+      const _pcLineas=(x,campo)=>{if(!hayFiltro)return '';
+        let ant=null,out='';
+        escal.forEach(e=>{const T=((e.p[campo]||{})[x[0]])||0;if(!(T>0))return;
+          const pc=x[1]/T*100;if(pc>=99.95)return;
+          const txt=_pcTxt(pc);
+          if(txt===ant)return; ant=txt;
+          out+=_pcLin(pc,e.nom);});
+        return out;};
+      const impG=(d,col,campo)=>{const e=Object.entries(d||{}).filter(x=>Math.round(x[1]));
+        if(!e.length)return '<div style="font-size:.7rem;color:#b0b5cf;">\u2013</div>';
+        return e.map(x=>{
+          // \u26a0\ufe0f El % va en SU PROPIO renglon debajo del importe y dice "del total" (Erik,
+          // 20/10). Pegado al numero se leia como parte del importe; abajo y con la
+          // palabra se entiende solo, sin tener que acordarse contra que se mide.
+          return '<div style="font-size:.7rem;font-weight:800;color:'+col
+            +';line-height:1.3;white-space:nowrap;">'+M(x[0],x[1])+'</div>'
+            +_pcLineas(x,campo);}).join('');};
+      // ⚠️ La caja blanca va ADENTRO de `.grafcard`, igual que lo que devuelve `card()`:
+      // `.grafcard` es flex, asi que sin ese envoltorio sus hijos se reparten como
+      // columnas y la tarjeta se desarma.
+      filas+='<div class="grafila"><div class="grafcard" style="--bc:#1a237e;cursor:default">'
+        +'<div style="flex:1 1 0;min-width:186px;background:#fff6cc;border-radius:10px;'
+          +'border:2px solid #1a237e;box-shadow:0 2px 6px rgba(26,35,126,.08);padding:11px 12px;">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'
+          +badge('General','#1a237e','var(--amarillo)')
+          +'<span style="margin-left:auto;font-size:.58rem;color:#1a237e;font-weight:700;opacity:.75;">'
+          +(miG==null?'HOY':mesLargo(HM[miG]).toUpperCase())+'</span></div>'
+        +'<div style="font-size:.58rem;color:#1a237e;opacity:.75;line-height:1.15;margin-bottom:5px;">'
+          +'Stock global</div>'
+        // ⚠️ DOS COLUMNAS, cada numero con SU variacion debajo. Antes los dos "vs" iban
+        // juntos en un renglon al pie y quedaba todo amontonado a la izquierda mientras
+        // las unidades, arriba a la derecha, no tenian nada abajo.
+        +(()=>{const col=(num,uni,vs,der)=>
+            '<div style="flex:1 1 0;min-width:0;'+(der?'text-align:right;':'')+'">'
+            +'<div style="display:flex;align-items:baseline;gap:4px;'
+              +(der?'justify-content:flex-end;':'')+'">'
+              +'<span style="font-size:1.25rem;font-weight:800;color:#1a237e;line-height:1.1;">'
+              +num+'</span>'
+              +'<span style="font-size:.58rem;color:#1a237e;opacity:.8;">'+uni+'</span></div>'
+            +'<div style="font-size:.62rem;font-weight:700;color:#1a237e;margin-top:1px;'
+              +'line-height:1.2;white-space:nowrap;">'+vs+'</div></div>';
+          return '<div style="display:flex;gap:10px;align-items:flex-start;">'
+            +col(fmtI(act.n),'SKU',vsN,false)
+            +col(fmtI(act.u),'unidades',vsU,true)+'</div>';})()
+        +'<div style="display:flex;gap:10px;border-top:1px solid rgba(26,35,126,.25);margin-top:7px;padding-top:6px;">'
+          +'<div style="flex:1 1 0;min-width:0;"><div style="font-size:.56rem;color:#1a237e;opacity:.75;'
+            +'font-weight:700;margin-bottom:2px;">Costo stock total</div>'+impG(act.c,STROJO,'c')+'</div>'
+          +'<div style="flex:1 1 0;min-width:0;"><div style="font-size:.56rem;color:#1a237e;opacity:.75;'
+            +'font-weight:700;margin-bottom:2px;">Venta mix stock total</div>'+impG(act.m,STVERDE,'m')+'</div>'
+        +'</div></div></div>'
+        +'<div class="grafbox" data-k="GRAL">'+grG+'</div></div>';}
     // ⚠️ Con un filtro de Estado se dibujan SOLO esas filas. Las tarjetas de arriba no
     // se filtran nunca --si lo hicieran, al elegir Quiebre las otras cinco darian cero--
     // pero aca abajo el filtro es justamente lo que se pide mirar.
@@ -1852,18 +2170,32 @@ function renderStock(){
       const ft=enFoto?{n:foto(HM[mi],k,'n'),c:fotoPlata(HM[mi],k,'c'),m:fotoPlata(HM[mi],k,'m')}:null;
       let gr;
       {const ver=st.grafVerG||'n';
-        const cur=(ver==='n')?null:ver;
-        const serie=HM.map(m=>foto(m,k,(ver==='n')?'n':'c',cur))
-          .concat([(ver==='n')?G[k].n:hoyPlata(c,cur)]);
+        // ⚠️ Con Categoria filtrada estas seis solo pueden contar SKU: su plata se
+        // guarda por estado y grupo, no abierta por categoria. La fila General si la
+        // tiene, asi que el desplegable deja elegir y aca se avisa en una linea.
+
+        // ⚠️ `cur` es la moneda y solo existe con plata: con SKU o Stock va en null o
+        // el eje dibujaria "USD 2.477".
+        const campo=(ver==='n')?'n':(ver==='u')?'u':'c';
+        const cur=(ver==='$'||ver==='USD')?ver:null;
+        const serie=HM.map(m=>foto(m,k,campo,cur))
+          .concat([(ver==='n')?G[k].n:(ver==='u')?G[k].u:hoyPlata(c,cur)]);
         const lbl=HM.map(mesCorto).concat(['Hoy']);
         const col=(STKH.find(x=>x[0]===k)||[0,0,c[2]])[2];
         const clic='_gm'+k;
         // tocar un punto es otro camino al mismo selector de la barra
         window[clic]=(i)=>{st.grafMesG=(i>=HM.length)?null:i;
           st.dirty.st=true;renderStock();};
-        gr=svgLinea(serie,lbl,col,0,cur,clic,(mi==null?serie.length-1:mi));
-        _grafRedibujo.push({k:k,serie:serie,lbl:lbl,color:col,cur:cur,clic:clic,
-          sel:(mi==null?serie.length-1:mi)});}
+        // ⚠️ Con Categoria filtrada estas seis solo pueden contar SKU: su plata se
+        // guarda por estado y grupo, no abierta por categoria. La fila General si la
+        // tiene --su balde `gral` va por grupo Y categoria-- asi que el desplegable
+        // deja elegir y aca se avisa en una linea en vez de dibujar ceros.
+        if(porLetra&&ver!=='n'){
+          gr='<div class="grafsin">Por categoría, el stock y la plata solo se '
+            +'guardan en el total: mirá la fila <b>General</b>.</div>';}
+        else{gr=svgLinea(serie,lbl,col,0,cur,clic,(mi==null?serie.length-1:mi));
+          _grafRedibujo.push({k:k,serie:serie,lbl:lbl,color:col,cur:cur,clic:clic,
+            sel:(mi==null?serie.length-1:mi)});}}
       // ⚠️ El detalle se abre DEBAJO de la fila, sin cambiar de vista. Reusa la tabla de
       // siempre: `rows` es `let`, asi que se la cambia por la de este estado, se arma y
       // se la devuelve. Duplicar la tabla serian 200 lineas que despues se desincronizan.
@@ -1908,55 +2240,60 @@ function renderStock(){
     // igual filtrando por Grupo, que es como se llega al mismo lugar por otro camino.
     // ⚠️ Con Categoria o Codigo filtrados no hay plata por mes que mostrar, asi que el
     // boton se apaga en vez de dibujar una linea que ignora la mitad de los filtros.
-    const hayCur=cu=>!porLetra&&CARDS.some(c=>hayPlata(c,cu));
-    if(porLetra&&st.grafVerG&&st.grafVerG!=='n')st.grafVerG='n';
+    // ⚠️ LAS CUATRO VISTAS SIEMPRE DISPONIBLES (Erik, 20/10: *"la vista tendria que
+    // estar disponible para cualquier filtro"*). Lo que no se pueda dibujar avisa en una
+    // linea (`.grafsin`) en vez de bloquear el control: apagarlo dejaba sin saber por
+    // que, y la TARJETA --que tiene el dato de hoy y responde a todos los filtros-- se
+    // podia leer igual.
+    const hayCur=cu=>CARDS.some(c=>hayPlata(c,cu));
     // ⚠️ Un solo boton "Plata" (Erik, 19/10): el dashboard elige la moneda en vez de
     // hacerlo elegir. La que tiene datos con el filtro puesto, o la del total mas
     // grande si las dos tienen. Sigue sin sumar pesos con dolares: elige una.
-    const totCur=cu=>CARDS.reduce((t,c)=>t+hoyPlata(c,cu),0);
-    // ⚠️ Con las dos monedas disponibles, tocar "Plata" ALTERNA entre ellas. Antes
-    // elegia la del total mas grande y, sin filtro, los pesos siempre ganan --son
-    // millones contra miles-- asi que a USD no se llegaba nunca.
-    const curMejor=()=>{const a=hayCur('$'),b=hayCur('USD');
-      if(a&&!b)return '$'; if(b&&!a)return 'USD';
-      if(!a&&!b)return null;
-      const act=st.grafVerG;
-      if(act==='$')return 'USD';
-      if(act==='USD')return '$';
-      return (totCur('USD')>=totCur('$'))?'USD':'$';};
     const _vg=st.grafVerG||'n';
     // y si la moneda elegida se apago, se vuelve a SKU en vez de quedar en blanco
-    if(st.grafVerG&&st.grafVerG!=='n'&&!hayCur(st.grafVerG))st.grafVerG='n';
-    const bg=(v,txt,on,activo,tip)=>'<button'+(activo?(' onclick="setGrafVerG(&quot;'+v+'&quot;)"'):' disabled')
-      +(tip?(' data-tip2="'+tip+'"'):'')
-      +' style="font:inherit;font-size:10px;font-weight:700;border-radius:20px;padding:3px 10px;'
-      +'border:1px solid '+(on?'#1a237e':'#c5cad8')+';background:'+(on?'#1a237e':'#fff')+';'
-      +'color:'+(on?'#fff':(activo?'#5a6178':'#c5cad8'))+';'
-      +'cursor:'+(activo?'pointer':'default')+';">'+txt+'</button>';
+    // ⚠️ Solo se vuelve a SKU si se apago LA MONEDA elegida. Sin el `('$'|'USD')`,
+    // "Stock" se reseteaba solo: `hayCur('u')` es falso siempre.
+    if((st.grafVerG==='$'||st.grafVerG==='USD')&&!hayCur(st.grafVerG))st.grafVerG='n';
+    // ⚠️ Un desplegable y no cuatro botones (Erik, 20/10): con cuatro, la fila pedia
+    // 150px y el boton de la moneda sin datos se leia como un boton roto. Como `option`
+    // deshabilitada el navegador la pinta en gris y se entiende sola.
+    // ⚠️ "Stock" se apaga con Categoria o Codigo filtrados, igual que la plata: esa
+    // serie sale de la letra de cada codigo, que dice el estado y no cuantas unidades.
+    const vopt=[['n','SKU'],['u','Stock'],['$','Plata $'],['USD','Plata USD']]
+      .map(o=>{const off=(o[0]==='u')?false
+          :((o[0]==='$'||o[0]==='USD')?!hayCur(o[0]):false);
+        return '<option value="'+o[0]+'"'+((o[0]===_vg)?' selected':'')
+          +(off?' disabled':'')+'>'+o[1]+'</option>';}).join('');
     const mopt=HM.map((m,i)=>'<option value="'+i+'"'+((st.grafMesG===i)?' selected':'')
         +'>'+mesLargo(m)+'</option>').join('')
       +'<option value=""'+((st.grafMesG==null)?' selected':'')+'>Hoy</option>';
     // ⚠️ EL ORDEN DE LA BARRA lo eligio Erik (19/10): Mes, Exceso, Ver, Rotacion.
     // Va de lo que cambia toda la pantalla a lo que elige un recorte.
     el.innerHTML='<div class="liqbar">'
+      +'<span class="barg">'
       +'<span class="liqlbl" data-tip="Mes" data-tip2="Qu\u00e9 mes muestran las tarjetas">Mes</span>'
-      +'<select onchange="setGrafMesG(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+mopt+'</select>'
-      +'<span style="width:12px"></span>'
+      +'<select onchange="setGrafMesG(this)" class="barsel">'+mopt+'</select></span>'
+      +'<span class="barg">'
       +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'
-      +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
-      +'<span style="width:12px"></span>'
-      +'<span class="liqlbl" data-tip="Qu\u00e9 miden los gr\u00e1ficos"'
-      +(porLetra?(' data-tip2="Con Categor\u00eda o C\u00f3digo filtrados la l\u00ednea se cuenta c\u00f3digo por '
-          +'c\u00f3digo, con la categor\u00eda de hoy. La plata no se puede abrir as\u00ed."'):'')
-      +'>Ver</span>'
-      +'<span style="display:inline-flex;gap:4px;">'+bg('n','SKU',_vg==='n',true)
-      +bg(curMejor()||'$',(_vg==='n'?'Plata':('Plata \u00b7 '+(_vg==='$'?'$':'USD'))),
-          _vg!=='n',!!curMejor(),
-          (hayCur('$')&&hayCur('USD'))?'Toc\u00e1 de nuevo para cambiar de moneda':'')+'</span>'
-      +'<span style="width:12px"></span>'
+      +'<select onchange="setExcCut(this)" class="barsel">'+eopt+'</select></span>'
+      +'<span class="barg">'
+      +'<span class="liqlbl" data-tip="Vista" data-tip2="'
+      +(porLetra?('Con Categor\u00eda o C\u00f3digo filtrados la l\u00ednea se cuenta c\u00f3digo por '
+          +'c\u00f3digo, con la categor\u00eda de hoy. El stock y la plata no se pueden abrir as\u00ed.')
+         :'Qu\u00e9 miden los gr\u00e1ficos')
+      +'">Vista</span>'
+      // ⚠️ CUATRO botones (Erik, 20/10: *"me gustaria ver sku, stock, plata $, plata
+      // usd"*). Deshace la unificacion del 19/10: entonces no entraban en la barra, y
+      // ahora si, porque las pastillas de Rotacion volvieron a ser un desplegable.
+      // ⚠️ "Stock" se apaga con Categoria o Codigo filtrados, igual que la plata: la
+      // serie sale de la letra de cada codigo y la letra dice el estado, no cuantas
+      // unidades habia.
+      +'<select onchange="setGrafVerG(this.value)" class="barsel">'
+      +vopt+'</select></span>'
+      +'<span class="barg">'
       +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
       +rotPills
-      +rotUSel
+      +rotUSel+'</span>'
       +'</div>'+totales
       +'<div class="grafwrap">'+filas+'</div>';
     // ⚠️ Recien ahora se puede medir: el ancho de la caja depende del monitor. En
@@ -1975,12 +2312,13 @@ function renderStock(){
     // ⚠️ La misma barra que la pantalla de graficos, menos Mes y Ver, que solo tienen
     // sentido con una linea delante. El orden y las pastillas son los mismos.
     '<div class="liqbar">'
+      +'<span class="barg">'
       +'<span class="liqlbl" data-tip="Exceso leve" data-tip2="Hasta cu\u00e1ntas veces el m\u00e1ximo un exceso es leve; de ah\u00ed para arriba es grave">Exceso leve</span>'
-      +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
-      +'<span style="width:12px"></span>'
+      +'<select onchange="setExcCut(this)" class="barsel">'+eopt+'</select></span>'
+      +'<span class="barg">'
       +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
       +rotPills
-      +rotUSel
+      +rotUSel+'</span>'
       +'</div>'
     +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+CARDS.map(c=>card(c)).join('')
     +'</div>'
@@ -1994,7 +2332,10 @@ function renderStock(){
   window._stTmr=setTimeout(()=>{const w=document.getElementById('stTbl');
     if(!w)return;
     // los dos cruces de rotacion tienen tabla propia; Sin rotacion usa la de siempre
-    if(st.ROT){w.innerHTML=tablaRot(rows);return;}
+    // ⚠️ Solo los DOS cruces de ritmo usan la tabla propia. Las tres ventanas de
+    // Sin rotacion van con la de siempre: a un codigo parado no le dicen nada las
+    // columnas de variacion, le importa el stock y lo que cuesta.
+    if(st.ROT==='baja'||st.ROT==='alza'){w.innerHTML=tablaRot(rows);return;}
     w.innerHTML='<table class="prevt">'+cg+th+(VIS==='ga'?mkGrp():mkTb())+'</table>'
       +(VIS==='ga'?'':pieTope('st',rows.length,Math.min(tope,rows.length)));},0);
 }

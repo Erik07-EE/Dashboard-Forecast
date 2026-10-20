@@ -589,6 +589,11 @@ def plata_de(r, data, k):
     costo = cc[0] if (cc and cc[0] is not None) else None
     cur = (cc[3] if (cc and len(cc) > 3 and cc[3]) else "$")
     mix = r[MIX]
+    # ⚠️ SIN VD NO HAY VENTA MIX (Erik, 20/10). El mix es una venta POTENCIAL: con el
+    # Excel proyectando cero demanda, multiplicar stock por precio inventa una venta que
+    # nadie espera. El costo no se toca: la plata gastada esta, venda o no venda.
+    # ⚠️ La misma regla vive en `stkCalc` (plantilla) y en `probar_estados.py`.
+    hay_venta = (r[DEM] or 0) > 0
     stock = r[4] or 0
     maxU = r[MAXE] or 0
     compra = mval(r, 0, 2) or 0
@@ -607,10 +612,10 @@ def plata_de(r, data, k):
             m = perd * mix if mix is not None else None
     elif k in ("exceso", "excleve", "excgrave"):
         c = exc * costo if costo is not None else None
-        m = exc * mix if mix is not None else None
+        m = exc * mix if (mix is not None and hay_venta) else None
     else:                                   # sinrot y lanz: lo que esta parado
         c = stock * costo if (costo is not None and stock > 0) else None
-        m = stock * mix if (mix is not None and stock > 0) else None
+        m = stock * mix if (mix is not None and stock > 0 and hay_venta) else None
     return cur, c, m
 
 
@@ -631,8 +636,29 @@ def foto_de(data):
     Esta aparte de `foto_mensual` para poder rearmar la foto de un mes desde un
     dashboard viejo (ver `congelar_septiembre.py`).
     """
-    ga, cod = {}, {}
+    ga, cod, gral = {}, {}, {}
     for r in data["rows"]:
+        # ⚠️ EL STOCK GLOBAL, por grupo y categoria: lo que muestra la fila General.
+        # Va aparte de `ga` porque es otra cuenta: `ga` guarda los dos montos de la
+        # tarjeta de cada estado --lo que falta invertir, lo que esta inmovilizado-- y
+        # esto es el stock entero valorizado.
+        # ⚠️ Misma puerta que `stkCalc`: sin "Meses por Cat." el codigo no entra en
+        # Estado Stock, asi que tampoco puede entrar aca o el ultimo punto de la linea
+        # quedaria mas bajo que los anteriores sin explicacion.
+        if r[4] is not None and r[IDEAL] is not None and (r[IDEAL] or 0) > 0:
+            _g = gral.setdefault(data["GA"][r[1]], {}).setdefault(
+                (data["CAT"][r[3]] or "s/C"), {"n": 0, "u": 0, "c": {}, "m": {}})
+            _st = r[4] or 0
+            _g["n"] += 1
+            _g["u"] += _st
+            if _st > 0:
+                _cc = (data.get("costos") or {}).get(r[2])
+                _co = _cc[0] if (_cc and _cc[0] is not None) else None
+                _cu = (_cc[3] if (_cc and len(_cc) > 3 and _cc[3]) else "$")
+                if _co is not None:
+                    _g["c"][_cu] = round(_g["c"].get(_cu, 0) + _st * _co, 2)
+                if r[MIX] is not None and (r[DEM] or 0) > 0:
+                    _g["m"][_cu] = round(_g["m"].get(_cu, 0) + _st * r[MIX], 2)
         k = estado_de(r, data)
         # ⚠️ El exceso se guarda por BALDE, no como leve/grave: asi el corte de la barra
         # se puede mover sin que los meses congelados dejen de ser comparables.
@@ -645,7 +671,7 @@ def foto_de(data):
         cur, c, m = plata_de(r, data, k)
         if c: g["c"][cur] = round(g["c"].get(cur, 0) + c, 2)
         if m: g["m"][cur] = round(g["m"].get(cur, 0) + m, 2)
-    return {"ga": ga, "cod": cod}
+    return {"ga": ga, "cod": cod, "gral": gral}
 
 
 def foto_mensual(data, ruta):
@@ -725,10 +751,18 @@ def letras_por_fila(hist, data):
 
 
 def publicar_fotos(data, hist):
-    """Las dos formas en que la foto viaja al HTML. Van juntas siempre: si se manda una
-    sola, el grafico dice una cosa con filtro y otra sin filtro."""
+    """Las TRES formas en que la foto viaja al HTML. Van juntas siempre: si se manda una
+    sola, el grafico dice una cosa con filtro y otra sin filtro.
+
+        hstk  los totales por grupo y estado -- las seis lineas de abajo
+        hcod  la letra de cada codigo        -- para filtrar por Categoria y Codigo
+        gral  el stock global por grupo y categoria -- la fila General
+    """
     data["hstk"] = solo_ga(hist)
     data["hcod"] = letras_por_fila(hist, data)
+    # ⚠️ 10 KB por mes. Guardarlo codigo por codigo costaria 67 y permitiria usar la
+    # categoria de HOY en los tres meses; Erik eligio esta el 20/10.
+    data["gral"] = {m: (v.get("gral") or {}) for m, v in hist.items()}
 
 
 def build(data, out_html, tpl_path):

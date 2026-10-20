@@ -80,12 +80,16 @@ def plata_en_pantalla(r, k):
     falta = max(0, maxU - stock - compraMes)
     vend = max(r[109] or 0, max(0, (mval(r, 0, 0) or 0) - stock))
     perd = max(0, (r[79] or 0) - max(mval(r, 0, 3) or 0, vend + stock))
+    # ⚠️ SIN VD NO HAY VENTA MIX (Erik, 20/10). El mix es una venta potencial: con
+    # demanda proyectada en cero, multiplicar stock por precio inventa una venta. El
+    # costo no se toca. La misma regla esta en `stkCalc` y en `plata_de`.
+    hay_venta = (r[79] or 0) > 0
     excC = exc * costo if costo is not None else None
-    excM = exc * mix if mix is not None else None
+    excM = exc * mix if (mix is not None and hay_venta) else None
     falC = falta * costo if costo is not None else None
     perdM = perd * mix if (k in ("cero", "riesgo") and mix is not None) else None
     stkC = stock * costo if (costo is not None and stock > 0) else None
-    stkM = stock * mix if (mix is not None and stock > 0) else None
+    stkM = stock * mix if (mix is not None and stock > 0 and hay_venta) else None
     if k in ("cero", "riesgo"): return cur, falC, perdM
     if k == "ideal": return cur, falC, None
     if k in ("exceso", "excleve", "excgrave"): return cur, excC, excM
