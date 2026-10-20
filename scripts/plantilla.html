@@ -1706,6 +1706,21 @@ function renderStock(){
       +'>'+o[1]+'</option>').join('');
   const ropt=[10,20,30,40,50].map(v=>'<option value="'+v+'"'+(((st.rotU||20)===v)?' selected':'')
     +'>'+v+'%</option>').join('');
+  // ⚠️ El umbral SOLO sirve para los dos cruces: `st.rotU` lo usa una sola funcion,
+  // `rotClase`, que decide si un codigo esta en baja o en alza. "Sin rotacion" es un
+  // estado del modelo --sin ventas en 6 meses cerrados y sin movimiento este mes-- y no
+  // lo toca. Erik: *"el % de rotacion solo es usable en alza y en baja, no?"*.
+  // \u26a0\ufe0f El desplegable APARECE SOLO con un cruce puesto (Erik, 19/10: *"que la opcion del
+  // % aparezca solo si tocas alza o baja"*). Con "Sin rotacion" no decide nada --ese es
+  // un estado del modelo-- y sin nada elegido no hay baja ni alza que medir.
+  // \u26a0\ufe0f Va DESPUES de las pastillas: delante, aparecer y desaparecer les corria el lugar
+  // cada vez que se prendia o apagaba un cruce.
+  const rotUSel=(_subAct==='baja'||_subAct==='alza')
+    ?('<span style="width:6px;display:inline-block"></span>'
+      +'<select onchange="setRotU(this)" data-tip="Umbral"'
+      +' data-tip2="Desde cu\u00e1nto cuenta como baja o alza"'
+      +' style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'
+      +ropt+'</select>'):'';
   // ⚠️ VISTA GRAFICO: una fila por estado, la tarjeta a la izquierda y su linea a la
   // derecha. La foto del 1ro de cada mes y el dato de hoy son la MISMA serie, y tenerlas
   // en dos pantallas obligaba a ir y venir para entender que los 147 del 1/10 son 57 hoy.
@@ -1940,8 +1955,8 @@ function renderStock(){
           (hayCur('$')&&hayCur('USD'))?'Toc\u00e1 de nuevo para cambiar de moneda':'')+'</span>'
       +'<span style="width:12px"></span>'
       +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
-      +'<select onchange="setRotU(this)" data-tip="Umbral" data-tip2="Desde cu\u00e1nto cuenta como baja o alza" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'
       +rotPills
+      +rotUSel
       +'</div>'+totales
       +'<div class="grafwrap">'+filas+'</div>';
     // ⚠️ Recien ahora se puede medir: el ancho de la caja depende del monitor. En
@@ -1964,8 +1979,8 @@ function renderStock(){
       +'<select onchange="setExcCut(this)" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+eopt+'</select>'
       +'<span style="width:12px"></span>'
       +'<span class="liqlbl" data-tip="Rotaci\u00f3n" data-tip2="Como viene la venta real: el \u00faltimo trimestre cerrado contra el anterior">Rotaci\u00f3n</span>'
-      +'<select onchange="setRotU(this)" data-tip="Umbral" data-tip2="Desde cu\u00e1nto cuenta como baja o alza" style="padding:3px 6px;border:1px solid #c5cae9;border-radius:6px;font-size:.75rem;">'+ropt+'</select>'
       +rotPills
+      +rotUSel
       +'</div>'
     +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin-top:12px;">'+CARDS.map(c=>card(c)).join('')
     +'</div>'

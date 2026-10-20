@@ -166,6 +166,12 @@ elige un recorte. Entra en un renglón de 37px.
   (Erik: *"mismo diseño que SKU y Plata de Ver, que sean clickeables"*). **Tocar la activa
   la apaga**, que es lo que hacía el «— sin filtro» del desplegable: una cuarta pastilla
   para eso sería un botón que no muestra nada.
+- ⚠️ **El desplegable del % aparece SOLO con «En baja» o «En alza»** (Erik, 19/10). El
+  umbral lo usa una sola función, `rotClase`, que es la que decide si un código está en
+  baja o en alza; **«Sin rotación» no lo toca** —ese es un estado del modelo, sin ventas
+  en los 6 meses cerrados y sin movimiento este mes— y sin nada elegido no hay baja ni
+  alza que medir. Va **después** de las pastillas: delante, aparecer y desaparecer les
+  corría el lugar cada vez que se prendía un cruce.
 - ⚠️ **El conteo se fue al globo.** El desplegable decía «En baja (1.115)»; en una
   pastilla de 10px eso la hace el doble de ancha que las de Ver y se pierde el mismo
   diseño que pidió.
