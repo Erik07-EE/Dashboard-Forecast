@@ -1549,3 +1549,66 @@ Erik gestiona compras y producto. **No es programador.**
 3. Ofrecer **checklist de opciones** cuando haya que decidir algo.
 4. Cada 5 preguntas, hacer un resumen simple de lo hablado.
 5. Antes de generar algo, mostrarlo para revisión.
+
+## 8/11/2026: el generador lee el Excel por TÍTULO, no por letra
+El 7/11 Erik reordenó el Forecast.xlsm (meses de 13 columnas desde CC, Máx. y Mín. en G y H, nombres nuevos: «Venta demanda», «Máximo inicio», «Máx.»). `generar_dashboard.py` ahora busca cada columna por su título de la fila 3 (`columnas()`, con los nombres viejos como alias) y corta con un error claro si falta uno. **Las letras que nombra este documento (CJ, BV, CP, H, BN…) son las del Excel de antes del 7/11**; los índices de `rows[]` (78, 79, 104, 106, 108…) no cambiaron. Probado: con el Excel viejo da el mismo DATA que antes, clave por clave.
+
+## 9/11/2026: primera corrida con el Excel reordenado
+
+Stock del **viernes 06/11 13:00** (era del 03/11 06:39). **5.453 códigos**, ninguno entró
+ni salió. Cambiaron 2.712 (stock, compras, proyección). La lectura por título funcionó: no
+hubo que tocar un solo nombre.
+
+Dónde quedó cada cosa en el Excel nuevo, resuelto por `columnas()`:
+
+| | |
+|---|---|
+| UN · GA · Código · Cat | A · B · C · E |
+| Primer ingreso · Máx. | F · G |
+| Cant. (IMPO) | K |
+| 12 meses de venta real | Y a AJ |
+| Tend. confirm. · Mix | AK · AO |
+| Stock actual · Meses actual | BH · BI |
+| Venta con stock · % días en stock | BJ · BM |
+| **el ritmo** | **BP** |
+| los 12 meses | CC a HP, de a 13 |
+
+- ⚠️ **El ritmo es ahora la «Venta demanda» del MES BASE** (BP), confirmado por Erik el
+  9/11. La «Venta ajustada» del bloque Base SAP ya no existe con ese nombre. El generador
+  lo encuentra solo porque busca `VAJ_TIT` **a partir de «Stock actual»** y la primera
+  «Venta demanda» que aparece después es la del Mes base. ⚠️ Si alguna vez se mete una
+  columna con ese título entre BH y BP, el ritmo se lee de otro lado **sin avisar**.
+- ⚠️ **«Máx.» (col G) son MESES, no unidades** — medido: de 0,5 a 8,0, mediana 1,0. Es lo
+  que antes se llamaba «Meses por Cat.». Si alguna vez pasa a unidades, el mínimo, el
+  máximo y los seis estados salen todos mal.
+- **Verificado contra el Excel en los 5.453 códigos** (`verificar_excel.py`, en el
+  scratchpad de ese día): stock, Máx., demanda, Mix, ritmo y máximo en unidades dan
+  idéntico. Las únicas diferencias son los **Meses**, por el redondeo a un decimal del
+  dashboard (20,5 contra 20,53). Es la prueba que hay que repetir cada vez que Erik
+  reordene el Excel: un título que quedó en el lugar equivocado leería otra columna sin
+  que nada corte.
+- `probar_estados.py`: las dos reglas coinciden en los 5.453 códigos y en los 23 buckets
+  de plata. Reparto: Quiebre 2.396 · Exceso grave 1.191 · Exceso leve 472 · Ideal 253 ·
+  Lanzamientos 106 · Riesgo 346 · Sin rotación 689.
+- La foto de **noviembre** ya estaba congelada (03/11 06:39) y no se tocó.
+
+### La VP de octubre del Histórico, arreglada
+
+El 3/11 el Histórico mostraba octubre con una VP de **49.176**, la mitad de cualquier otro
+mes (VR/VP 226% contra una banda normal de 81–125%). **La causa era la copia congelada**:
+`Forecast 10-26.xlsm` se había guardado el 2/11, con el stock ya consumido, y la
+«Venta proy.» —que vale `mín(demanda, stock al 1ro + compras)`— se recalculó contra ese
+stock. Erik rehizo la copia el 4/11 y quedó en **91.775 en 2.448 códigos**, que es el
+número correcto (nuestro propio dashboard del 20/10 daba 91.416 leyendo el Excel vivo).
+
+- ⚠️ **Rehacer la copia no alcanza: hay que sacar el mes del cache.** `historico_vp.json`
+  guarda el mes una vez y no lo vuelve a leer, así que el 49.176 siguió apareciendo cinco
+  días después de que el Excel estuviera bien. Se borra la clave (`2026-10`) y el
+  generador lo relee solo. El cache está en git, así que es reversible.
+- ⚠️ **La copia `Forecast MM-26.xlsm` se guarda ANTES de refrescar el stock**, apenas
+  cierra el mes. Guardada después, la VP de ese mes nace mal.
+
+⚠️ **Esta publicación tiene fecha de vencimiento.** Erik está migrando el dashboard y los
+otros cuatro gestores a **una sola app**, y trabaja en los dos en paralelo: usa el tablero
+unos días más y después lo deja en «old». No encarar refactors acá: lo que haga falta,
+mínimo y que funcione.

@@ -25,6 +25,86 @@ def _usd(s):
             except: pass
     return [pi,cii]
 
+# --------------------------------------------------------------------------------
+# COLUMNAS POR TITULO (Erik, 8/11/2026).
+#
+# Hasta el 7/11 esto leia por letra fija (meses desde CJ de a 14 columnas, BN, BV, H, CP...).
+# El 7/11 Erik reordeno el Excel (saco la columna vacia E, puso Max. y Min. en G y H, meses de
+# 13 columnas desde CC) y con letras fijas el generador leia otras columnas sin avisar.
+# Ahora cada columna se busca por su TITULO en la fila 3, con los nombres viejos como alias, y
+# los meses por el numero de mes de la fila 1 (0, 1, 2...; el Mes base tiene -1). Si un titulo
+# no esta, corta con un error que dice cual. Con el Excel de antes da exactamente las mismas
+# columnas que las letras viejas (probado el 8/11).
+import unicodedata
+
+def _norm(v):
+    s=re.sub(r"\s+"," ","" if v is None else str(v)).strip().lower()
+    return "".join(ch for ch in unicodedata.normalize("NFD",s) if unicodedata.category(ch)!="Mn")
+
+def _es_fecha(v): return isinstance(v,(datetime.date,datetime.datetime))
+
+VA_TIT=("Venta demanda","V.Ajust. c/stock")        # la demanda del mes (antes "V.Ajust. c/stock")
+VAJ_TIT=VA_TIT+("Venta ajustada",)                  # la de Base SAP (en los Forecast de octubre y antes, "Venta ajustada")
+# lo que se lee de cada mes: nombre interno -> titulos posibles (el primero es el de hoy)
+BLOQUE_TIT=[("va",VA_TIT),("vp",("Venta proy. (unid.)","Venta proy. (unidades)")),
+            ("vpusd",("Venta proy. (USD / $)",)),("si",("Stock inicio","Stock inicio de mes")),
+            ("smax",("Maximo inicio","Stock max. inicio","Stock maximo")),
+            ("mi",("Meses inicio","Meses fin de mes")),
+            ("prop",("Propuesta (unid.)","Cantidad proyectada")),("propusd",("Propuesta (USD / $)","Total")),
+            ("ped",("Pedido (unid.)","Cantidad confirmada")),("total",("Total (USD / $)","Total"))]
+
+def columnas(r1,r2,r3):
+    """Donde esta cada cosa que lee extract(): indices desde 0, buscados por titulo."""
+    def buscar(tits,desde=0,que=None):
+        nt=[_norm(t) for t in tits]
+        for c in range(desde,len(r3)):
+            if not _es_fecha(r3[c]) and _norm(r3[c]) in nt: return c
+        raise SystemExit("ERROR: no encontre en la fila 3 del Forecast la columna '%s'"%(que or tits[0]))
+    C={"un":buscar(["UN"]),"ga":buscar(["GA"]),"cod":buscar(["Codigo"]),"cat":buscar(["Cat"]),
+       "ing":buscar(["Primer ingreso"]),"ideal":buscar(["Max.","Colchon","Meses por Cat."],que="Max.")}
+    C["cant"]=buscar(["Cant."],buscar(["Proveedor designado"]))
+    # los 12 meses de venta real: las fechas seguidas de la fila 3
+    f=[c for c,v in enumerate(r3) if _es_fecha(v)]
+    f=[c for i,c in enumerate(f) if c-f[0]==i]
+    if len(f)<12: raise SystemExit("ERROR: no encontre en la fila 3 del Forecast los 12 meses de venta")
+    C["real"]=f[:12]
+    C["tend"]=buscar(["Tend. confirm."],f[11])
+    C["mix"]=buscar(["Mix"])
+    sa=buscar(["Stock actual"])
+    C["sa"]=sa; C["ma"]=buscar(["Meses actual"],sa); C["vcs"]=buscar(["Venta con stock"],sa)
+    C["pres"]=buscar(["% dias en stock"],sa); C["vaj"]=buscar(VAJ_TIT,sa)
+    # los meses: "Venta demanda" con el numero de mes (0, 1, 2...) arriba, en la fila 1
+    nva=[_norm(t) for t in VA_TIT]
+    bl=[c for c,v in enumerate(r3) if _norm(v) in nva and isinstance(r1[c],(int,float))
+        and not isinstance(r1[c],bool) and r1[c]>=0]
+    if len(bl)<12: raise SystemExit("ERROR: encontre %d meses en el Forecast y tienen que ser 12"%len(bl))
+    bl=bl[:12]; paso=bl[1]-bl[0]
+    if any(bl[k+1]-bl[k]!=paso for k in range(11)):
+        raise SystemExit("ERROR: los meses del Forecast no tienen todos el mismo ancho")
+    # cada columna del mes, buscada por titulo en el primero ("Total" puede estar dos veces en los
+    # archivos viejos: se toma la primera libre), y comprobado que los 12 meses son iguales
+    off={}; usadas=set()
+    for k,tits in BLOQUE_TIT:
+        nt=[_norm(t) for t in tits]
+        o=next((o for o in range(paso) if o not in usadas and _norm(r3[bl[0]+o]) in nt),None)
+        if o is None: raise SystemExit("ERROR: no encontre la columna '%s' en los meses del Forecast"%tits[0])
+        usadas.add(o); off[k]=o
+    for b in bl[1:]:
+        for k,o in off.items():
+            if _norm(r3[b+o])!=_norm(r3[bl[0]+o]):
+                raise SystemExit("ERROR: el mes de la columna %d del Forecast no tiene '%s' donde los demas"%(b+1,r3[bl[0]+o]))
+    C["bloques"]=bl; C["paso"]=paso; C["off"]=off
+    return C
+
+def rotulo(r2,b,paso,etiqueta):
+    """El valor de la fila 2 despues de 'T.C.:', 'Estac.:' o 'Evento esp.:' en el mes que empieza en b."""
+    for c in range(b,min(b+paso,len(r2))):
+        if _norm(r2[c])==_norm(etiqueta):
+            for x in range(c+1,min(b+paso,len(r2))):
+                if r2[x] not in (None,"","-"): return r2[x]
+            return None
+    return None
+
 def find_latest(folder):
     cands=[p for p in glob.glob(os.path.join(folder,"*.xlsm")) if not os.path.basename(p).startswith("~$")]
     if not cands: raise SystemExit("No se encontro ningun .xlsm en "+folder)
@@ -33,12 +113,13 @@ def find_latest(folder):
 def extract(path):
     wb=openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
     ws=wb["Forecast"]
-    BS=88; STRIDE=14
-    all_rows=[list(x) for x in ws.iter_rows(min_row=1,max_row=6000,max_col=270,values_only=True)]
-    _rl=all_rows[2] if len(all_rows)>2 else []
-    real_labels=[(_rl[cc] if cc<len(_rl) else None) for cc in range(ci("AB")-1, ci("AB")-1+12)]
+    all_rows=[list(x) for x in ws.iter_rows(min_row=1,max_row=6000,max_col=max(270,ws.max_column or 0),values_only=True)]
     r1=all_rows[0]
-    months=[str(r1[BS+STRIDE*k]) for k in range(12)]
+    # las columnas, por titulo (ver columnas() arriba). BL = donde empieza cada mes (su "Venta demanda")
+    C=columnas(all_rows[0],all_rows[1],all_rows[2])
+    BL=C["bloques"]; PASO=C["paso"]; O=C["off"]
+    real_labels=[all_rows[2][cc] for cc in C["real"]]
+    months=[str(r1[b+1]) for b in BL]
     def I(v):
         try: return int(round(float(v)))
         except: return None
@@ -58,43 +139,44 @@ def extract(path):
     rows=[]
     realmap={}; presmap={}
     for row in all_rows[3:]:
-        cod=row[2]
+        cod=row[C["cod"]]
         if not (cod and str(cod).strip()): continue
         # fila separadora del Excel: codigo "-", sin UN ni datos. Ensuciaba el
         # filtro de Categoria con un "-" que no existe como categoria.
         if str(cod).strip()=="-": continue
-        if str(row[1]).strip()=="Adicionales": continue  # GA sin valor estadistico
-        ui=idx(UN,row[0]); gi=idx(GA,row[1]); cti=idx(CAT,row[5])
-        sa=N(row[ci("BN")-1]); ma=F1(row[ci("BO")-1])
+        if str(row[C["ga"]]).strip()=="Adicionales": continue  # GA sin valor estadistico
+        ui=idx(UN,row[C["un"]]); gi=idx(GA,row[C["ga"]]); cti=idx(CAT,row[C["cat"]])
+        sa=N(row[C["sa"]]); ma=F1(row[C["ma"]])
         flat=[]; prev=ma
         for k in range(12):
-            b=BS+STRIDE*k; bn=BS+STRIDE*(k+1)
-            si=N(row[b+5-1]); mf=F1(row[b+7-1]); comp=N(row[b+10-1]); ven=N(row[b+1-1])
-            ni=bn+5-1; sf=N(row[ni]) if ni<len(row) else None
+            b=BL[k]; bn=b+PASO
+            # "Pedido (unid.)" es lo que entra en el mes; "Venta proy. (unid.)" lo que sale
+            si=N(row[b+O["si"]]); mf=F1(row[b+O["mi"]]); comp=N(row[b+O["ped"]]); ven=N(row[b+O["vp"]])
+            ni=bn+O["si"]; sf=N(row[ni]) if ni<len(row) else None
             if sf is None and si is not None and comp is not None and ven is not None: sf=si+comp-ven
             flat += [si, prev, comp, ven, sf, mf]; prev=mf
-        ideal=F1(row[ci("H")-1])
-        cajax=N(row[ci("L")-1])
-        # BV = "Venta ajustada": el ritmo mensual con el que el Excel calcula
-        # "Meses actual" (BO = BN/BV). El dashboard lo necesita para que los meses
+        ideal=F1(row[C["ideal"]])        # "Max." (antes "Meses por Cat." / "Colchon")
+        cajax=N(row[C["cant"]])          # "Cant." del Proveedor designado
+        # "Venta demanda" de Base SAP (antes BV "Venta ajustada"): el ritmo mensual con el
+        # que el Excel calcula "Meses actual". El dashboard lo necesita para que los meses
         # y las unidades hablen el mismo idioma en todas las solapas.
-        vaj=N(row[ci("BV")-1])
+        vaj=N(row[C["vaj"]])
         vpx=[]
         for k in range(12):
-            b=BS+STRIDE*k
-            vpx += [N(row[b+0-1]), N(row[b+4-1])]  # venta base, venta proy USD/$
-        try: an=round(float(row[ci("AN")-1]),4)
+            b=BL[k]
+            vpx += [N(row[b+O["va"]]), N(row[b+O["vpusd"]])]  # venta demanda, venta proy USD/$
+        try: an=round(float(row[C["tend"]]),4)
         except: an=None
-        try: pp=round(float(row[ci("AS")-1]),4)
+        try: pp=round(float(row[C["mix"]]),4)
         except: pp=None
         _rr=[]
-        for cc in range(ci("AB")-1, ci("AB")-1+12):
+        for cc in C["real"]:
             try: _rr.append(abs(float(row[cc])))
             except: _rr.append(None)
         realmap[str(cod).strip()]=_rr
-        # Col G "Primer ingreso": cuando entro el codigo al catalogo. Va como numero
+        # "Primer ingreso": cuando entro el codigo al catalogo. Va como numero
         # AAAAMMDD para que ordene solo; la plantilla lo muestra dd/mm/aa.
-        _g=row[ci("G")-1]
+        _g=row[C["ing"]]
         try: ing=int(_g.strftime("%Y%m%d"))
         except Exception: ing=None
         # una celda vacia puede venir como 01/01/1900: no es una fecha de ingreso
@@ -103,17 +185,18 @@ def extract(path):
         # Cat." meses, cada uno con su estacionalidad. Arranca en el mes en curso
         # (busca la columna por el nombre del mes), a diferencia de CB que arranca
         # fija en AU. Es la base del maximo de Estado Stock.
-        try: maxe=float(row[ci("CP")-1] or 0)
+        # (Hoy se llama "Maximo inicio": el del primer mes.)
+        try: maxe=float(row[BL[0]+O["smax"]] or 0)
         except (TypeError,ValueError): maxe=0.0
-        # Presencia en stock del semestre. BS = "% dias en stock" y BP = la venta
+        # Presencia en stock del semestre. "% dias en stock" y "Venta con stock" = la venta
         # por mes medida solo sobre los dias que hubo stock. ⚠️ Las dos existen
         # SOLO para Importados; en el resto la celda esta vacia y viaja None.
-        presmap[str(cod).strip()] = (N(row[ci("BS")-1]), N(row[ci("BP")-1]))
+        presmap[str(cod).strip()] = (N(row[C["pres"]]), N(row[C["vcs"]]))
         rows.append([ui,gi,str(cod).strip(),cti,sa,ma]+flat+[ideal]+vpx+[an]+[pp]+[cajax]+[vaj]+[ing]+[maxe])
     # IMPO por GA
     def estado_of(H1,b):
-        for off in (8,9):
-            v=H1[b-1+off]
+        for off in (O["prop"],O["propusd"]):
+            v=H1[b+off]
             if v:
                 u=str(v).upper()
                 if "CONFIRM" in u: return "confirmado"
@@ -121,7 +204,7 @@ def extract(path):
         return "-"
     heads=[]
     for i in range(3,len(all_rows)):
-        row=all_rows[i]; b=row[1]; c=row[2]
+        row=all_rows[i]; b=row[C["ga"]]; c=row[C["cod"]]
         if (b and str(b).strip()) and not (c and str(c).strip()):
             heads.append((i,str(b).strip()))
     groups={}
@@ -137,18 +220,19 @@ def extract(path):
         H1=all_rows[grp[0]]; H2=all_rows[grp[1]] if len(grp)>1 else H1
         arr=[]
         for kk in range(12):
-            b=BS+STRIDE*kk
-            num=H1[b-1+10]; fe=H1[b-1+12]
+            # en las filas del GA: el estado va en Propuesta, la IMPO en Pedido y la fecha en Total
+            b=BL[kk]
+            num=H1[b+O["ped"]]; fe=H1[b+O["total"]]
             disp=""; eta=""
             if hasattr(fe,"strftime"):
                 disp=fe.strftime("%d/%m/%Y"); eta=(fe-timedelta(days=10)).strftime("%d/%m/%Y")
             elif fe: disp=str(fe)
-            uc=_usd(str(H2[b-1+12] or "")); up=_usd(str(H2[b-1+9] or ""))
+            uc=_usd(str(H2[b+O["total"]] or "")); up=_usd(str(H2[b+O["propusd"]] or ""))
             arr.append({"mes":months[kk],"estado":estado_of(H1,b),
                 "impo":(str(num).strip() if num else ""),
                 "disp":disp,"eta":eta,
-                "cant":_total(str(H2[b-1+10] or "")),"pi":uc[0],"ci":uc[1],
-                "cant_proy":_total(str(H2[b-1+8] or "")),"pi_proy":up[0],"ci_proy":up[1]})
+                "cant":_total(str(H2[b+O["ped"]] or "")),"pi":uc[0],"ci":uc[1],
+                "cant_proy":_total(str(H2[b+O["prop"]] or "")),"pi_proy":up[0],"ci_proy":up[1]})
         impo[ga]=arr
     # ---- Estacionalidad / Evento especial / TC por mes ----
     # Estac. y Evento se leen DIRECTO de la hoja "Estacionalidad" (lo que edita el usuario),
@@ -164,27 +248,37 @@ def extract(path):
             if _sn.strip().lower().replace("ó","o")=="configuracion": _essheet=wb[_sn]; break
         if _essheet is None:
             raise Exception("no hay hoja 'Configuracion'. Hojas disponibles: "+", ".join(wb.sheetnames))
-        for _r in _essheet.iter_rows(min_row=1, max_col=14, values_only=True):
-            mn=_r[ci("L")-1] if len(_r)>ci("L")-1 else None
-            es=_r[ci("M")-1] if len(_r)>ci("M")-1 else None
-            ev=_r[ci("N")-1] if len(_r)>ci("N")-1 else None
+        # por titulo (8/11): la tabla que tiene "Estacionalidad" y "Evento especial" en su
+        # encabezado, con el nombre del mes en la columna de la izquierda (hoy S:U; antes L:N)
+        _cf=[list(x) for x in _essheet.iter_rows(min_row=1, max_row=200, max_col=80, values_only=True)]
+        _pos=None
+        for _i,_r in enumerate(_cf):
+            _ce=next((c for c,v in enumerate(_r) if _norm(v)=="estacionalidad"),None)
+            _cv=next((c for c,v in enumerate(_r) if _norm(v)=="evento especial"),None)
+            if _ce and _cv is not None: _pos=(_i,_ce,_cv); break
+        if _pos is None:
+            raise Exception("no encontre los titulos 'Estacionalidad' y 'Evento especial' en 'Configuracion'")
+        _i,_ce,_cv=_pos
+        for _r in _cf[_i+1:]:
+            mn=_r[_ce-1]; es=_r[_ce]; ev=_r[_cv]
             if isinstance(mn, str) and isinstance(es, (int, float)):
                 _estac[mn.strip().lower()] = (P2(es), P2(ev))
-        print("  Estacionalidad: %d meses leidos de 'Configuracion' (cols L/M/N)"%len(_estac))
+        print("  Estacionalidad: %d meses leidos de 'Configuracion'"%len(_estac))
     except Exception as _e:
         print("  Estacionalidad: uso valores cacheados del bloque (2 dec):", _e)
     season=[]
     for k in range(12):
-        b=BS+STRIDE*k
-        def r2(off): return all_rows[1][b+off-1]
+        b=BL[k]
+        # la fila 2 de cada mes: "T.C.:", "Estac.:" y "Evento esp.:", cada una con su valor al lado
+        def r2(et): return rotulo(all_rows[1],b,PASO,et)
         _mn=str(months[k]).strip().lower()
         if _mn in _estac:
             _es_v,_ev_v=_estac[_mn]
         else:
-            _es_v,_ev_v=P2(r2(9)),P2(r2(12))  # fallback al cache de la fórmula (2 dec)
-        season.append([_es_v, _ev_v, F1(r2(4))])  # estac, evento, TC
-    # fecha/hora del stock (BN2 + BO2)
-    bn=all_rows[1][ci("BN")-1]; bo=all_rows[1][ci("BO")-1]
+            _es_v,_ev_v=P2(r2("Estac.:")),P2(r2("Evento esp.:"))  # fallback al cache de la fórmula (2 dec)
+        season.append([_es_v, _ev_v, F1(r2("T.C.:"))])  # estac, evento, TC
+    # fecha/hora del stock: la fila 2 de "Stock actual" y la de al lado
+    bn=all_rows[1][C["sa"]]; bo=all_rows[1][C["sa"]+1]
     dias=["Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
     mes_es=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
     if hasattr(bn,"strftime"):
@@ -281,16 +375,19 @@ def extract_vp_archive(path, month):
     ws=wb["Forecast"]
     rr=[list(x) for x in ws.iter_rows(min_row=1, max_row=6000, max_col=200, values_only=True)]
     r1=rr[0] if rr else []; r2=rr[1] if len(rr)>1 else []; r3=rr[2] if len(rr)>2 else []
+    # el mes se busca primero en la fila 1 (el nombre del mes de cada bloque). Desde el 7/11 la
+    # fila 2 trae la fecha base repetida en todos los meses, y buscando ahi primero se tomaba el
+    # Mes base en vez del mes del archivo. La fila 2 queda para los Forecast viejos.
     targets=[]
     for hdr in (r1,r2):
-        for cix,val in enumerate(hdr):
-            if _month_of(val)==month: targets.append(cix)
-    targets=sorted(set(targets))
+        targets=sorted(set(cix for cix,val in enumerate(hdr) if _month_of(val)==month))
+        if targets: break
     vpcol=None
     for t in targets:
         for cix in range(t, min(t+16,len(r3))):
             h=str(r3[cix] or "").lower()
-            if ("venta proy" in h) and ("unidad" in h): vpcol=cix; break
+            # "Venta proy. (unid.)" desde el 7/11; antes "Venta proy. (unidades)"
+            if ("venta proy" in h) and ("unid" in h): vpcol=cix; break
         if vpcol is not None: break
     if vpcol is None: return {}
     mixcol=None
@@ -788,10 +885,19 @@ def build(data, out_html, tpl_path):
 def _bv_de(path):
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
     ws = wb["Forecast"]
-    k = ci("BV") - 1
+    # por titulo (8/11): la "Venta demanda" (antes "V.Ajust. c/stock" o "Venta ajustada") que
+    # sigue a "Stock actual". Los Forecast viejos que no tengan esos titulos, por la letra BV.
+    r3 = next(ws.iter_rows(min_row=3, max_row=3, max_col=max(270, ws.max_column or 0), values_only=True))
+    nva = [_norm(t) for t in VAJ_TIT]
+    sa = next((c for c, v in enumerate(r3) if _norm(v) == "stock actual"), None)
+    k = next((c for c in range(sa, len(r3)) if _norm(r3[c]) in nva), None) if sa is not None else None
+    if k is None:
+        k = ci("BV") - 1
+        print("  Rotacion: %s no tiene el titulo 'Venta demanda': leo la col BV" % os.path.basename(path))
+    kc = next((c for c, v in enumerate(r3) if _norm(v) == "codigo"), 2)
     out = {}
     for row in ws.iter_rows(min_row=4, max_row=6000, max_col=k + 1, values_only=True):
-        c = row[2]
+        c = row[kc]
         if not (c and str(c).strip()) or str(c).strip() == "-": continue
         v = row[k]
         if isinstance(v, (int, float)): out[str(c).strip()] = round(float(v), 2)
